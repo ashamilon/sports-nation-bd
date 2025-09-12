@@ -50,7 +50,9 @@ export default function FeaturedProducts() {
       productId: product.id,
       name: product.name,
       price: product.price,
-      image: product.images[0] || '/api/placeholder/300/400',
+      image: (product.images && product.images.length > 0 && !product.images[0].startsWith('blob:')) 
+        ? product.images[0] 
+        : '/api/placeholder/300/300',
       quantity: 1,
       variantId: product.variants[0]?.id,
       variantName: product.variants[0]?.name
@@ -99,13 +101,13 @@ export default function FeaturedProducts() {
             >
               <div className="product-card glass-card rounded-2xl overflow-hidden">
                 {/* Product Image */}
-                <div className="relative aspect-[3/4] overflow-hidden">
-                  {product.images && product.images.length > 0 ? (
+                <div className="relative aspect-square overflow-hidden">
+                  {product.images && product.images.length > 0 && !product.images[0].startsWith('blob:') ? (
                     <Image
                       src={product.images[0]}
                       alt={product.name}
                       width={300}
-                      height={400}
+                      height={300}
                       className="w-full h-full object-cover"
                       unoptimized={product.images[0].includes('/api/placeholder')}
                     />
@@ -204,13 +206,13 @@ export default function FeaturedProducts() {
             >
               <div className="product-card glass-card rounded-xl overflow-hidden">
                 {/* Product Image */}
-                <div className="relative aspect-[3/4] overflow-hidden">
-                  {product.images && product.images.length > 0 ? (
+                <div className="relative aspect-square overflow-hidden">
+                  {product.images && product.images.length > 0 && !product.images[0].startsWith('blob:') ? (
                     <Image
                       src={product.images[0]}
                       alt={product.name}
                       width={300}
-                      height={400}
+                      height={300}
                       className="w-full h-full object-cover"
                       unoptimized={product.images[0].includes('/api/placeholder')}
                     />

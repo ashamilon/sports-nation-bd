@@ -89,7 +89,9 @@ export default function ProductsGrid() {
       productId: product.id,
       name: product.name,
       price: variant?.price || product.price,
-      image: product.images[0] || '/placeholder-product.jpg',
+      image: (product.images && product.images.length > 0 && !product.images[0].startsWith('blob:')) 
+        ? product.images[0] 
+        : '/api/placeholder/300/300',
       quantity: 1,
       variantId: variant?.id,
       variantName: variant?.name
@@ -103,7 +105,7 @@ export default function ProductsGrid() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {[...Array(8)].map((_, i) => (
           <div key={i} className="animate-pulse">
-            <div className="bg-muted aspect-[3/4] rounded-lg mb-4"></div>
+            <div className="bg-muted aspect-square rounded-lg mb-4"></div>
             <div className="h-4 bg-muted rounded mb-2"></div>
             <div className="h-4 bg-muted rounded w-3/4"></div>
           </div>
@@ -159,13 +161,13 @@ export default function ProductsGrid() {
           >
             <div className="product-card glass-card rounded-2xl overflow-hidden">
               {/* Product Image */}
-              <div className="relative aspect-[3/4] overflow-hidden">
-                {product.images && product.images.length > 0 ? (
+              <div className="relative aspect-square overflow-hidden">
+                {product.images && product.images.length > 0 && !product.images[0].startsWith('blob:') ? (
                   <Image
                     src={product.images[0]}
                     alt={product.name}
                     width={300}
-                    height={400}
+                    height={300}
                     className="w-full h-full object-cover"
                     unoptimized={product.images[0].includes('/api/placeholder')}
                   />
@@ -281,13 +283,13 @@ export default function ProductsGrid() {
             >
               <div className="product-card glass-card rounded-2xl overflow-hidden">
                 {/* Product Image */}
-                <div className="relative aspect-[3/4] overflow-hidden">
-                  {product.images && product.images.length > 0 ? (
+                <div className="relative aspect-square overflow-hidden">
+                  {product.images && product.images.length > 0 && !product.images[0].startsWith('blob:') ? (
                     <Image
                       src={product.images[0]}
                       alt={product.name}
                       width={300}
-                      height={400}
+                      height={300}
                       className="w-full h-full object-cover"
                       unoptimized={product.images[0].includes('/api/placeholder')}
                     />
