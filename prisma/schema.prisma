@@ -1,0 +1,248 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  role          String    @default("customer") // customer, admin, moderator
+  phone         String?
+  password      String?   // For credentials auth
+  address       String?
+  city          String?
+  country       String?
+  postalCode    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+  orders   Order[]
+  reviews  Review[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  image       String?
+  parentId    String?
+  parent      Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  products    Product[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String
+  price       Float
+  comparePrice Float?
+  sku         String   @unique
+  stock       Int      @default(0)
+  images      String   // JSON string of image URLs
+  isActive    Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  weight      Float?
+  dimensions  String?
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  variants    ProductVariant[]
+  reviews     Review[]
+  orderItems  OrderItem[]
+  cartItems   CartItem[]
+  badges      ProductBadge[]
+  // Customization options
+  allowNameNumber Boolean @default(false) // For jerseys
+  nameNumberPrice Float? @default(250) // Additional price for name/number
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ProductVariant {
+  id        String   @id @default(cuid())
+  name      String
+  value     String
+  price     Float?
+  stock     Int      @default(0)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+  cartItems  CartItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Cart {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  items     CartItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+  quantity  Int
+  customOptions String? // JSON string for custom jerseys, badges, names, numbers
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId, variantId])
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  userId          String
+  user            User        @relation(fields: [userId], references: [id])
+  status          String      @default("pending") // pending, confirmed, processing, shipped, completed, cancelled, refunded
+  paymentStatus   String      @default("pending") // pending, paid, partial, failed, refunded
+  paymentMethod   String?
+  paymentIntentId String?
+  transactionId   String?
+  subtotal        Float
+  shippingCost    Float       @default(0)
+  tipAmount       Float?      @default(0)
+  total           Float
+  currency        String      @default("BDT")
+  customerLocation String?    // bangladesh, europe
+  shippingAddress String      // JSON string
+  billingAddress  String?     // JSON string
+  trackingNumber  String?
+  notes           String?
+  items           OrderItem[]
+  payments        Payment[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model OrderItem {
+  id            String         @id @default(cuid())
+  orderId       String
+  order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product        @relation(fields: [productId], references: [id])
+  productVariantId String?
+  productVariant ProductVariant? @relation(fields: [productVariantId], references: [id])
+  quantity      Int
+  price         Float
+  customOptions String? // JSON string for custom jerseys, badges, names, numbers
+  createdAt     DateTime       @default(now())
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  rating    Int
+  comment   String?
+  isVerified Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+}
+
+model Payment {
+  id              String   @id @default(cuid())
+  orderId         String
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount          Float
+  currency        String   @default("BDT")
+  status          String   @default("pending") // pending, completed, failed, refunded
+  paymentMethod   String   // card, bKash, Rocket, bank_transfer, cash_on_delivery
+  transactionId   String?
+  paymentIntentId String?
+  metadata        String?  // JSON string for additional payment data
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Coupon {
+  id          String     @id @default(cuid())
+  code        String     @unique
+  description String?
+  type        String     // percentage, fixed
+  value       Float
+  minimumAmount Float?
+  maximumDiscount Float?
+  usageLimit  Int?
+  usedCount   Int        @default(0)
+  isActive    Boolean    @default(true)
+  startsAt    DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model ProductBadge {
+  id        String   @id @default(cuid())
+  name      String
+  description String?
+  price     Float
+  image     String?  // Badge image URL
+  isActive  Boolean  @default(true)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

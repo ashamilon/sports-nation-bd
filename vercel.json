@@ -1,0 +1,33 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "regions": ["sin1"],
+  "env": {
+    "NEXTAUTH_SECRET": "@nextauth_secret",
+    "NEXTAUTH_URL": "@nextauth_url",
+    "DATABASE_URL": "@database_url",
+    "SSLCOMMERZ_STORE_ID": "@sslcommerz_store_id",
+    "SSLCOMMERZ_STORE_PASSWORD": "@sslcommerz_store_password",
+    "SSLCOMMERZ_SANDBOX": "@sslcommerz_sandbox",
+    "SMS_PROVIDER": "@sms_provider",
+    "SMS_API_KEY": "@sms_api_key",
+    "SMS_SENDER_ID": "@sms_sender_id",
+    "SMS_BASE_URL": "@sms_base_url"
+  },
+  "build": {
+    "env": {
+      "NEXTAUTH_SECRET": "@nextauth_secret",
+      "NEXTAUTH_URL": "@nextauth_url",
+      "DATABASE_URL": "@database_url",
+      "SSLCOMMERZ_STORE_ID": "@sslcommerz_store_id",
+      "SSLCOMMERZ_STORE_PASSWORD": "@sslcommerz_store_password",
+      "SSLCOMMERZ_SANDBOX": "@sslcommerz_sandbox",
+      "SMS_PROVIDER": "@sms_provider",
+      "SMS_API_KEY": "@sms_api_key",
+      "SMS_SENDER_ID": "@sms_sender_id",
+      "SMS_BASE_URL": "@sms_base_url"
+    }
+  }
+}

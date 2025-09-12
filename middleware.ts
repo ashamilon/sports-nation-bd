@@ -1,0 +1,47 @@
+import { withAuth } from 'next-auth/middleware'
+import { NextResponse } from 'next/server'
+
+export default withAuth(
+  function middleware(req) {
+    const token = req.nextauth.token
+    const isAdmin = token?.role === 'admin'
+    const isAdminRoute = req.nextUrl.pathname.startsWith('/admin')
+
+    // Redirect non-admin users trying to access admin routes
+    if (isAdminRoute && !isAdmin) {
+      return NextResponse.redirect(new URL('/dashboard', req.url))
+    }
+
+    // Redirect admin users from user dashboard to admin dashboard
+    if (req.nextUrl.pathname.startsWith('/dashboard') && isAdmin) {
+      return NextResponse.redirect(new URL('/admin', req.url))
+    }
+  },
+  {
+    callbacks: {
+      authorized: ({ token, req }) => {
+        // Allow access to public routes
+        const publicRoutes = ['/', '/products', '/category', '/product', '/auth']
+        const isPublicRoute = publicRoutes.some(route => 
+          req.nextUrl.pathname === route || req.nextUrl.pathname.startsWith(route + '/')
+        )
+
+        if (isPublicRoute) {
+          return true
+        }
+
+        // Require authentication for protected routes
+        return !!token
+      },
+    },
+  }
+)
+
+export const config = {
+  matcher: [
+    '/admin/:path*',
+    '/dashboard/:path*',
+    '/checkout/:path*',
+    '/cart/:path*'
+  ]
+}
