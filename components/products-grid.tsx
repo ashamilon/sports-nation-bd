@@ -91,7 +91,7 @@ export default function ProductsGrid() {
       price: variant?.price || product.price,
       image: (product.images && product.images.length > 0 && !product.images[0].startsWith('blob:')) 
         ? product.images[0] 
-        : '/api/placeholder/300/300',
+        : '/api/placeholder/300',
       quantity: 1,
       variantId: variant?.id,
       variantName: variant?.name
