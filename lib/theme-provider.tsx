@@ -73,7 +73,7 @@ export function ThemeProvider({
   // Prevent hydration mismatch by not rendering until mounted
   if (!mounted) {
     return (
-      <ThemeProviderContext.Provider {...props} value={value}>
+      <ThemeProviderContext.Provider {...props} value={initialState}>
         {children}
       </ThemeProviderContext.Provider>
     )

@@ -3,9 +3,15 @@
 import { useTheme } from '@/lib/theme-provider'
 import { Sun, Moon, Monitor } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const toggleTheme = () => {
     if (theme === 'light') setTheme('dark')
@@ -23,6 +29,23 @@ export function ThemeToggle() {
     if (theme === 'light') return 'Switch to dark mode'
     if (theme === 'dark') return 'Switch to system mode'
     return 'Switch to light mode'
+  }
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!mounted) {
+    return (
+      <button
+        className="glass-button relative p-2 rounded-lg"
+        title="Loading theme..."
+      >
+        <Monitor className="h-4 w-4" />
+        <div className="absolute -bottom-1 -right-1 flex gap-0.5">
+          <div className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+          <div className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+          <div className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+        </div>
+      </button>
+    )
   }
 
   return (
