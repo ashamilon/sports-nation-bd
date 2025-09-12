@@ -70,17 +70,26 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
   }
 
   const handleAddToCart = () => {
-    // For separate variants (Size, Fabric), we don't need to find a specific variant
-    // since each variant type is independent
     let totalPrice = product.price
     
-    // Add any variant price adjustments (if variants have different prices)
-    Object.entries(selectedVariants).forEach(([variantName, variantValue]) => {
-      const variant = product.variants.find(v => v.name === variantName && v.value === variantValue)
-      if (variant && variant.price !== product.price) {
-        totalPrice += (variant.price - product.price)
+    // For jerseys with separate Size and Fabric selections
+    if (product.category.slug === 'jerseys' && selectedVariants['Size'] && selectedVariants['Fabric']) {
+      // Find the combined variant that matches both size and fabric
+      const combinedVariantValue = `${selectedVariants['Size']} - ${selectedVariants['Fabric']}`
+      const matchingVariant = product.variants.find(v => v.value === combinedVariantValue)
+      
+      if (matchingVariant) {
+        totalPrice = matchingVariant.price
       }
-    })
+    } else {
+      // For other products, add any variant price adjustments
+      Object.entries(selectedVariants).forEach(([variantName, variantValue]) => {
+        const variant = product.variants.find(v => v.name === variantName && v.value === variantValue)
+        if (variant && variant.price !== product.price) {
+          totalPrice += (variant.price - product.price)
+        }
+      })
+    }
     
     // Add name/number price if selected
     if (product.allowNameNumber && (customName || customNumber)) {
@@ -108,7 +117,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
       productId: product.id,
       name: product.name,
       price: totalPrice,
-      image: product.images[selectedImage] || '/placeholder-product.jpg',
+      image: product.images[selectedImage] || '/api/placeholder/300',
       quantity,
       variantId: undefined, // No single variant ID for separate variants
       variantName: variantName || undefined,
@@ -259,31 +268,89 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
                   acc[variant.name].push(variant)
                   return acc
                 }, {} as Record<string, typeof product.variants>)
-              ).map(([variantName, variants]) => (
-                <div key={variantName}>
-                  <h4 className="font-medium mb-2">{variantName}</h4>
-                  <div className="flex gap-2 flex-wrap">
-                    {variants.map((variant) => (
-                      <button
-                        key={variant.id}
-                        onClick={() => handleVariantChange(variantName, variant.value)}
-                        className={`px-4 py-2 border rounded-lg transition-colors ${
-                          selectedVariants[variantName] === variant.value
-                            ? 'border-primary bg-primary/10 text-primary'
-                            : 'border-border hover:border-primary/50'
-                        }`}
-                      >
-                        {variant.value}
-                        {variant.price && variant.price !== product.price && (
-                          <span className="ml-1 text-xs">
-                            (+{formatCurrency(variant.price - product.price)})
-                          </span>
-                        )}
-                      </button>
-                    ))}
+              ).map(([variantName, variants]) => {
+                // For jerseys with combined "Size & Fabric" variants, show separate selectors
+                if (variantName.toLowerCase().includes('size') && variantName.toLowerCase().includes('fabric') && product.category.slug === 'jerseys') {
+                  // Extract unique sizes and fabrics from combined variants
+                  const sizes = [...new Set(variants.map(v => v.value.split(' - ')[0]))].sort((a, b) => {
+                    const sizeOrder = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL']
+                    return sizeOrder.indexOf(a) - sizeOrder.indexOf(b)
+                  })
+                  
+                  const fabrics = [...new Set(variants.map(v => v.value.split(' - ')[1]))]
+                  
+                  return (
+                    <div key={variantName} className="space-y-4">
+                      {/* Size Selector */}
+                      <div>
+                        <h4 className="font-medium mb-2">Size</h4>
+                        <div className="flex gap-2 flex-wrap">
+                          {sizes.map((size) => (
+                            <button
+                              key={size}
+                              onClick={() => handleVariantChange('Size', size)}
+                              className={`px-4 py-2 border rounded-lg transition-colors ${
+                                selectedVariants['Size'] === size
+                                  ? 'border-primary bg-primary/10 text-primary'
+                                  : 'border-border hover:border-primary/50'
+                              }`}
+                            >
+                              {size}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Fabric Selector */}
+                      <div>
+                        <h4 className="font-medium mb-2">Fabric Type</h4>
+                        <div className="flex gap-2 flex-wrap">
+                          {fabrics.map((fabric) => (
+                            <button
+                              key={fabric}
+                              onClick={() => handleVariantChange('Fabric', fabric)}
+                              className={`px-4 py-2 border rounded-lg transition-colors ${
+                                selectedVariants['Fabric'] === fabric
+                                  ? 'border-primary bg-primary/10 text-primary'
+                                  : 'border-border hover:border-primary/50'
+                              }`}
+                            >
+                              {fabric}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                }
+                
+                // For other variants, show as before
+                return (
+                  <div key={variantName}>
+                    <h4 className="font-medium mb-2">{variantName}</h4>
+                    <div className="flex gap-2 flex-wrap">
+                      {variants.map((variant) => (
+                        <button
+                          key={variant.id}
+                          onClick={() => handleVariantChange(variantName, variant.value)}
+                          className={`px-4 py-2 border rounded-lg transition-colors ${
+                            selectedVariants[variantName] === variant.value
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-border hover:border-primary/50'
+                          }`}
+                        >
+                          {variant.value}
+                          {variant.price && variant.price !== product.price && (
+                            <span className="ml-1 text-xs">
+                              (+{formatCurrency(variant.price - product.price)})
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
 
@@ -408,20 +475,32 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-4">
-            <button
-              onClick={handleAddToCart}
-              className="flex-1 bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
-            >
-              <ShoppingCart className="h-5 w-5" />
-              Add to Cart
-            </button>
-            <button className="p-3 border rounded-lg hover:bg-accent transition-colors">
-              <Heart className="h-5 w-5" />
-            </button>
-            <button className="p-3 border rounded-lg hover:bg-accent transition-colors">
-              <Share2 className="h-5 w-5" />
-            </button>
+          <div className="space-y-4">
+            {/* Validation message for jerseys */}
+            {product.category.slug === 'jerseys' && (!selectedVariants['Size'] || !selectedVariants['Fabric']) && (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  Please select both Size and Fabric Type to add to cart
+                </p>
+              </div>
+            )}
+            
+            <div className="flex gap-4">
+              <button
+                onClick={handleAddToCart}
+                disabled={product.category.slug === 'jerseys' && (!selectedVariants['Size'] || !selectedVariants['Fabric'])}
+                className="flex-1 bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ShoppingCart className="h-5 w-5" />
+                Add to Cart
+              </button>
+              <button className="p-3 border rounded-lg hover:bg-accent transition-colors">
+                <Heart className="h-5 w-5" />
+              </button>
+              <button className="p-3 border rounded-lg hover:bg-accent transition-colors">
+                <Share2 className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
           {/* Features */}

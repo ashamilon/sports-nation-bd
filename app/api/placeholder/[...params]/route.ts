@@ -12,18 +12,22 @@ export async function GET(
     const h = parseInt(height) || w // Make it square by default
 
     // Create a sports-themed SVG placeholder
+    const timestamp = Date.now()
     const svg = `
       <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id="bg-${timestamp}" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" style="stop-color:#f3f4f6;stop-opacity:1" />
             <stop offset="100%" style="stop-color:#e5e7eb;stop-opacity:1" />
           </linearGradient>
         </defs>
-        <rect width="100%" height="100%" fill="url(#bg)"/>
+        <rect width="100%" height="100%" fill="url(#bg-${timestamp})"/>
         <circle cx="50%" cy="50%" r="${Math.min(w, h) * 0.15}" fill="#d1d5db" opacity="0.3"/>
         <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="${Math.min(w, h) * 0.08}" fill="#9ca3af" text-anchor="middle" dy=".3em">
           ⚽
+        </text>
+        <text x="50%" y="80%" font-family="Arial, sans-serif" font-size="12" fill="#9ca3af" text-anchor="middle">
+          ${w}×${h}
         </text>
       </svg>
     `
