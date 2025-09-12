@@ -28,8 +28,8 @@ export const metadata: Metadata = {
   keywords: "sports gear, jerseys, watches, sneakers, football, basketball, custom jerseys, Bangladesh",
   authors: [{ name: "Sports Nation BD" }],
   icons: {
-    icon: '/logo.png',
-    apple: '/logo.png',
+    icon: '/logo.svg',
+    apple: '/logo.svg',
   },
   openGraph: {
     title: "Sports Nation BD - Premium Sports Gear",
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     images: [
       {
-        url: '/logo.png',
+        url: '/logo.svg',
         width: 1200,
         height: 630,
         alt: 'Sports Nation BD Logo',
