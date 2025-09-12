@@ -55,6 +55,7 @@
   --color-ring: var(--ring);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-bebas-neue);
   --radius: var(--radius);
 }
 
@@ -67,6 +68,12 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Display font utility class */
+.font-display {
+  font-family: var(--font-display), sans-serif;
+  letter-spacing: 0.05em;
 }
 
 /* Custom animations */
