@@ -15,7 +15,8 @@ import {
   Bell,
   LogOut,
   Menu,
-  X
+  X,
+  Package
 } from 'lucide-react'
 
 interface DashboardLayoutProps {
@@ -25,6 +26,7 @@ interface DashboardLayoutProps {
 const navigation = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Orders', href: '/dashboard/orders', icon: ShoppingBag },
+  { name: 'Tracking', href: '/dashboard/tracking', icon: Package },
   { name: 'Wishlist', href: '/dashboard/wishlist', icon: Heart },
   { name: 'Profile', href: '/dashboard/profile', icon: UserIcon },
   { name: 'Addresses', href: '/dashboard/addresses', icon: MapPin },

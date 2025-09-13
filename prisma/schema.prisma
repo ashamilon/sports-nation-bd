@@ -197,9 +197,12 @@ model Order {
   shippingAddress String      // JSON string
   billingAddress  String?     // JSON string
   trackingNumber  String?
+  courierService  String?     // sundarban, pathao
+  courierTrackingId String?   // Courier's tracking ID
   notes           String?
   items           OrderItem[]
   payments        Payment[]
+  trackingUpdates TrackingUpdate[]
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 }
@@ -508,6 +511,20 @@ model SEO {
   canonical   String?
   robots      String?  // index, noindex, follow, nofollow
   schema      String?  // JSON-LD structured data
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TrackingUpdate {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status      String   // picked_up, in_transit, out_for_delivery, delivered, failed_delivery, returned
+  location    String?  // Current location
+  description String?  // Status description
+  timestamp   DateTime @default(now())
+  courierData String?  // JSON data from courier API
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

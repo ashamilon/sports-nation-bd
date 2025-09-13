@@ -14,13 +14,17 @@ import {
   XCircle,
   MoreVertical,
   Download,
-  Printer
+  Printer,
+  MapPin
 } from 'lucide-react'
+import CourierSelector from './courier-selector'
 
 export default function OrdersManagement() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedOrders, setSelectedOrders] = useState<number[]>([])
+  const [selectedOrderForCourier, setSelectedOrderForCourier] = useState<string | null>(null)
+  const [showCourierSelector, setShowCourierSelector] = useState(false)
 
   // Mock data - replace with actual data from API
   const orders = [
@@ -42,7 +46,9 @@ export default function OrdersManagement() {
       shippingAddress: 'Dhaka, Bangladesh',
       orderDate: '2024-01-15',
       deliveryDate: '2024-01-18',
-      trackingNumber: 'TRK123456789'
+      trackingNumber: 'TRK123456789',
+      courierService: 'sundarban',
+      courierTrackingId: 'SD123456789'
     },
     {
       id: 'ORD-002',
@@ -61,7 +67,9 @@ export default function OrdersManagement() {
       shippingAddress: 'Chittagong, Bangladesh',
       orderDate: '2024-01-15',
       deliveryDate: null,
-      trackingNumber: null
+      trackingNumber: null,
+      courierService: null,
+      courierTrackingId: null
     },
     {
       id: 'ORD-003',
@@ -80,7 +88,9 @@ export default function OrdersManagement() {
       shippingAddress: 'Sylhet, Bangladesh',
       orderDate: '2024-01-14',
       deliveryDate: null,
-      trackingNumber: null
+      trackingNumber: null,
+      courierService: null,
+      courierTrackingId: null
     },
     {
       id: 'ORD-004',
@@ -100,7 +110,9 @@ export default function OrdersManagement() {
       shippingAddress: 'Rajshahi, Bangladesh',
       orderDate: '2024-01-14',
       deliveryDate: '2024-01-20',
-      trackingNumber: 'TRK987654321'
+      trackingNumber: 'TRK987654321',
+      courierService: 'pathao',
+      courierTrackingId: 'PT987654321'
     },
     {
       id: 'ORD-005',
@@ -119,7 +131,9 @@ export default function OrdersManagement() {
       shippingAddress: 'Khulna, Bangladesh',
       orderDate: '2024-01-13',
       deliveryDate: null,
-      trackingNumber: null
+      trackingNumber: null,
+      courierService: null,
+      courierTrackingId: null
     }
   ]
 
@@ -198,6 +212,18 @@ export default function OrdersManagement() {
     } else {
       setSelectedOrders(filteredOrders.map(order => parseInt(order.id.replace('ORD-', ''))))
     }
+  }
+
+  const handleAssignCourier = (orderId: string) => {
+    setSelectedOrderForCourier(orderId)
+    setShowCourierSelector(true)
+  }
+
+  const handleCourierUpdate = (courierService: string, trackingId: string) => {
+    // Update the order in the local state
+    // In a real app, this would be handled by the API response
+    setShowCourierSelector(false)
+    setSelectedOrderForCourier(null)
   }
 
   const totalRevenue = orders
@@ -362,6 +388,7 @@ export default function OrdersManagement() {
                 <th className="text-left p-4 font-medium text-foreground">Total</th>
                 <th className="text-left p-4 font-medium text-foreground">Status</th>
                 <th className="text-left p-4 font-medium text-foreground">Payment</th>
+                <th className="text-left p-4 font-medium text-foreground">Courier</th>
                 <th className="text-left p-4 font-medium text-foreground">Date</th>
                 <th className="text-left p-4 font-medium text-foreground">Actions</th>
               </tr>
@@ -424,6 +451,21 @@ export default function OrdersManagement() {
                     </span>
                   </td>
                   <td className="p-4">
+                    {order.courierService ? (
+                      <div>
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          <Truck className="w-3 h-3 mr-1" />
+                          {order.courierService}
+                        </span>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          ID: {order.courierTrackingId}
+                        </p>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">Not assigned</span>
+                    )}
+                  </td>
+                  <td className="p-4">
                     <div>
                       <p className="text-sm text-foreground">{order.orderDate}</p>
                       {order.deliveryDate && (
@@ -441,6 +483,17 @@ export default function OrdersManagement() {
                       >
                         <Eye className="h-4 w-4" />
                       </motion.button>
+                      {!order.courierService && order.status !== 'cancelled' && (
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => handleAssignCourier(order.id)}
+                          className="glass-button p-2 rounded-lg text-blue-600 hover:bg-blue-500/10"
+                          title="Assign Courier"
+                        >
+                          <MapPin className="h-4 w-4" />
+                        </motion.button>
+                      )}
                       <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
@@ -481,6 +534,34 @@ export default function OrdersManagement() {
           </motion.button>
         </div>
       </div>
+
+      {/* Courier Selector Modal */}
+      {showCourierSelector && selectedOrderForCourier && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Assign Courier Service
+                </h3>
+                <button
+                  onClick={() => setShowCourierSelector(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <CourierSelector
+                orderId={selectedOrderForCourier}
+                onCourierUpdate={handleCourierUpdate}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
