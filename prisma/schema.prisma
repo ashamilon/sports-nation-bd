@@ -57,6 +57,12 @@ model User {
   sessions Session[]
   orders   Order[]
   reviews  Review[]
+  wishlist Wishlist?
+  // CMS Relations
+  pages         Page[]
+  blogPosts     BlogPost[]
+  media         Media[]
+  contactForms  ContactForm[]
 }
 
 model VerificationToken {
@@ -101,6 +107,7 @@ model Product {
   reviews     Review[]
   orderItems  OrderItem[]
   cartItems   CartItem[]
+  wishlistItems WishlistItem[]
   badges      ProductBadge[]
   // Customization options
   allowNameNumber Boolean @default(false) // For jerseys
@@ -119,6 +126,7 @@ model ProductVariant {
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   orderItems OrderItem[]
   cartItems  CartItem[]
+  wishlistItems WishlistItem[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -145,6 +153,29 @@ model CartItem {
   updatedAt DateTime @updatedAt
 
   @@unique([cartId, productId, variantId])
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     WishlistItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  wishlistId String
+  wishlist  Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([wishlistId, productId, variantId])
 }
 
 model Order {
@@ -245,4 +276,239 @@ model ProductBadge {
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// CMS Models for Content Management
+model SiteContent {
+  id          String   @id @default(cuid())
+  key         String   @unique // e.g., "home_hero_title", "contact_email"
+  title       String?
+  content     String   // Main content (can be HTML, JSON, or plain text)
+  type        String   @default("text") // text, html, json, image, number, boolean
+  category    String   @default("general") // hero, footer, contact, offers, etc.
+  isActive    Boolean  @default(true)
+  metadata    String?  // Additional JSON data
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Banner {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  image       String   // Banner image URL
+  link        String?  // Optional link URL
+  position    String   // home_hero, home_top, product_page, etc.
+  priority    Int      @default(0) // Higher number = higher priority
+  isActive    Boolean  @default(true)
+  startsAt    DateTime?
+  expiresAt   DateTime?
+  metadata    String?  // Additional JSON data
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model CountdownTimer {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  targetDate  DateTime
+  type        String   @default("offer") // offer, product, event, etc.
+  targetId    String?  // Product ID or other target
+  isActive    Boolean  @default(true)
+  position    String   @default("home") // home, product, category, etc.
+  priority    Int      @default(0)
+  metadata    String?  // Additional JSON data
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Offer {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  type        String   // percentage, fixed_amount, buy_x_get_y, etc.
+  value       Float
+  code        String?  // Coupon code if applicable
+  minimumAmount Float?
+  maximumDiscount Float?
+  usageLimit  Int?
+  usedCount   Int      @default(0)
+  isActive    Boolean  @default(true)
+  startsAt    DateTime?
+  expiresAt   DateTime?
+  targetProducts String? // JSON array of product IDs
+  targetCategories String? // JSON array of category IDs
+  metadata    String?  // Additional JSON data
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Comprehensive CMS Models
+model Page {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  content     String   // HTML content
+  excerpt     String?
+  metaTitle   String?
+  metaDescription String?
+  metaKeywords String?
+  template    String   @default("default") // page template
+  isPublished Boolean  @default(false)
+  publishedAt DateTime?
+  authorId    String?
+  author      User?    @relation(fields: [authorId], references: [id])
+  sections    PageSection[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PageSection {
+  id          String   @id @default(cuid())
+  pageId      String
+  page        Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  title       String?
+  content     String   // HTML content
+  type        String   @default("text") // text, image, video, gallery, etc.
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  metadata    String?  // Additional JSON data
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Navigation {
+  id          String   @id @default(cuid())
+  title       String
+  url         String
+  parentId    String?
+  parent      Navigation? @relation("NavigationHierarchy", fields: [parentId], references: [id])
+  children    Navigation[] @relation("NavigationHierarchy")
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  isExternal  Boolean  @default(false)
+  target      String   @default("_self") // _self, _blank
+  icon        String?
+  metadata    String?  // Additional JSON data
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Media {
+  id          String   @id @default(cuid())
+  filename    String
+  originalName String
+  mimeType    String
+  size        Int
+  url         String
+  alt         String?
+  caption     String?
+  category    String   @default("general") // images, videos, documents, etc.
+  tags        String?  // JSON array of tags
+  isActive    Boolean  @default(true)
+  uploadedBy  String?
+  uploader    User?    @relation(fields: [uploadedBy], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model BlogPost {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  content     String   // HTML content
+  excerpt     String?
+  featuredImage String?
+  metaTitle   String?
+  metaDescription String?
+  metaKeywords String?
+  isPublished Boolean  @default(false)
+  publishedAt DateTime?
+  authorId    String?
+  author      User?    @relation(fields: [authorId], references: [id])
+  category    String?
+  tags        String?  // JSON array of tags
+  viewCount   Int      @default(0)
+  isFeatured  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Testimonial {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  company     String?
+  position    String?
+  content     String
+  rating      Int      @default(5) // 1-5 stars
+  avatar      String?
+  isActive    Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model FAQ {
+  id          String   @id @default(cuid())
+  question    String
+  answer      String
+  category    String   @default("general")
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ContactForm {
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  phone       String?
+  subject     String
+  message     String
+  status      String   @default("new") // new, read, replied, closed
+  priority    String   @default("normal") // low, normal, high, urgent
+  assignedTo  String?
+  assignee    User?    @relation(fields: [assignedTo], references: [id])
+  response    String?
+  respondedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Newsletter {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  firstName   String?
+  lastName    String?
+  isActive    Boolean  @default(true)
+  subscribedAt DateTime @default(now())
+  unsubscribedAt DateTime?
+  source      String?  // where they subscribed from
+  tags        String?  // JSON array of interests
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SEO {
+  id          String   @id @default(cuid())
+  page        String   @unique // page path or identifier
+  title       String?
+  description String?
+  keywords    String?
+  ogTitle     String?
+  ogDescription String?
+  ogImage     String?
+  twitterTitle String?
+  twitterDescription String?
+  twitterImage String?
+  canonical   String?
+  robots      String?  // index, noindex, follow, nofollow
+  schema      String?  // JSON-LD structured data
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

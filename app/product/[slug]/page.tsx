@@ -3,7 +3,7 @@ import Header from '@/components/header'
 import CartSidebar from '@/components/cart-sidebar'
 import Footer from '@/components/footer'
 import ProductDetails from '@/components/product-details'
-import { prisma } from '@/lib/db'
+import { prisma } from '@/lib/prisma'
 
 interface ProductPageProps {
   params: {

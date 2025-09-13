@@ -1,7 +1,10 @@
 "use client"
 
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import Image from 'next/image'
+import { useWishlistStore } from '@/lib/store/wishlist-store'
 import { 
   ShoppingBag, 
   Heart, 
@@ -16,6 +19,12 @@ import {
 } from 'lucide-react'
 
 export default function DashboardOverview() {
+  const [isHydrated, setIsHydrated] = useState(false)
+  const { items: wishlistItems, fetchWishlist } = useWishlistStore()
+
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
   // Mock data - replace with actual data from API
   const stats = [
     {
@@ -225,27 +234,68 @@ export default function DashboardOverview() {
           </div>
           
           <div className="space-y-4">
-            {wishlistItems.map((item) => (
-              <div key={item.id} className="flex items-center space-x-4 p-4 glass-card rounded-lg">
-                <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center">
-                  <span className="text-xs text-muted-foreground">IMG</span>
+            {!isHydrated ? (
+              <div className="text-center py-8">
+                <div className="animate-pulse">
+                  <div className="h-4 bg-muted rounded w-3/4 mx-auto mb-2"></div>
+                  <div className="h-3 bg-muted rounded w-1/2 mx-auto"></div>
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-foreground">{item.name}</h3>
-                  <p className="text-sm text-muted-foreground">{item.price}</p>
-                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-1 ${
-                    item.inStock 
-                      ? 'text-green-600 bg-green-100 dark:bg-green-900/20 dark:text-green-400'
-                      : 'text-red-600 bg-red-100 dark:bg-red-900/20 dark:text-red-400'
-                  }`}>
-                    {item.inStock ? 'In Stock' : 'Out of Stock'}
-                  </span>
-                </div>
-                <button className="glass-button p-2 rounded-lg">
-                  <Heart className="h-4 w-4" />
-                </button>
               </div>
-            ))}
+            ) : wishlistItems.slice(0, 3).map((item) => {
+              const getImageUrl = (images: string) => {
+                try {
+                  const imageArray = JSON.parse(images)
+                  return imageArray[0] || '/api/placeholder/64/64'
+                } catch {
+                  return '/api/placeholder/64/64'
+                }
+              }
+              
+              const formatPrice = (price: number) => {
+                return new Intl.NumberFormat('bn-BD', {
+                  style: 'currency',
+                  currency: 'BDT',
+                  minimumFractionDigits: 0
+                }).format(price)
+              }
+              
+              return (
+                <div key={item.id} className="flex items-center space-x-4 p-4 glass-card rounded-lg">
+                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted">
+                    <Image
+                      src={getImageUrl(item.product.images)}
+                      alt={item.product.name}
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium text-foreground line-clamp-1">{item.product.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {formatPrice(item.variant?.price || item.product.price)}
+                    </p>
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-1 ${
+                      (item.variant?.stock || item.product.stock) > 0
+                        ? 'text-green-600 bg-green-100 dark:bg-green-900/20 dark:text-green-400'
+                        : 'text-red-600 bg-red-100 dark:bg-red-900/20 dark:text-red-400'
+                    }`}>
+                      {(item.variant?.stock || item.product.stock) > 0 ? 'In Stock' : 'Out of Stock'}
+                    </span>
+                  </div>
+                  <Link href={`/product/${item.product.slug}`} className="glass-button p-2 rounded-lg">
+                    <Heart className="h-4 w-4" />
+                  </Link>
+                </div>
+              )
+            })}
+            
+            {isHydrated && wishlistItems.length === 0 && (
+              <div className="text-center py-8">
+                <Heart className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">No items in wishlist</p>
+              </div>
+            )}
           </div>
         </motion.div>
       </div>

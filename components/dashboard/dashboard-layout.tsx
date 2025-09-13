@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { signOut } from 'next-auth/react'
 import { motion } from 'framer-motion'
 import { 
   LayoutDashboard, 
@@ -109,7 +110,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
           {/* Footer */}
           <div className="p-4 border-t border-white/10">
-            <button className="flex items-center space-x-3 w-full px-4 py-3 text-muted-foreground hover:text-foreground hover:glass-button rounded-lg transition-all duration-200">
+            <button 
+              onClick={() => signOut({ callbackUrl: '/' })}
+              className="flex items-center space-x-3 w-full px-4 py-3 text-muted-foreground hover:text-foreground hover:glass-button rounded-lg transition-all duration-200"
+            >
               <LogOut className="h-5 w-5" />
               <span className="font-medium">Sign Out</span>
             </button>

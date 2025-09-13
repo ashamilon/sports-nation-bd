@@ -1,11 +1,12 @@
 "use client"
 
 import Link from 'next/link'
+import Image from 'next/image'
 import Logo from '@/components/logo'
 import { Mail, Phone, MapPin, Facebook, Instagram, Twitter, Youtube } from 'lucide-react'
 
 export default function Footer() {
-  const currentYear = new Date().getFullYear()
+  const currentYear = 2025
 
   const footerLinks = {
     shop: [
@@ -180,6 +181,20 @@ export default function Footer() {
                 Subscribe
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Payment Methods Banner */}
+        <div className="py-6 border-t">
+          <div className="text-center">
+            <Image 
+              src="/payment-banner.png" 
+              alt="Payment Methods - VISA, Mastercard, bKash, Nagad, SSLCommerz and more" 
+              width={1200}
+              height={200}
+              className="max-w-full h-auto mx-auto"
+              priority={false}
+            />
           </div>
         </div>
 

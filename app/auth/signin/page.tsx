@@ -156,6 +156,7 @@ export default function SignInPage() {
           {/* Social Sign In */}
           <div className="space-y-3">
             <motion.button
+              onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="w-full glass-button py-3 rounded-lg flex items-center justify-center space-x-2"

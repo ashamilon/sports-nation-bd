@@ -74,10 +74,13 @@ export default function Logo({ className = '', showText = true, size = 'md' }: L
       
       {showText && (
         <div className="flex flex-col">
-          <h1 className={`${textSizeClasses[size]} font-display font-bold text-foreground`}>
+          <h1 className={`${textSizeClasses[size]} font-display font-bold text-foreground hidden sm:block`}>
             Sports Nation BD
           </h1>
-          <p className="text-xs text-muted-foreground">Premium Sports Gear</p>
+          <h1 className={`text-lg font-display font-bold text-foreground sm:hidden`}>
+            SN BD
+          </h1>
+          <p className="text-xs text-muted-foreground hidden sm:block">Premium Sports Gear</p>
         </div>
       )}
     </Link>

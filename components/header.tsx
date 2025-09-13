@@ -13,6 +13,8 @@ import {
   X,
   Heart
 } from 'lucide-react'
+import { RegionalSelector } from './regional-selector'
+import { RegionalTopBar } from './regional-topbar'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -33,41 +35,18 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full glass-nav">
       {/* Top Bar */}
-      <div className="glass-topbar text-primary-foreground py-2 overflow-hidden">
-        <div className="container mx-auto px-4">
-          {/* Desktop View */}
-          <div className="hidden md:flex justify-between items-center text-sm">
-            <div className="flex items-center space-x-4">
-              <span>🚚 Free delivery on orders over ৳2,000</span>
-              <span>💳 20% down payment available</span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span>📞 +880 1234 567890</span>
-              <span>📧 info@sportsnationbd.com</span>
-            </div>
-          </div>
-          
-          {/* Mobile View - Auto Scrolling */}
-          <div className="md:hidden">
-            <div className="flex items-center text-sm whitespace-nowrap animate-scroll">
-              <span className="mr-8">🚚 Free delivery on orders over ৳2,000</span>
-              <span className="mr-8">💳 20% down payment available</span>
-              <span className="mr-8">📞 +880 1234 567890</span>
-              <span className="mr-8">📧 info@sportsnationbd.com</span>
-              <span className="mr-8">🔄 7-15 days money back guarantee</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <RegionalTopBar />
 
       {/* Main Header */}
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Logo size="md" />
+          <div className="flex-shrink-0">
+            <Logo size="md" />
+          </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center space-x-8 flex-1 justify-center">
             {navigation.map((item) => (
               <Link
                 key={item.name}
@@ -80,7 +59,7 @@ export default function Header() {
           </nav>
 
           {/* Right Side Actions */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
             {/* Search */}
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
@@ -93,6 +72,9 @@ export default function Header() {
             <button className="glass-button p-2 rounded-lg">
               <Heart className="h-5 w-5" />
             </button>
+
+            {/* Regional Selector */}
+            <RegionalSelector />
 
             {/* Theme Toggle */}
             <ThemeToggle />

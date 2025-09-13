@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useCartStore } from '@/lib/store/cart-store'
+import { useWishlistStore } from '@/lib/store/wishlist-store'
+import { PriceDisplay } from './price-display'
+import { DeliveryInfo } from './delivery-info'
 import { formatCurrency } from '@/lib/currency'
 import { Star, Heart, ShoppingCart, Eye } from 'lucide-react'
 import Image from 'next/image'
@@ -25,9 +28,13 @@ interface Product {
 export default function FeaturedProducts() {
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isHydrated, setIsHydrated] = useState(false)
   const { addItem } = useCartStore()
+  const { addToWishlist, isInWishlist } = useWishlistStore()
 
   useEffect(() => {
+    setIsHydrated(true)
+    
     const fetchFeaturedProducts = async () => {
       try {
         const response = await fetch('/api/products?featured=true&limit=6')
@@ -58,6 +65,15 @@ export default function FeaturedProducts() {
       variantName: product.variants[0]?.name
     })
     toast.success(`${product.name} added to cart!`)
+  }
+
+  const handleToggleWishlist = async (product: Product) => {
+    const success = await addToWishlist(product.id)
+    if (success) {
+      toast.success('Added to wishlist!')
+    } else {
+      toast.error('Failed to add to wishlist')
+    }
   }
 
   if (isLoading) {
@@ -128,8 +144,13 @@ export default function FeaturedProducts() {
 
                   {/* Quick Actions */}
                   <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors">
-                      <Heart className="h-4 w-4" />
+                    <button 
+                      onClick={() => handleToggleWishlist(product)}
+                      className={`p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors ${
+                        isHydrated && isInWishlist(product.id) ? 'text-red-500' : ''
+                      }`}
+                    >
+                      <Heart className={`h-4 w-4 ${isHydrated && isInWishlist(product.id) ? 'fill-current' : ''}`} />
                     </button>
                     <Link 
                       href={`/product/${product.slug}`}
@@ -168,16 +189,11 @@ export default function FeaturedProducts() {
                   </div>
 
                   {/* Price */}
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="text-xl font-bold text-primary">
-                      {formatCurrency(product.price)}
-                    </span>
-                    {product.comparePrice && product.comparePrice > product.price && (
-                      <span className="text-sm text-muted-foreground line-through">
-                        {formatCurrency(product.comparePrice)}
-                      </span>
-                    )}
-                  </div>
+                  <PriceDisplay 
+                    price={product.price}
+                    comparePrice={product.comparePrice}
+                    className="mb-4"
+                  />
 
                   {/* Add to Cart Button */}
                   <button
@@ -260,16 +276,11 @@ export default function FeaturedProducts() {
                   </div>
 
                   {/* Price */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg font-bold text-primary">
-                      {formatCurrency(product.price)}
-                    </span>
-                    {product.comparePrice && product.comparePrice > product.price && (
-                      <span className="text-xs text-muted-foreground line-through">
-                        {formatCurrency(product.comparePrice)}
-                      </span>
-                    )}
-                  </div>
+                  <PriceDisplay 
+                    price={product.price}
+                    comparePrice={product.comparePrice}
+                    className="mb-3"
+                  />
 
                   {/* Add to Cart Button */}
                   <button

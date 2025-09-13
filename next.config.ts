@@ -9,8 +9,23 @@ const nextConfig: NextConfig = {
   
   // Image optimization
   images: {
-    domains: ['localhost', 'sportsnationbd.com'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3000',
+        pathname: '/api/placeholder/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'sportsnationbd.com',
+        pathname: '/**',
+      },
+    ],
     formats: ['image/webp', 'image/avif'],
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   
   // Security headers
@@ -39,11 +54,7 @@ const nextConfig: NextConfig = {
   // Redirects for SEO
   async redirects() {
     return [
-      {
-        source: '/admin',
-        destination: '/admin/',
-        permanent: true,
-      },
+      // Add other redirects here if needed
     ];
   },
 };

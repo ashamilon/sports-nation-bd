@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowRight, Star, Shield, Truck, CreditCard } from 'lucide-react'
+import { DeliveryInfo } from './delivery-info'
 
 export default function HeroSection() {
   return (
@@ -66,45 +67,29 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.8 }}
-              className="grid grid-cols-2 gap-4 pt-8"
+              className="space-y-4 pt-8"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <Truck className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Free Delivery</p>
-                  <p className="text-xs text-muted-foreground">Over ৳2,000</p>
-                </div>
-              </div>
+              <DeliveryInfo compact />
               
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <CreditCard className="h-5 w-5 text-primary" />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <CreditCard className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">20% Down Payment</p>
+                    <p className="text-xs text-muted-foreground">Rest on delivery</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium text-sm">20% Down Payment</p>
-                  <p className="text-xs text-muted-foreground">Rest on delivery</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <Shield className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Money Back</p>
-                  <p className="text-xs text-muted-foreground">7-15 days guarantee</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <Star className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Premium Quality</p>
-                  <p className="text-xs text-muted-foreground">Authentic products</p>
+                
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <Star className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">Premium Quality</p>
+                    <p className="text-xs text-muted-foreground">Authentic products</p>
+                  </div>
                 </div>
               </div>
             </motion.div>

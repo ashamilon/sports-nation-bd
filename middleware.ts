@@ -5,15 +5,15 @@ export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token
     const isAdmin = token?.role === 'admin'
-    const isAdminRoute = req.nextUrl.pathname.startsWith('/admin')
+    const pathname = req.nextUrl.pathname
 
     // Redirect non-admin users trying to access admin routes
-    if (isAdminRoute && !isAdmin) {
+    if (pathname.startsWith('/admin') && !isAdmin) {
       return NextResponse.redirect(new URL('/dashboard', req.url))
     }
 
     // Redirect admin users from user dashboard to admin dashboard
-    if (req.nextUrl.pathname.startsWith('/dashboard') && isAdmin) {
+    if (pathname.startsWith('/dashboard') && isAdmin) {
       return NextResponse.redirect(new URL('/admin', req.url))
     }
   },
