@@ -120,10 +120,10 @@ export default function DashboardOverview() {
   }
 
   return (
-    <div className="space-y-1 p-2">
+    <div className="space-y-1 p-1">
       {/* Header */}
       <div>
-        <h1 className="text-lg font-bold text-foreground">Welcome back!</h1>
+        <h1 className="text-base font-bold text-foreground">Welcome back!</h1>
         <p className="text-muted-foreground text-xs">Here's what's happening with your account.</p>
       </div>
 
@@ -137,7 +137,7 @@ export default function DashboardOverview() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="glass-card p-6 rounded-2xl"
+              className="glass-card p-4 rounded-2xl"
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -160,9 +160,9 @@ export default function DashboardOverview() {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="glass-card p-6 rounded-2xl"
+          className="glass-card p-4 rounded-2xl"
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-foreground">Recent Orders</h2>
             <Link 
               href="/dashboard/orders"
@@ -198,9 +198,9 @@ export default function DashboardOverview() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="glass-card p-6 rounded-2xl"
+          className="glass-card p-4 rounded-2xl"
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-foreground">Wishlist</h2>
             <Link 
               href="/dashboard/wishlist"
@@ -245,6 +245,7 @@ export default function DashboardOverview() {
                       width={64}
                       height={64}
                       className="w-full h-full object-cover"
+                      unoptimized
                     />
                   </div>
                   <div className="flex-1">
