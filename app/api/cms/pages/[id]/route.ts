@@ -6,11 +6,12 @@ import { authOptions } from '@/lib/auth'
 // GET - Fetch single page
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const page = await prisma.page.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         author: {
           select: {
@@ -48,7 +49,7 @@ export async function GET(
 // PUT - Update page
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -59,6 +60,7 @@ export async function PUT(
       )
     }
 
+    const { id } = await params
     const body = await request.json()
     const {
       title,
@@ -75,7 +77,7 @@ export async function PUT(
 
     // Check if page exists
     const existingPage = await prisma.page.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!existingPage) {
@@ -117,7 +119,7 @@ export async function PUT(
     }
 
     const page = await prisma.page.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       include: {
         author: {
@@ -137,13 +139,13 @@ export async function PUT(
     if (sections) {
       // Delete existing sections
       await prisma.pageSection.deleteMany({
-        where: { pageId: params.id }
+        where: { pageId: id }
       })
 
       // Create new sections
       await prisma.pageSection.createMany({
         data: sections.map((section: any, index: number) => ({
-          pageId: params.id,
+          pageId: id,
           title: section.title,
           content: section.content,
           type: section.type || 'text',
@@ -154,7 +156,7 @@ export async function PUT(
 
       // Fetch updated page with sections
       const updatedPage = await prisma.page.findUnique({
-        where: { id: params.id },
+        where: { id },
         include: {
           author: {
             select: {
@@ -191,7 +193,7 @@ export async function PUT(
 // DELETE - Delete page
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -202,8 +204,9 @@ export async function DELETE(
       )
     }
 
+    const { id } = await params
     const page = await prisma.page.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!page) {
@@ -214,7 +217,7 @@ export async function DELETE(
     }
 
     await prisma.page.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({

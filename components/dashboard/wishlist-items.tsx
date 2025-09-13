@@ -58,23 +58,16 @@ export default function WishlistItems() {
 
   const handleAddToCart = (item: any) => {
     const productData = {
-      id: item.product.id,
+      productId: item.product.id,
       name: item.product.name,
-      slug: item.product.slug,
       price: item.variant?.price || item.product.price,
-      images: JSON.parse(item.product.images || '[]'),
-      stock: item.variant?.stock || item.product.stock,
-      category: item.product.category.name,
-      variant: item.variant ? {
-        id: item.variant.id,
-        name: item.variant.name,
-        value: item.variant.value,
-        price: item.variant.price,
-        stock: item.variant.stock
-      } : null
+      image: getImageUrl(item.product.images),
+      quantity: 1,
+      variantId: item.variant?.id,
+      variantName: item.variant ? `${item.variant.name}: ${item.variant.value}` : undefined
     }
     
-    addItem(productData, 1)
+    addItem(productData)
   }
 
   const formatPrice = (price: number) => {

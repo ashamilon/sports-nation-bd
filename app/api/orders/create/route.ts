@@ -67,6 +67,13 @@ export async function POST(request: NextRequest) {
         )
       }
 
+      if (!productVariant.price) {
+        return NextResponse.json(
+          { message: `Price not available for ${productVariant.product.name}` },
+          { status: 400 }
+        )
+      }
+
       const itemTotal = productVariant.price * item.quantity
       subtotal += itemTotal
 

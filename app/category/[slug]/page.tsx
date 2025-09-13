@@ -52,7 +52,15 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       ...product,
       images: JSON.parse(product.images || '[]'),
       averageRating: avgRating,
-      reviewCount: product.reviews.length
+      reviewCount: product.reviews.length,
+      comparePrice: product.comparePrice || undefined,
+      weight: product.weight || undefined,
+      dimensions: product.dimensions || undefined,
+      nameNumberPrice: product.nameNumberPrice || undefined,
+      variants: product.variants.map(variant => ({
+        ...variant,
+        price: variant.price || undefined
+      }))
     }
   })
 
@@ -67,7 +75,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           )}
         </div>
         <CategoryProducts 
-          category={category} 
+          category={{
+            ...category,
+            description: category.description || undefined
+          }} 
           products={productsWithRating}
         />
       </main>

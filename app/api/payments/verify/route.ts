@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     // Get order and payment from database
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include: { payment: true, items: { include: { product: true } } }
+      include: { payments: true, items: { include: { product: true } } }
     })
 
     if (!order) {
@@ -37,19 +37,18 @@ export async function POST(request: NextRequest) {
     const isValid = await paymentService.validatePayment(
       gateway,
       transactionId || orderId,
-      amount || order.totalAmount,
+      amount || order.total,
       currency || order.currency
     )
 
     if (isValid) {
       // Update payment status
-      if (order.payment) {
+      if (order.payments && order.payments.length > 0) {
         await prisma.payment.update({
-          where: { id: order.payment.id },
+          where: { id: order.payments[0].id },
           data: {
             status: paymentStatus.COMPLETED,
-            transactionId: transactionId || order.payment.transactionId,
-            completedAt: new Date()
+            transactionId: transactionId || order.payments[0].transactionId
           }
         })
       }
@@ -76,15 +75,15 @@ export async function POST(request: NextRequest) {
         order: {
           id: order.id,
           status: 'confirmed',
-          totalAmount: order.totalAmount,
+          total: order.total,
           currency: order.currency
         }
       })
     } else {
       // Update payment status to failed
-      if (order.payment) {
+      if (order.payments && order.payments.length > 0) {
         await prisma.payment.update({
-          where: { id: order.payment.id },
+          where: { id: order.payments[0].id },
           data: { status: paymentStatus.FAILED }
         })
       }

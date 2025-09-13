@@ -78,14 +78,14 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
       const combinedVariantValue = `${selectedVariants['Size']} - ${selectedVariants['Fabric']}`
       const matchingVariant = product.variants.find(v => v.value === combinedVariantValue)
       
-      if (matchingVariant) {
+      if (matchingVariant && matchingVariant.price) {
         totalPrice = matchingVariant.price
       }
     } else {
       // For other products, add any variant price adjustments
       Object.entries(selectedVariants).forEach(([variantName, variantValue]) => {
         const variant = product.variants.find(v => v.name === variantName && v.value === variantValue)
-        if (variant && variant.price !== product.price) {
+        if (variant && variant.price && variant.price !== product.price) {
           totalPrice += (variant.price - product.price)
         }
       })

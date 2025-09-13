@@ -71,14 +71,16 @@ export async function POST(request: NextRequest) {
 
       // Update product stock
       for (const item of order.items) {
-        await prisma.productVariant.update({
-          where: { id: item.productVariantId },
-          data: {
-            stock: {
-              decrement: item.quantity
+        if (item.productVariantId) {
+          await prisma.productVariant.update({
+            where: { id: item.productVariantId },
+            data: {
+              stock: {
+                decrement: item.quantity
+              }
             }
-          }
-        })
+          })
+        }
       }
     }
 

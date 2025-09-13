@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 // Update courier information for an order
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -14,7 +14,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const orderId = params.id
+    const { id: orderId } = await params
     const body = await request.json()
     const { courierService, courierTrackingId, trackingNumber } = body
 
@@ -79,7 +79,7 @@ export async function PUT(
 // Get courier information for an order
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -87,7 +87,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const orderId = params.id
+    const { id: orderId } = await params
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },

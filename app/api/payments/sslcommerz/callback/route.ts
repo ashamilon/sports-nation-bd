@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     // Get order from database
     const order = await prisma.order.findUnique({
       where: { id: tranId },
-      include: { payment: true }
+      include: { payments: true }
     })
 
     if (!order) {
@@ -39,13 +39,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Update payment record with SSL Commerz response
-    if (order.payment) {
+    if (order.payments && order.payments.length > 0) {
       await prisma.payment.update({
-        where: { id: order.payment.id },
+        where: { id: order.payments[0].id },
         data: {
           status: status === 'VALID' ? paymentStatus.COMPLETED : paymentStatus.FAILED,
           transactionId: valId || bankTranId,
-          gatewayResponse: JSON.stringify({
+          metadata: JSON.stringify({
             status,
             valId,
             amount,
@@ -60,8 +60,7 @@ export async function POST(request: NextRequest) {
             cardCategory,
             riskLevel,
             riskTitle
-          }),
-          completedAt: status === 'VALID' ? new Date() : null
+          })
         }
       })
     }

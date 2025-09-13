@@ -83,9 +83,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { name, description, price, categoryId, images, variants } = body
 
+    // Generate slug and SKU
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+    const sku = `SKU-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`
+
     const product = await prisma.product.create({
       data: {
         name,
+        slug,
+        sku,
         description,
         price,
         categoryId,

@@ -112,8 +112,8 @@ export default function CartPage() {
                         {item.customOptions.badges && item.customOptions.badges.length > 0 && (
                           <p>• Badges: {item.customOptions.badges.length} selected</p>
                         )}
-                        {item.customOptions.badgeTotal && item.customOptions.badgeTotal > 0 && (
-                          <p>• Badge Total: {formatCurrency(item.customOptions.badgeTotal)}</p>
+                        {(item.customOptions as any).badgeTotal && (item.customOptions as any).badgeTotal > 0 && (
+                          <p>• Badge Total: {formatCurrency((item.customOptions as any).badgeTotal)}</p>
                         )}
                       </div>
                     )}

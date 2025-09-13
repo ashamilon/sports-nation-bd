@@ -55,7 +55,34 @@ export default async function ProductPage({ params }: ProductPageProps) {
     ...product,
     images: JSON.parse(product.images || '[]'),
     averageRating,
-    reviewCount: product.reviews.length
+    reviewCount: product.reviews.length,
+    comparePrice: product.comparePrice || undefined,
+    weight: product.weight || undefined,
+    dimensions: product.dimensions || undefined,
+    nameNumberPrice: product.nameNumberPrice || undefined,
+    variants: product.variants.map(variant => ({
+      ...variant,
+      price: variant.price || undefined
+    })),
+    category: {
+      ...product.category,
+      description: product.category.description || undefined,
+      image: product.category.image || undefined
+    },
+    reviews: product.reviews.map(review => ({
+      ...review,
+      comment: review.comment || undefined,
+      user: {
+        name: review.user.name || undefined,
+        image: review.user.image || undefined
+      },
+      createdAt: review.createdAt.toISOString()
+    })),
+    badges: product.badges.map(badge => ({
+      ...badge,
+      description: badge.description || undefined,
+      image: badge.image || undefined
+    }))
   }
 
   return (
