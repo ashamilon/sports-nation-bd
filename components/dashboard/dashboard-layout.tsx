@@ -124,7 +124,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {/* Main content */}
-      <div>
+      <div className="lg:pl-64">
         {/* Mobile menu button only */}
         <div className="lg:hidden sticky top-0 z-30 glass-nav border-b border-white/10">
           <div className="flex items-center justify-between px-2 py-1">

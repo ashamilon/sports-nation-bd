@@ -120,7 +120,7 @@ export default function DashboardOverview() {
   }
 
   return (
-    <div className="space-y-1 p-1 lg:pl-4">
+    <div className="space-y-1 p-1">
       {/* Header */}
       <div>
         <h1 className="text-base font-bold text-foreground">Welcome back!</h1>
