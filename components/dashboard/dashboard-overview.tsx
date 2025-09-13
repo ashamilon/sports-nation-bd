@@ -120,15 +120,15 @@ export default function DashboardOverview() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Welcome back!</h1>
-        <p className="text-muted-foreground mt-2">Here's what's happening with your account.</p>
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold text-foreground">Welcome back!</h1>
+        <p className="text-muted-foreground mt-1">Here's what's happening with your account.</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => {
           const Icon = stat.icon
           return (
@@ -154,7 +154,7 @@ export default function DashboardOverview() {
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Recent Orders */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
