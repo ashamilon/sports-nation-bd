@@ -125,8 +125,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Main content */}
       <div className="lg:pl-64">
-        {/* Mobile menu button only */}
-        <div className="lg:hidden sticky top-0 z-30 glass-nav border-b border-white/10">
+        {/* Mobile menu button only - hidden for now */}
+        <div className="hidden lg:hidden sticky top-0 z-30 glass-nav border-b border-white/10">
           <div className="flex items-center justify-between px-4 py-1">
             <button
               onClick={() => setSidebarOpen(true)}
