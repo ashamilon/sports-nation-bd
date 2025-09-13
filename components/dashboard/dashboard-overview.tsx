@@ -88,29 +88,6 @@ export default function DashboardOverview() {
     }
   ]
 
-  const wishlistItems = [
-    {
-      id: 1,
-      name: 'Nike Air Max 270',
-      price: '৳12,000',
-      image: '/api/placeholder/80/80',
-      inStock: true
-    },
-    {
-      id: 2,
-      name: 'Barcelona Home Jersey 2024',
-      price: '৳2,500',
-      image: '/api/placeholder/80/80',
-      inStock: false
-    },
-    {
-      id: 3,
-      name: 'Naviforce Watch NF9028',
-      price: '৳8,500',
-      image: '/api/placeholder/80/80',
-      inStock: true
-    }
-  ]
 
   const getStatusIcon = (status: string) => {
     switch (status) {
