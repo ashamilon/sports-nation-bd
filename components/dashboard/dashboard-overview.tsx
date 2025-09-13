@@ -120,11 +120,11 @@ export default function DashboardOverview() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2 p-4">
       {/* Header */}
-      <div className="mb-2">
-        <h1 className="text-2xl font-bold text-foreground">Welcome back!</h1>
-        <p className="text-muted-foreground mt-1">Here's what's happening with your account.</p>
+      <div className="mb-1">
+        <h1 className="text-xl font-bold text-foreground">Welcome back!</h1>
+        <p className="text-muted-foreground text-sm">Here's what's happening with your account.</p>
       </div>
 
       {/* Stats Grid */}

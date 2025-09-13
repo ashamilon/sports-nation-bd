@@ -125,39 +125,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Main content */}
       <div className="lg:pl-64">
-        {/* Top bar */}
-        <div className="sticky top-0 z-30 glass-nav border-b border-white/10">
-          <div className="flex items-center justify-between px-4 py-2">
+        {/* Mobile menu button only */}
+        <div className="lg:hidden sticky top-0 z-30 glass-nav border-b border-white/10">
+          <div className="flex items-center justify-between px-4 py-1">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden glass-button p-2 rounded-lg"
+              className="glass-button p-2 rounded-lg"
             >
               <Menu className="h-5 w-5" />
             </button>
-            
-            <div className="flex items-center space-x-4">
-              <button className="glass-button p-2 rounded-lg relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full"></span>
-              </button>
-              
-              <div className="hidden md:flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center">
-                  <span className="text-white font-semibold text-sm">
-                    {user.name.split(' ').map(n => n[0]).join('')}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">{user.name}</p>
-                  <p className="text-xs text-muted-foreground">Member since {new Date(user.memberSince).getFullYear()}</p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
         {/* Page content */}
-        <main className="p-2 pt-1">
+        <main className="p-0">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
