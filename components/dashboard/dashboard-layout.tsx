@@ -127,7 +127,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="lg:pl-64">
         {/* Top bar */}
         <div className="sticky top-0 z-30 glass-nav border-b border-white/10">
-          <div className="flex items-center justify-between px-6 py-4">
+          <div className="flex items-center justify-between px-6 py-3">
             <button
               onClick={() => setSidebarOpen(true)}
               className="lg:hidden glass-button p-2 rounded-lg"
@@ -157,7 +157,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
 
         {/* Page content */}
-        <main className="p-6">
+        <main className="p-4 pt-2">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

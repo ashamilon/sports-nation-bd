@@ -120,7 +120,7 @@ export default function DashboardOverview() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground">Welcome back!</h1>
@@ -154,7 +154,7 @@ export default function DashboardOverview() {
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Orders */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
