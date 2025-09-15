@@ -79,12 +79,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 rounded-full bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center">
                 <span className="text-white font-semibold text-lg">
-                  {user.name.split(' ').map(n => n[0]).join('')}
+                  {user?.name?.split(' ').map(n => n[0]).join('') || 'U'}
                 </span>
               </div>
               <div>
-                <h3 className="font-semibold text-foreground">{user.name}</h3>
-                <p className="text-sm text-muted-foreground">{user.email}</p>
+                <h3 className="font-semibold text-foreground">{user?.name || 'User'}</h3>
+                <p className="text-sm text-muted-foreground">{user?.email || 'No email'}</p>
               </div>
             </div>
           </div>
