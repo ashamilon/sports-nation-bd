@@ -51,15 +51,37 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const setting = await prisma.homepageSettings.create({
-      data: {
-        sectionKey,
-        sectionName,
-        isVisible: isVisible ?? true,
-        sortOrder: sortOrder ?? 0,
-        metadata: metadata ? JSON.stringify(metadata) : null
-      }
+    const client = new Client({
+      connectionString: process.env.DATABASE_URL
     })
+
+    await client.connect()
+    
+    const query = `
+      INSERT INTO "HomepageSettings" (
+        "sectionKey", 
+        "sectionName", 
+        "isVisible", 
+        "sortOrder", 
+        "metadata", 
+        "createdAt", 
+        "updatedAt"
+      ) VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+      RETURNING *
+    `
+    
+    const values = [
+      sectionKey,
+      sectionName,
+      isVisible ?? true,
+      sortOrder ?? 0,
+      metadata ? JSON.stringify(metadata) : null
+    ]
+    
+    const result = await client.query(query, values)
+    const setting = result.rows[0]
+    
+    await client.end()
 
     return NextResponse.json({
       success: true,
