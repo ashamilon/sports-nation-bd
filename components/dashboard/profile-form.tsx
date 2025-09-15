@@ -19,18 +19,18 @@ export default function ProfileForm() {
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  // Mock user data - replace with actual data from API
+  // User data - will be populated from API
   const [userData, setUserData] = useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
-    phone: '+880 1234 567890',
-    dateOfBirth: '1990-05-15',
-    gender: 'male',
-    address: '123 Main Street, Dhanmondi, Dhaka 1205',
-    city: 'Dhaka',
-    postalCode: '1205',
-    country: 'Bangladesh',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    dateOfBirth: '',
+    gender: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    country: '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''

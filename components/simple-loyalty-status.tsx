@@ -26,11 +26,6 @@ export default async function SimpleLoyaltyStatus() {
             <p className="text-muted-foreground mb-4">
               Sign in to track your loyalty status and unlock exclusive benefits!
             </p>
-            <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg mb-4">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                <strong>Test Account:</strong> Email: test@sportsnationbd.com, Password: password123
-              </p>
-            </div>
             <div className="space-y-2 text-sm text-muted-foreground">
               <p>🥉 Bronze Level: 50৳ discount on first order</p>
               <p>🥈 Silver Level: 150৳ discount on every order</p>

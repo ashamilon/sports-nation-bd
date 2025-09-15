@@ -39,13 +39,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
 
-  // Mock user data - replace with actual user data from auth
-  const user = {
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    avatar: '/api/placeholder/40/40',
-    memberSince: '2024-01-15'
-  }
+  // Get real user data from session
+  const user = session?.user ? {
+    name: session.user.name || 'User',
+    email: session.user.email || '',
+    avatar: session.user.image || '/api/placeholder/40/40',
+    memberSince: session.user.createdAt ? new Date(session.user.createdAt).toLocaleDateString() : 'Recently'
+  } : null
 
   return (
     <div className="min-h-screen bg-background">
