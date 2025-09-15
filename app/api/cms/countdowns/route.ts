@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     if (type) where.type = type
     if (active) {
       where.isActive = true
-      where.endDate = { gte: new Date() } // Only future countdowns
+      where.targetDate = { gte: new Date() } // Only future countdowns
     } else if (active === false) {
       // When explicitly requesting inactive items, show all (for admin)
       // No additional filters
