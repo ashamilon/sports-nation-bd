@@ -101,11 +101,11 @@ async function main() {
       comparePrice: 3000,
       sku: 'RM-HOME-2024',
       stock: 50,
-      images: JSON.stringify([
+      images: [
         '/api/placeholder/300/400',
         '/api/placeholder/300/400',
         '/api/placeholder/300/400'
-      ]),
+      ],
       isActive: true,
       isFeatured: true,
       categoryId: jerseysCategory.id,
@@ -125,11 +125,11 @@ async function main() {
       comparePrice: 5500,
       sku: 'NF-9027',
       stock: 25,
-      images: JSON.stringify([
+      images: [
         '/api/placeholder/300/400',
         '/api/placeholder/300/400',
         '/api/placeholder/300/400'
-      ]),
+      ],
       isActive: true,
       isFeatured: true,
       categoryId: watchesCategory.id
@@ -147,11 +147,11 @@ async function main() {
       comparePrice: 2900,
       sku: 'BAR-AWAY-2024',
       stock: 45,
-      images: JSON.stringify([
+      images: [
         '/api/placeholder/300/400',
         '/api/placeholder/300/400',
         '/api/placeholder/300/400'
-      ]),
+      ],
       isActive: true,
       isFeatured: true,
       categoryId: jerseysCategory.id,
@@ -171,11 +171,11 @@ async function main() {
       comparePrice: 15000,
       sku: 'NIKE-AM270',
       stock: 30,
-      images: JSON.stringify([
+      images: [
         '/api/placeholder/300/400',
         '/api/placeholder/300/400',
         '/api/placeholder/300/400'
-      ]),
+      ],
       isActive: true,
       isFeatured: true,
       categoryId: sneakersCategory.id

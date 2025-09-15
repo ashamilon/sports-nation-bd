@@ -53,7 +53,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const productWithRating = {
     ...product,
-    images: JSON.parse(product.images || '[]'),
+    images: product.images || [],
     averageRating,
     reviewCount: product.reviews.length,
     comparePrice: product.comparePrice || undefined,

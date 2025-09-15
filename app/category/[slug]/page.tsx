@@ -50,7 +50,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
     return {
       ...product,
-      images: JSON.parse(product.images || '[]'),
+      images: product.images || [],
       averageRating: avgRating,
       reviewCount: product.reviews.length,
       comparePrice: product.comparePrice || undefined,

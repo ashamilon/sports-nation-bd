@@ -149,8 +149,8 @@ export default function ProductsGrid() {
         </div>
       </div>
 
-      {/* Desktop Products Grid */}
-      <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {/* Desktop Products Grid - Vertical Layout */}
+      <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {products.map((product, index) => (
           <motion.div
             key={product.id}
@@ -169,7 +169,7 @@ export default function ProductsGrid() {
                     width={300}
                     height={300}
                     className="w-full h-full object-cover"
-                    unoptimized={product.images[0].includes('/api/placeholder')}
+                    unoptimized={false}
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
@@ -291,7 +291,7 @@ export default function ProductsGrid() {
                       width={300}
                       height={300}
                       className="w-full h-full object-cover"
-                      unoptimized={product.images[0].includes('/api/placeholder')}
+                      unoptimized={false}
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">

@@ -12,9 +12,8 @@ export async function GET(request: NextRequest) {
     const all = searchParams.get('all') === 'true'
 
     if (all) {
-      // Get all active content
+      // Get all content (both active and inactive for admin)
       const content = await prisma.siteContent.findMany({
-        where: { isActive: true },
         orderBy: { category: 'asc' }
       })
       return NextResponse.json(content)
@@ -62,18 +61,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Key and content are required' }, { status: 400 })
     }
 
-    // Upsert content (create or update)
-    const siteContent = await prisma.siteContent.upsert({
-      where: { key },
-      update: {
-        title,
-        content,
-        type: type || 'text',
-        category: category || 'general',
-        isActive: isActive !== undefined ? isActive : true,
-        metadata: metadata ? JSON.stringify(metadata) : null
-      },
-      create: {
+    // Create new content
+    const siteContent = await prisma.siteContent.create({
+      data: {
         key,
         title,
         content,

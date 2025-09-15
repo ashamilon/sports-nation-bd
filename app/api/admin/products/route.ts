@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     // Parse images from JSON string for each product
     const productsWithParsedImages = products.map(product => ({
       ...product,
-      images: product.images ? JSON.parse(product.images) : []
+      images: product.images || []
     }))
 
     return NextResponse.json({
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
         comparePrice: comparePrice || null,
         sku: finalSku,
         stock: stock || 0,
-        images: JSON.stringify(images || []),
+        images: images || [],
         isActive,
         isFeatured,
         weight: weight || null,

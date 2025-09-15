@@ -16,7 +16,10 @@ export async function GET(request: NextRequest) {
     if (type) where.type = type
     if (active) {
       where.isActive = true
-      where.targetDate = { gte: new Date() } // Only future countdowns
+      where.endDate = { gte: new Date() } // Only future countdowns
+    } else if (active === false) {
+      // When explicitly requesting inactive items, show all (for admin)
+      // No additional filters
     }
 
     const countdowns = await prisma.countdownTimer.findMany({
@@ -27,7 +30,7 @@ export async function GET(request: NextRequest) {
       ]
     })
 
-    return NextResponse.json(countdowns)
+    return NextResponse.json({ success: true, data: countdowns })
   } catch (error) {
     console.error('Error fetching countdowns:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -43,17 +46,17 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { title, description, targetDate, type, targetId, isActive, position, priority, metadata } = body
+    const { title, description, endDate, type, targetId, isActive, position, priority, metadata } = body
 
-    if (!title || !targetDate) {
-      return NextResponse.json({ error: 'Title and target date are required' }, { status: 400 })
+    if (!title || !endDate) {
+      return NextResponse.json({ error: 'Title and end date are required' }, { status: 400 })
     }
 
     const countdown = await prisma.countdownTimer.create({
       data: {
         title,
         description,
-        targetDate: new Date(targetDate),
+        targetDate: new Date(endDate),
         type: type || 'offer',
         targetId,
         isActive: isActive !== undefined ? isActive : true,
@@ -63,7 +66,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    return NextResponse.json(countdown)
+    return NextResponse.json({ success: true, data: countdown })
   } catch (error) {
     console.error('Error creating countdown:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

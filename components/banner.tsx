@@ -1,6 +1,5 @@
 "use client"
 
-import Image from 'next/image'
 import Link from 'next/link'
 
 interface BannerProps {
@@ -26,13 +25,11 @@ export default function Banner({
 }: BannerProps) {
   const bannerContent = (
     <div className={`relative overflow-hidden rounded-lg ${className}`}>
-      <Image
+      <img
         src={image}
         alt={title}
-        width={1200}
-        height={400}
         className="w-full h-auto object-cover"
-        priority={false}
+        style={{ width: '100%', height: 'auto' }}
       />
       <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
         <div className="text-center text-white p-6">

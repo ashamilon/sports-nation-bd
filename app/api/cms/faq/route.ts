@@ -13,6 +13,9 @@ export async function GET(request: NextRequest) {
     const where: any = {}
     if (active === 'true') {
       where.isActive = true
+    } else if (active === 'false') {
+      // When explicitly requesting inactive items, show all (for admin)
+      // No additional filters
     }
     if (category) {
       where.category = category

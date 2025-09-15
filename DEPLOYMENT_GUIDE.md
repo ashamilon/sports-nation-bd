@@ -1,245 +1,192 @@
-# 🚀 Sports Nation BD - Deployment Guide
+# 🚀 Vercel Deployment Guide for Sports Nation BD
 
-## Overview
-This guide will help you deploy your Sports Nation BD e-commerce website to `sportsnationbd.com` using various hosting platforms.
+## Prerequisites
+- ✅ Vercel account (free tier available)
+- ✅ GitHub repository with your code
+- ✅ Namecheap domain ready
+- ✅ Supabase database configured
 
-## 🎯 **Recommended: Vercel Deployment (Easiest)**
+## Step 1: Prepare Your Repository
 
-### Step 1: Prepare Your Project
-1. **Push to GitHub**: Make sure your code is in a GitHub repository
-2. **Environment Variables**: Prepare all your environment variables
-3. **Database**: Set up a production database (recommended: PlanetScale or Neon)
+### 1.1 Push to GitHub
+```bash
+# Make sure all your changes are committed
+git add .
+git commit -m "Ready for production deployment"
+git push origin main
+```
 
-### Step 2: Deploy to Vercel
+### 1.2 Verify Build
+```bash
+# Test the build locally
+npm run build
+```
+
+## Step 2: Deploy to Vercel
+
+### 2.1 Connect to Vercel
 1. Go to [vercel.com](https://vercel.com)
-2. Sign up/Login with GitHub
+2. Sign in with GitHub
 3. Click "New Project"
-4. Import your GitHub repository
-5. Configure environment variables (see below)
-6. Deploy!
+4. Import your `sports-nation-bd` repository
+5. Select the repository and click "Import"
 
-### Step 3: Configure Environment Variables in Vercel
-Go to your Vercel project → Settings → Environment Variables and add:
+### 2.2 Configure Project Settings
+- **Framework Preset**: Next.js (auto-detected)
+- **Root Directory**: `./` (default)
+- **Build Command**: `npm run build` (default)
+- **Output Directory**: `.next` (default)
+- **Install Command**: `npm install` (default)
+
+## Step 3: Environment Variables
+
+### 3.1 Add Environment Variables in Vercel
+Go to Project Settings → Environment Variables and add:
 
 ```bash
-# Authentication
-NEXTAUTH_SECRET=your_super_secret_key_here
-NEXTAUTH_URL=https://sportsnationbd.com
+# Database
+DATABASE_URL=postgresql://postgres.kebgbomwiyfumhrslfgg:Limon.123!@aws-1-ap-south-1.pooler.supabase.com:6543/postgres
 
-# Database (Production)
-DATABASE_URL=your_production_database_url
+# NextAuth
+NEXTAUTH_URL=https://yourdomain.com
+NEXTAUTH_SECRET=your-super-secret-key-here
 
-# SSL Commerz
-SSLCOMMERZ_STORE_ID=your_store_id
-SSLCOMMERZ_STORE_PASSWORD=your_store_password
-SSLCOMMERZ_SANDBOX=false
+# Google OAuth (if using)
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
 
-# SMS Configuration
-SMS_PROVIDER=bulksmsbd
-SMS_API_KEY=your_bulksmsbd_api_key
-SMS_SENDER_ID=your_sender_id
-SMS_BASE_URL=https://bulksmsbd.net/api/smsapi
+# Payment Gateways (if using)
+STRIPE_PUBLISHABLE_KEY=your-stripe-publishable-key
+STRIPE_SECRET_KEY=your-stripe-secret-key
+PAYPAL_CLIENT_ID=your-paypal-client-id
+PAYPAL_CLIENT_SECRET=your-paypal-client-secret
+
+# Email Service (for verification emails)
+EMAIL_SERVER_HOST=smtp.gmail.com
+EMAIL_SERVER_PORT=587
+EMAIL_SERVER_USER=your-email@gmail.com
+EMAIL_SERVER_PASSWORD=your-app-password
+EMAIL_FROM=noreply@yourdomain.com
+
+# SMS Service (for OTP)
+TWILIO_ACCOUNT_SID=your-twilio-account-sid
+TWILIO_AUTH_TOKEN=your-twilio-auth-token
+TWILIO_PHONE_NUMBER=+1234567890
 ```
 
-### Step 4: Custom Domain Setup
-1. In Vercel dashboard → Domains
-2. Add `sportsnationbd.com`
-3. Update your domain's DNS settings:
-   - Add CNAME record: `www` → `cname.vercel-dns.com`
-   - Add A record: `@` → `76.76.19.61`
-
----
-
-## 🐳 **Alternative: Docker Deployment**
-
-### Step 1: Create Dockerfile
-```dockerfile
-FROM node:18-alpine AS base
-
-# Install dependencies only when needed
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
-WORKDIR /app
-
-COPY package.json package-lock.json* ./
-RUN npm ci
-
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-
-RUN npm run build
-
-# Production image, copy all the files and run next
-FROM base AS runner
-WORKDIR /app
-
-ENV NODE_ENV production
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-COPY --from=builder /app/public ./public
-
-# Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
-
-# Automatically leverage output traces to reduce image size
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-USER nextjs
-
-EXPOSE 3000
-
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
-
-CMD ["node", "server.js"]
-```
-
-### Step 2: Create docker-compose.yml
-```yaml
-version: '3.8'
-services:
-  app:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXTAUTH_SECRET=your_secret
-      - NEXTAUTH_URL=https://sportsnationbd.com
-      - DATABASE_URL=your_database_url
-      - SSLCOMMERZ_STORE_ID=your_store_id
-      - SSLCOMMERZ_STORE_PASSWORD=your_password
-      - SSLCOMMERZ_SANDBOX=false
-      - SMS_PROVIDER=bulksmsbd
-      - SMS_API_KEY=your_api_key
-      - SMS_SENDER_ID=your_sender_id
-    restart: unless-stopped
-```
-
----
-
-## 🗄️ **Database Setup (Production)**
-
-### Option 1: PlanetScale (Recommended)
-1. Go to [planetscale.com](https://planetscale.com)
-2. Create account and new database
-3. Get connection string
-4. Update `DATABASE_URL` in your deployment
-
-### Option 2: Neon
-1. Go to [neon.tech](https://neon.tech)
-2. Create account and new project
-3. Get connection string
-4. Update `DATABASE_URL` in your deployment
-
-### Database Migration
-After setting up production database:
+### 3.2 Generate NEXTAUTH_SECRET
 ```bash
-# Push schema to production
-npx prisma db push
-
-# Seed admin user
-npm run db:seed
+# Generate a secure secret
+openssl rand -base64 32
 ```
 
----
+## Step 4: Deploy
 
-## 🔧 **Post-Deployment Setup**
+### 4.1 Initial Deployment
+1. Click "Deploy" in Vercel
+2. Wait for build to complete (2-3 minutes)
+3. Your site will be available at `https://your-project.vercel.app`
 
-### 1. Update SSL Commerz Settings
-- Change `SSLCOMMERZ_SANDBOX=false` for live payments
-- Update success/cancel URLs to your domain
+### 4.2 Test the Deployment
+- Visit your Vercel URL
+- Test user registration
+- Test admin login
+- Test all major functionality
 
-### 2. Configure SMS
-- Ensure BulkSMSBD IP whitelisting includes your server IP
-- Test SMS functionality
+## Step 5: Connect Custom Domain
 
-### 3. Set up Monitoring
-- Enable Vercel Analytics
-- Set up error tracking (Sentry recommended)
+### 5.1 Add Domain in Vercel
+1. Go to Project Settings → Domains
+2. Add your domain: `yourdomain.com`
+3. Add www subdomain: `www.yourdomain.com`
 
----
+### 5.2 Configure DNS in Namecheap
+Go to Namecheap DNS settings and add:
 
-## 🔄 **Continuous Deployment**
+```
+Type: A Record
+Host: @
+Value: 76.76.19.61
+TTL: Automatic
 
-### GitHub Actions (Optional)
-Create `.github/workflows/deploy.yml`:
-```yaml
-name: Deploy to Production
-on:
-  push:
-    branches: [main]
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v20
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.ORG_ID }}
-          vercel-project-id: ${{ secrets.PROJECT_ID }}
-          vercel-args: '--prod'
+Type: CNAME Record
+Host: www
+Value: cname.vercel-dns.com
+TTL: Automatic
 ```
 
----
+### 5.3 SSL Certificate
+- Vercel automatically provides SSL certificates
+- Wait 24-48 hours for full propagation
+- Test HTTPS access
 
-## 🛠️ **Making Changes After Deployment**
+## Step 6: Production Optimizations
 
-### Method 1: Direct GitHub Push
-1. Make changes locally
-2. Push to GitHub
-3. Vercel auto-deploys
-
-### Method 2: Vercel CLI
+### 6.1 Update NextAuth URL
+Update your environment variables with the actual domain:
 ```bash
-npm i -g vercel
-vercel login
-vercel --prod
+NEXTAUTH_URL=https://yourdomain.com
 ```
 
-### Method 3: Vercel Dashboard
-1. Go to Vercel dashboard
-2. Click "Deploy" → "Import Git Repository"
-3. Make changes in Vercel's editor
+### 6.2 Update Google OAuth (if using)
+1. Go to Google Cloud Console
+2. Update authorized redirect URIs:
+   - `https://yourdomain.com/api/auth/callback/google`
+   - `https://www.yourdomain.com/api/auth/callback/google`
+
+### 6.3 Update Payment Gateways (if using)
+Update webhook URLs in Stripe/PayPal:
+- `https://yourdomain.com/api/stripe/webhook`
+- `https://yourdomain.com/api/paypal/webhook`
+
+## Step 7: Final Testing
+
+### 7.1 Test All Features
+- [ ] User registration with OTP
+- [ ] Email verification
+- [ ] User login
+- [ ] Admin panel access
+- [ ] Product browsing
+- [ ] Cart functionality
+- [ ] Checkout process
+- [ ] Payment processing
+- [ ] Order management
+
+### 7.2 Performance Check
+- [ ] Page load speeds
+- [ ] Mobile responsiveness
+- [ ] SEO meta tags
+- [ ] Image optimization
+
+## Troubleshooting
+
+### Common Issues:
+
+1. **Build Failures**
+   - Check environment variables
+   - Verify all dependencies are in package.json
+   - Check for TypeScript errors
+
+2. **Database Connection Issues**
+   - Verify DATABASE_URL is correct
+   - Check Supabase connection settings
+   - Ensure database is accessible from Vercel
+
+3. **Authentication Issues**
+   - Verify NEXTAUTH_URL matches your domain
+   - Check NEXTAUTH_SECRET is set
+   - Update OAuth redirect URIs
+
+4. **Domain Issues**
+   - Wait 24-48 hours for DNS propagation
+   - Check DNS settings in Namecheap
+   - Verify SSL certificate is active
+
+## Support
+- Vercel Documentation: https://vercel.com/docs
+- Next.js Deployment: https://nextjs.org/docs/deployment
+- Supabase Documentation: https://supabase.com/docs
 
 ---
 
-## 📞 **Support & Modifications**
-
-After deployment, you can:
-- ✅ Make changes through GitHub (auto-deploy)
-- ✅ Use Vercel dashboard for quick edits
-- ✅ Contact me for complex modifications
-- ✅ Use Vercel CLI for local development
-
----
-
-## 🚨 **Important Notes**
-
-1. **Never commit `.env.local`** - Use Vercel environment variables
-2. **Test thoroughly** before going live
-3. **Backup your database** regularly
-4. **Monitor performance** and errors
-5. **Keep dependencies updated**
-
----
-
-## 🎉 **You're Ready to Launch!**
-
-Your Sports Nation BD website will be live at `sportsnationbd.com` with:
-- ✅ E-commerce functionality
-- ✅ SSL Commerz payments
-- ✅ SMS order confirmations
-- ✅ Admin dashboard
-- ✅ Multi-language support
-- ✅ Mobile responsive design
-
-**Need help? I'm here to assist with any modifications or issues!** 🚀
+🎉 **Congratulations!** Your Sports Nation BD e-commerce platform is now live!

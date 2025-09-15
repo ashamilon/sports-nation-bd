@@ -20,6 +20,10 @@ export default function SignUpPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [step, setStep] = useState(1) // 1: Basic info, 2: Email verification, 3: Phone verification
+  const [otp, setOtp] = useState('')
+  const [isOtpSent, setIsOtpSent] = useState(false)
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
   const router = useRouter()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,24 +33,57 @@ export default function SignUpPage() {
     }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError('')
+  const handleSendOtp = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ phone: formData.phone })
+      })
 
-    // Validation
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match')
+      const data = await response.json()
+      if (response.ok) {
+        setIsOtpSent(true)
+        alert(`OTP sent to ${formData.phone}\n\nFor testing, OTP is: ${data.otp}`)
+      } else {
+        setError(data.message || 'Failed to send OTP')
+      }
+    } catch (error) {
+      setError('Failed to send OTP. Please try again.')
+    } finally {
       setIsLoading(false)
-      return
     }
+  }
 
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters')
-      setIsLoading(false)
-      return
+  const handleVerifyOtp = async () => {
+    try {
+      setIsVerifyingOtp(true)
+      const response = await fetch('/api/auth/send-otp', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ phone: formData.phone, otp })
+      })
+
+      const data = await response.json()
+      if (response.ok) {
+        // OTP verified, proceed with registration
+        await handleRegistration()
+      } else {
+        setError(data.message || 'Invalid OTP')
+      }
+    } catch (error) {
+      setError('Failed to verify OTP. Please try again.')
+    } finally {
+      setIsVerifyingOtp(false)
     }
+  }
 
+  const handleRegistration = async () => {
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -67,7 +104,16 @@ export default function SignUpPage() {
         throw new Error(data.message || 'Something went wrong')
       }
 
-      // Auto sign in after successful registration
+      // Check if email verification is required
+      if (data.requiresVerification) {
+        // Show verification message instead of auto sign in
+        setError('')
+        alert(`Registration successful! Please check your email to verify your account.\n\nFor testing, you can use this verification link:\n${data.verificationUrl}`)
+        router.push('/auth/signin?message=Please verify your email to continue')
+        return
+      }
+
+      // Auto sign in after successful registration (if no verification required)
       const result = await signIn('credentials', {
         email: formData.email,
         password: formData.password,
@@ -81,9 +127,26 @@ export default function SignUpPage() {
       }
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Something went wrong. Please try again.')
-    } finally {
-      setIsLoading(false)
     }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+
+    // Validation
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match')
+      return
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters')
+      return
+    }
+
+    // Start with phone verification
+    await handleSendOtp()
   }
 
   return (
@@ -111,6 +174,10 @@ export default function SignUpPage() {
                 {error}
               </motion.div>
             )}
+
+            {!isOtpSent ? (
+              <>
+                {/* Basic Registration Form */}
 
             {/* Name */}
             <div className="space-y-2">
@@ -253,11 +320,71 @@ export default function SignUpPage() {
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
-                  <span>Create Account</span>
+                  <span>Send OTP & Create Account</span>
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}
             </motion.button>
+              </>
+            ) : (
+              <>
+                {/* OTP Verification Form */}
+                <div className="text-center mb-6">
+                  <h3 className="text-lg font-semibold mb-2">Verify Your Phone</h3>
+                  <p className="text-sm text-muted-foreground">
+                    We sent a 6-digit code to {formData.phone}
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label htmlFor="otp" className="text-sm font-medium text-foreground">
+                      Enter OTP
+                    </label>
+                    <input
+                      id="otp"
+                      name="otp"
+                      type="text"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      className="glass-input px-4 py-3 w-full rounded-lg text-center text-lg tracking-widest"
+                      placeholder="000000"
+                      maxLength={6}
+                      required
+                    />
+                  </div>
+
+                  <motion.button
+                    type="button"
+                    onClick={handleVerifyOtp}
+                    disabled={isVerifyingOtp || otp.length !== 6}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full glass-button py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                  >
+                    {isVerifyingOtp ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <span>Verify & Complete Registration</span>
+                        <ArrowRight className="h-4 w-4" />
+                      </>
+                    )}
+                  </motion.button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOtpSent(false)
+                      setOtp('')
+                    }}
+                    className="w-full text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    Change phone number
+                  </button>
+                </div>
+              </>
+            )}
           </form>
 
           {/* Divider */}

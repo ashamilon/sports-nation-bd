@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { useCartStore } from '@/lib/store/cart-store'
 import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
@@ -10,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'react-hot-toast'
-import { Loader2, CreditCard, Globe, MapPin, User, Mail, Phone, Percent, Heart, Coffee, Star } from 'lucide-react'
+import { Loader2, CreditCard, Globe, MapPin, User, Mail, Phone, Percent, Heart, Coffee, Star, CheckCircle, Edit3 } from 'lucide-react'
 
 interface CustomerInfo {
   name: string
@@ -21,14 +22,28 @@ interface CustomerInfo {
   country: string
 }
 
+interface UserProfile {
+  id: string
+  name: string
+  email: string
+  phone: string
+  address: string
+  city: string
+  country: string
+  postalCode: string
+}
+
 export default function CheckoutPage() {
   const router = useRouter()
   const { data: session } = useSession()
   const { items, getTotalPrice, clearCart } = useCartStore()
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false)
   const [paymentType, setPaymentType] = useState<'full' | 'partial'>('full')
   const [tipAmount, setTipAmount] = useState(0)
   const [customTip, setCustomTip] = useState('')
+  const [useDefaultAddress, setUseDefaultAddress] = useState(true)
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     name: session?.user?.name || '',
     email: session?.user?.email || '',
@@ -45,8 +60,90 @@ export default function CheckoutPage() {
     }
   }, [items, router])
 
+  // Fetch user profile and auto-fill form
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!session?.user?.id) return
+      
+      setIsLoadingProfile(true)
+      try {
+        const response = await fetch('/api/user/profile')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success && data.user) {
+            setUserProfile(data.user)
+            // Auto-fill the form with user's default information
+            setCustomerInfo({
+              name: data.user.name || session.user.name || '',
+              email: data.user.email || session.user.email || '',
+              phone: data.user.phone || '',
+              address: data.user.address || '',
+              city: data.user.city || '',
+              country: data.user.country || 'BD'
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error)
+      } finally {
+        setIsLoadingProfile(false)
+      }
+    }
+
+    fetchUserProfile()
+  }, [session])
+
   const handleInputChange = (field: keyof CustomerInfo, value: string) => {
     setCustomerInfo(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleUseDefaultAddress = () => {
+    if (userProfile) {
+      setCustomerInfo({
+        name: userProfile.name || session?.user?.name || '',
+        email: userProfile.email || session?.user?.email || '',
+        phone: userProfile.phone || '',
+        address: userProfile.address || '',
+        city: userProfile.city || '',
+        country: userProfile.country || 'BD'
+      })
+      setUseDefaultAddress(true)
+    }
+  }
+
+  const handleUseCustomAddress = () => {
+    setUseDefaultAddress(false)
+    // Keep current form data but mark as custom
+  }
+
+  const handleSaveAsDefault = async () => {
+    if (!session?.user?.id) return
+    
+    try {
+      const response = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: customerInfo.name,
+          phone: customerInfo.phone,
+          address: customerInfo.address,
+          city: customerInfo.city,
+          country: customerInfo.country
+        })
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setUserProfile(data.user)
+          setUseDefaultAddress(true)
+          toast.success('Address saved as default!')
+        }
+      }
+    } catch (error) {
+      console.error('Error saving address:', error)
+      toast.error('Failed to save address')
+    }
   }
 
   const getSubtotal = () => {
@@ -169,16 +266,16 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Checkout</h1>
-          <p className="text-gray-600">Complete your order securely</p>
+          <h1 className="text-4xl font-bold text-foreground mb-2">Checkout</h1>
+          <p className="text-muted-foreground">Complete your order securely</p>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Customer Information */}
-          <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+          <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
             <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
               <CardTitle className="flex items-center gap-2 text-xl">
                 <User className="h-6 w-6" />
@@ -186,11 +283,69 @@ export default function CheckoutPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
+              {/* Address Selection */}
+              {isLoadingProfile ? (
+                <div className="flex items-center justify-center p-4">
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  <span className="text-sm text-muted-foreground">Loading your profile...</span>
+                </div>
+              ) : userProfile ? (
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium text-foreground">Delivery Address</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={useDefaultAddress ? "default" : "outline"}
+                      size="sm"
+                      onClick={handleUseDefaultAddress}
+                      className="flex items-center gap-2"
+                      disabled={isLoadingProfile}
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                      Use Default Address
+                    </Button>
+                    <Button
+                      variant={!useDefaultAddress ? "default" : "outline"}
+                      size="sm"
+                      onClick={handleUseCustomAddress}
+                      className="flex items-center gap-2"
+                    >
+                      <Edit3 className="h-4 w-4" />
+                      Use Different Address
+                    </Button>
+                  </div>
+                  
+                  {useDefaultAddress && userProfile.address && (
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-sm text-green-800 font-medium">Using your default address:</p>
+                      <p className="text-sm text-green-700">
+                        {userProfile.address}, {userProfile.city}, {userProfile.country}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {!useDefaultAddress && (
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-800 font-medium mb-2">Using custom address</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleSaveAsDefault}
+                        className="text-blue-600 border-blue-300 hover:bg-blue-100"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        Save as Default Address
+                      </Button>
+                    </div>
+                  )}
+                  
+                  <Separator />
+                </div>
+              ) : null}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name" className="text-sm font-medium">Full Name *</Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="name"
                       type="text"
@@ -205,7 +360,7 @@ export default function CheckoutPage() {
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium">Email *</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="email"
                       type="email"
@@ -221,7 +376,7 @@ export default function CheckoutPage() {
               <div className="space-y-2">
                 <Label htmlFor="phone" className="text-sm font-medium">Phone Number *</Label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="phone"
                     type="tel"
@@ -236,7 +391,7 @@ export default function CheckoutPage() {
               <div className="space-y-2">
                 <Label htmlFor="address" className="text-sm font-medium">Address *</Label>
                 <div className="relative">
-                  <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="address"
                     type="text"
@@ -263,7 +418,7 @@ export default function CheckoutPage() {
                 <div className="space-y-2">
                   <Label htmlFor="country" className="text-sm font-medium">Country</Label>
                   <div className="relative">
-                    <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="country"
                       type="text"
@@ -281,7 +436,7 @@ export default function CheckoutPage() {
           {/* Order Summary & Payment */}
           <div className="space-y-6">
             {/* Order Summary */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+            <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
               <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <Star className="h-6 w-6" />
@@ -468,6 +623,18 @@ export default function CheckoutPage() {
                 <p className="text-xs text-gray-500 text-center">
                   Secure payment powered by SSL Commerz
                 </p>
+                
+                {/* Payment Banner */}
+                <div className="mt-4 flex justify-center">
+                  <Image
+                    src="/payment-banner.png"
+                    alt="Payment Methods"
+                    width={400}
+                    height={130}
+                    className="rounded-lg shadow-sm max-w-full h-auto"
+                    unoptimized
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>

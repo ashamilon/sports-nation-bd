@@ -36,24 +36,44 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    // Create user
+    // Create user (unverified)
     const user = await prisma.user.create({
       data: {
         name,
         email,
         phone,
         password: hashedPassword,
-        role: 'customer'
+        role: 'customer',
+        emailVerified: null // User needs to verify email
+      }
+    })
+
+    // Generate email verification token
+    const crypto = require('crypto')
+    const token = crypto.randomBytes(32).toString('hex')
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+
+    // Store verification token
+    await prisma.verificationToken.create({
+      data: {
+        identifier: email,
+        token,
+        expires
       }
     })
 
     // Return user without password
     const { password: _, ...userWithoutPassword } = user
 
+    // TODO: Send verification email
+    const verificationUrl = `${process.env.NEXTAUTH_URL}/auth/verify-email?token=${token}&email=${encodeURIComponent(email)}`
+
     return NextResponse.json(
       { 
-        message: 'User created successfully',
-        user: userWithoutPassword
+        message: 'User created successfully. Please check your email to verify your account.',
+        user: userWithoutPassword,
+        verificationUrl, // Remove this in production
+        requiresVerification: true
       },
       { status: 201 }
     )

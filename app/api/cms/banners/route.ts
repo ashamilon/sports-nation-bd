@@ -24,6 +24,9 @@ export async function GET(request: NextRequest) {
           { expiresAt: { gte: new Date() } }
         ]}
       ]
+    } else if (active === false) {
+      // When explicitly requesting inactive items, show all (for admin)
+      // No additional filters
     }
 
     const banners = await prisma.banner.findMany({
@@ -34,7 +37,7 @@ export async function GET(request: NextRequest) {
       ]
     })
 
-    return NextResponse.json(banners)
+    return NextResponse.json({ success: true, data: banners })
   } catch (error) {
     console.error('Error fetching banners:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -71,7 +74,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    return NextResponse.json(banner)
+    return NextResponse.json({ success: true, data: banner })
   } catch (error) {
     console.error('Error creating banner:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

@@ -21,6 +21,27 @@ const nextConfig: NextConfig = {
         hostname: 'sportsnationbd.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3000',
+        pathname: '/uploads/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.google.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'thephysiocompany.co.uk',
+        pathname: '/**',
+      },
     ],
     formats: ['image/webp', 'image/avif'],
     dangerouslyAllowSVG: true,

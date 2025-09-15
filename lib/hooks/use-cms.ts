@@ -102,7 +102,7 @@ export function useBanners(position?: string) {
         if (!response.ok) throw new Error('Failed to fetch banners')
         
         const data = await response.json()
-        setBanners(data)
+        setBanners(data.success ? data.data : [])
         setError(null)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error')

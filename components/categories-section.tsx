@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { Watch, Shirt, Footprints, ShirtIcon, Scissors, Crown } from 'lucide-react'
+import MobileCategorySlideshow from './mobile-category-slideshow'
 
 const categories = [
   {
@@ -125,52 +126,14 @@ export default function CategoriesSection() {
           ))}
         </div>
 
-        {/* Mobile Horizontal Scroll */}
+        {/* Mobile Slideshow */}
         <div className="md:hidden">
-          <div className="mobile-scroll gap-4 pb-4">
-            {categories.map((category, index) => (
-              <motion.div
-                key={category.slug}
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="mobile-scroll-item w-72 flex-shrink-0"
-              >
-                <Link href={category.href}>
-                  <div className="group relative overflow-hidden rounded-2xl glass-card transition-all duration-300">
-                    {/* Background gradient */}
-                    <div className={`absolute inset-0 bg-gradient-to-br ${category.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-                    
-                    <div className="relative p-6">
-                      {/* Icon */}
-                      <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors duration-300">
-                        <category.icon className="h-8 w-8 text-primary" />
-                      </div>
-
-                      {/* Content */}
-                      <div className="space-y-3">
-                        <h3 className="text-xl font-semibold group-hover:text-primary transition-colors duration-300">
-                          {category.name}
-                        </h3>
-                        <p className="text-muted-foreground">
-                          {category.description}
-                        </p>
-                      </div>
-
-                      {/* Decorative element */}
-                      <div className="absolute top-4 right-4 text-4xl opacity-20 group-hover:opacity-40 transition-opacity duration-300">
-                        {category.image}
-                      </div>
-
-                      {/* Hover effect overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
+          <MobileCategorySlideshow 
+            categories={categories.map(cat => ({
+              ...cat,
+              emoji: cat.image
+            }))}
+          />
         </div>
 
         {/* Special offer banner */}

@@ -11,6 +11,7 @@ import { Star, Heart, ShoppingCart, Eye } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
+import MobileProductSlideshow from './mobile-product-slideshow'
 
 interface Product {
   id: string
@@ -104,8 +105,8 @@ export default function FeaturedProducts() {
           </p>
         </motion.div>
 
-        {/* Desktop Grid */}
-        <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Desktop Grid - Vertical Layout */}
+        <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {products.map((product, index) => (
             <motion.div
               key={product.id}
@@ -125,7 +126,7 @@ export default function FeaturedProducts() {
                       width={300}
                       height={300}
                       className="w-full h-full object-cover"
-                      unoptimized={product.images[0].includes('/api/placeholder')}
+                      unoptimized={false}
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
@@ -209,91 +210,11 @@ export default function FeaturedProducts() {
           ))}
         </div>
 
-        {/* Mobile Grid */}
-        <div className="md:hidden grid grid-cols-2 gap-4">
-          {products.map((product, index) => (
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: index * 0.1 }}
-              viewport={{ once: true }}
-              className="group"
-            >
-              <div className="product-card glass-card rounded-xl overflow-hidden">
-                {/* Product Image */}
-                <div className="relative aspect-square overflow-hidden">
-                  {product.images && product.images.length > 0 && !product.images[0].startsWith('blob:') ? (
-                    <Image
-                      src={product.images[0]}
-                      alt={product.name}
-                      width={300}
-                      height={300}
-                      className="w-full h-full object-cover"
-                      unoptimized={product.images[0].includes('/api/placeholder')}
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-                      <span className="text-6xl opacity-20">⚽</span>
-                    </div>
-                  )}
-                  
-                  {/* Badges */}
-                  <div className="absolute top-2 left-2">
-                    {product.isNew && (
-                      <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
-                        New
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Product Info */}
-                <div className="p-3">
-                  <Link href={`/product/${product.slug}`} className="block">
-                    <h3 className="font-semibold text-sm mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                      {product.name}
-                    </h3>
-                  </Link>
-
-                  {/* Rating */}
-                  <div className="flex items-center gap-1 mb-2">
-                    <div className="flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-3 w-3 ${
-                            i < Math.floor(product.averageRating)
-                              ? 'text-yellow-400 fill-current'
-                              : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      ({product.reviewCount})
-                    </span>
-                  </div>
-
-                  {/* Price */}
-                  <PriceDisplay 
-                    price={product.price}
-                    comparePrice={product.comparePrice}
-                    className="mb-3"
-                  />
-
-                  {/* Add to Cart Button */}
-                  <button
-                    onClick={() => handleAddToCart(product)}
-                    className="w-full bg-primary text-primary-foreground py-2 px-3 rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 text-sm"
-                  >
-                    <ShoppingCart className="h-3 w-3" />
-                    Add to Cart
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+        {/* Mobile Slideshow */}
+        <div className="md:hidden">
+          <MobileProductSlideshow 
+            products={products}
+          />
         </div>
 
         {/* View All Button */}

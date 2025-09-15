@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Account {
@@ -53,11 +53,24 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  // Loyalty System Fields
+  loyaltyLevel     String    @default("bronze") // bronze, silver, gold, platinum
+  loyaltyPoints    Int       @default(0)
+  totalOrders      Int       @default(0)
+  totalSpent       Float     @default(0)
+  currentPeriodOrders Int    @default(0) // Orders in current promotion period
+  currentPeriodStart DateTime? // Start of current promotion period
+  lastOrderDate    DateTime? // Last order date for demotion tracking
+  firstOrderDiscountUsed Boolean @default(false) // Track if 50tk first order discount used
+  platinumDiscountUsed DateTime? // Track when platinum discount was last used
+  isEligibleForLoyalty Boolean @default(true) // Only for Bangladesh users
+
   accounts Account[]
   sessions Session[]
   orders   Order[]
   reviews  Review[]
   wishlist Wishlist?
+  loyaltyHistory LoyaltyHistory[]
   // CMS Relations
   pages         Page[]
   blogPosts     BlogPost[]
@@ -71,6 +84,21 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+// Loyalty System Models
+model LoyaltyHistory {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fromLevel     String   // Previous level
+  toLevel       String   // New level
+  reason        String   // "promotion", "demotion", "reset"
+  ordersCount   Int      // Number of orders that triggered the change
+  periodStart   DateTime // Start of the period
+  periodEnd     DateTime // End of the period
+  totalSpent    Float    // Total spent in the period
+  createdAt     DateTime @default(now())
 }
 
 model Category {
@@ -96,7 +124,7 @@ model Product {
   comparePrice Float?
   sku         String   @unique
   stock       Int      @default(0)
-  images      String   // JSON string of image URLs
+  images      String[] // Array of image URLs
   isActive    Boolean  @default(true)
   isFeatured  Boolean  @default(false)
   weight      Float?
@@ -109,6 +137,7 @@ model Product {
   cartItems   CartItem[]
   wishlistItems WishlistItem[]
   badges      ProductBadge[]
+  collections CollectionProduct[] // Many-to-many with collections
   // Customization options
   allowNameNumber Boolean @default(false) // For jerseys
   nameNumberPrice Float? @default(250) // Additional price for name/number
@@ -526,6 +555,50 @@ model TrackingUpdate {
   timestamp   DateTime @default(now())
   courierData String?  // JSON data from courier API
   isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Collection Management System
+model Collection {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  image       String?  // Collection banner/cover image
+  parentId    String?  // For sub-collections
+  parent      Collection? @relation("CollectionHierarchy", fields: [parentId], references: [id])
+  children    Collection[] @relation("CollectionHierarchy")
+  products    CollectionProduct[] // Many-to-many with products
+  isActive    Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  metadata    String?  // Additional JSON data
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model CollectionProduct {
+  id           String     @id @default(cuid())
+  collectionId String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sortOrder    Int        @default(0)
+  isFeatured   Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([collectionId, productId])
+}
+
+model HomepageSettings {
+  id          String   @id @default(cuid())
+  sectionKey  String   @unique // e.g., 'hero', 'banners', 'collections', 'products', 'testimonials'
+  sectionName String   // Display name for the section
+  isVisible   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  metadata    String?  // JSON string for additional settings
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

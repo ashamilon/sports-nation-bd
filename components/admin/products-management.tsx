@@ -22,6 +22,7 @@ import {
   Download,
   Upload
 } from 'lucide-react'
+import SimpleCollectionManager from './simple-collection-manager'
 
 export default function ProductsManagement() {
   const router = useRouter()
@@ -331,7 +332,7 @@ export default function ProductsManagement() {
 
       {/* Products Grid/List */}
       {viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProducts.map((product, index) => (
             <motion.div
               key={product.id}
@@ -388,6 +389,10 @@ export default function ProductsManagement() {
                     >
                       <Edit className="h-4 w-4" />
                     </motion.button>
+                    <SimpleCollectionManager 
+                      product={product} 
+                      onUpdate={fetchProducts}
+                    />
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
@@ -483,6 +488,10 @@ export default function ProductsManagement() {
                         >
                           <Edit className="h-4 w-4" />
                         </motion.button>
+                        <SimpleCollectionManager 
+                          product={product} 
+                          onUpdate={fetchProducts}
+                        />
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}

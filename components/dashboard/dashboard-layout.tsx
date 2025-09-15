@@ -16,7 +16,8 @@ import {
   LogOut,
   Menu,
   X,
-  Package
+  Package,
+  Home
 } from 'lucide-react'
 
 interface DashboardLayoutProps {
@@ -24,6 +25,7 @@ interface DashboardLayoutProps {
 }
 
 const navigation = [
+  { name: 'Back to Home', href: '/', icon: Home, isExternal: true },
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Orders', href: '/dashboard/orders', icon: ShoppingBag },
   { name: 'Tracking', href: '/dashboard/tracking', icon: Package },
@@ -91,17 +93,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             {navigation.map((item) => {
               const isActive = pathname === item.href
               const Icon = item.icon
+              const isHomeLink = item.isExternal
               
               return (
                 <Link
                   key={item.name}
                   href={item.href}
                   className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                    isActive
+                    isHomeLink
+                      ? 'text-blue-400 hover:text-blue-300 hover:glass-button border border-blue-400/30'
+                      : isActive
                       ? 'glass-button bg-primary/20 text-primary border-primary/30'
                       : 'text-muted-foreground hover:text-foreground hover:glass-button'
                   }`}
-                  onClick={() => setSidebarOpen(false)}
+                  onClick={() => !isHomeLink && setSidebarOpen(false)}
                 >
                   <Icon className="h-5 w-5" />
                   <span className="font-medium">{item.name}</span>
@@ -134,6 +139,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             >
               <Menu className="h-4 w-4" />
             </button>
+            <Link
+              href="/"
+              className="flex items-center space-x-2 text-blue-400 hover:text-blue-300 px-3 py-1 rounded-lg border border-blue-400/30 hover:glass-button transition-all duration-200"
+            >
+              <Home className="h-4 w-4" />
+              <span className="text-sm font-medium">Home</span>
+            </Link>
           </div>
         </div>
 

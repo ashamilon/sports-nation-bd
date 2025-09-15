@@ -185,10 +185,41 @@ export default function EditProductPage() {
     setVariants(newVariants)
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
-    const newImages = files.map(file => URL.createObjectURL(file))
-    setImages(prev => [...prev, ...newImages])
+    if (files.length === 0) return
+
+    try {
+      setIsLoading(true)
+      
+      // Create FormData for file upload
+      const formData = new FormData()
+      files.forEach(file => {
+        formData.append('files', file)
+      })
+
+      // Upload files to server
+      const response = await fetch('/api/admin/products/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Add uploaded image URLs to state
+        const newImageUrls = data.files.map((file: any) => file.url)
+        setImages(prev => [...prev, ...newImageUrls])
+        toast.success(`${data.files.length} image(s) uploaded successfully`)
+      } else {
+        toast.error(data.error || 'Failed to upload images')
+      }
+    } catch (error) {
+      console.error('Error uploading images:', error)
+      toast.error('Failed to upload images')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const removeImage = (index: number) => {

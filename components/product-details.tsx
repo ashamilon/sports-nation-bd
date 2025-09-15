@@ -150,7 +150,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
                 height={600}
                 className="w-full h-full object-cover"
                 priority
-                unoptimized={product.images[selectedImage].includes('/api/placeholder')}
+                unoptimized={false}
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
@@ -176,7 +176,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
                     width={150}
                     height={150}
                     className="w-full h-full object-cover"
-                    unoptimized={image.includes('/api/placeholder')}
+                    unoptimized={false}
                   />
                 </button>
               ))}

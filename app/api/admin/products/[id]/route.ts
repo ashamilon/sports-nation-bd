@@ -33,10 +33,10 @@ export async function GET(
       )
     }
 
-    // Parse images from JSON string
+    // Images are already an array in the database
     const productWithParsedImages = {
       ...product,
-      images: product.images ? JSON.parse(product.images) : []
+      images: product.images || []
     }
 
     return NextResponse.json(productWithParsedImages)
@@ -104,7 +104,7 @@ export async function PUT(
         comparePrice: comparePrice || null,
         sku,
         stock,
-        images: JSON.stringify(images || []),
+        images: images || [],
         isActive: isActive ?? true,
         isFeatured: isFeatured ?? false,
         weight: weight || null,
@@ -145,7 +145,7 @@ export async function PUT(
     // Parse images from JSON string
     const productWithParsedImages = {
       ...updatedProduct,
-      images: updatedProduct?.images ? JSON.parse(updatedProduct.images) : []
+      images: updatedProduct?.images || []
     }
 
     return NextResponse.json({
