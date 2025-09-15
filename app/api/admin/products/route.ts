@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     // Build orderBy clause
     let orderBy: any = { createdAt: 'desc' }
     if (sortBy === 'sales') {
-      orderBy = { salesCount: 'desc' }
+      orderBy = { createdAt: 'desc' } // Default to creation date since salesCount doesn't exist
     } else if (sortBy === 'price') {
       orderBy = { price: 'desc' }
     } else if (sortBy === 'name') {
@@ -56,8 +56,8 @@ export async function GET(request: NextRequest) {
     // Format products for display
     const formattedProducts = products.map(product => ({
       name: product.name,
-      sales: product.salesCount || 0,
-      revenue: `৳${((product.salesCount || 0) * product.price).toLocaleString()}`,
+      sales: 0, // Default sales count since Product model doesn't have salesCount field
+      revenue: `৳0`, // Default revenue since we don't have sales data
       image: product.images && product.images.length > 0 ? product.images[0] : '/api/placeholder/60/60'
     }))
 
