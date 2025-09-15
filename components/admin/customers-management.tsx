@@ -24,93 +24,26 @@ export default function CustomersManagement() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedCustomers, setSelectedCustomers] = useState<number[]>([])
 
-  // Mock data - replace with actual data from API
-  const customers = [
-    {
-      id: 1,
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      phone: '+880 1234 567890',
-      location: 'Dhaka, Bangladesh',
-      joinDate: '2024-01-10',
-      status: 'active',
-      totalOrders: 5,
-      totalSpent: 25000,
-      lastOrder: '2024-01-15',
-      rating: 4.8,
-      avatar: '/api/placeholder/40/40'
-    },
-    {
-      id: 2,
-      name: 'Sarah Wilson',
-      email: 'sarah.wilson@example.com',
-      phone: '+880 9876 543210',
-      location: 'Chittagong, Bangladesh',
-      joinDate: '2024-01-08',
-      status: 'active',
-      totalOrders: 3,
-      totalSpent: 16800,
-      lastOrder: '2024-01-14',
-      rating: 4.6,
-      avatar: '/api/placeholder/40/40'
-    },
-    {
-      id: 3,
-      name: 'Mike Johnson',
-      email: 'mike.johnson@example.com',
-      phone: '+880 5555 123456',
-      location: 'Sylhet, Bangladesh',
-      joinDate: '2024-01-05',
-      status: 'inactive',
-      totalOrders: 1,
-      totalSpent: 4200,
-      lastOrder: '2024-01-05',
-      rating: 4.2,
-      avatar: '/api/placeholder/40/40'
-    },
-    {
-      id: 4,
-      name: 'Emma Davis',
-      email: 'emma.davis@example.com',
-      phone: '+880 7777 888999',
-      location: 'Rajshahi, Bangladesh',
-      joinDate: '2024-01-03',
-      status: 'active',
-      totalOrders: 8,
-      totalSpent: 45600,
-      lastOrder: '2024-01-12',
-      rating: 4.9,
-      avatar: '/api/placeholder/40/40'
-    },
-    {
-      id: 5,
-      name: 'Ahmed Hassan',
-      email: 'ahmed.hassan@example.com',
-      phone: '+880 3333 444555',
-      location: 'Khulna, Bangladesh',
-      joinDate: '2023-12-28',
-      status: 'vip',
-      totalOrders: 12,
-      totalSpent: 89000,
-      lastOrder: '2024-01-10',
-      rating: 5.0,
-      avatar: '/api/placeholder/40/40'
-    },
-    {
-      id: 6,
-      name: 'Fatima Rahman',
-      email: 'fatima.rahman@example.com',
-      phone: '+880 2222 111333',
-      location: 'Barisal, Bangladesh',
-      joinDate: '2024-01-01',
-      status: 'active',
-      totalOrders: 2,
-      totalSpent: 7200,
-      lastOrder: '2024-01-08',
-      rating: 4.7,
-      avatar: '/api/placeholder/40/40'
+  const [customers, setCustomers] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    fetchCustomers()
+  }, [])
+
+  const fetchCustomers = async () => {
+    try {
+      const response = await fetch('/api/admin/customers')
+      if (response.ok) {
+        const data = await response.json()
+        setCustomers(data.customers || [])
+      }
+    } catch (error) {
+      console.error('Error fetching customers:', error)
+    } finally {
+      setIsLoading(false)
     }
-  ]
+  }
 
   const statusOptions = ['all', 'active', 'inactive', 'vip']
 

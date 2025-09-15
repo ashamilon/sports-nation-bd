@@ -1,48 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
-    const search = searchParams.get('search') || ''
-    const status = searchParams.get('status') || ''
-    const paymentStatus = searchParams.get('paymentStatus') || ''
+    const page = parseInt(searchParams.get('page') || '1')
+    const status = searchParams.get('status')
+    const search = searchParams.get('search')
 
     const skip = (page - 1) * limit
 
     // Build where clause
     const where: any = {}
-    
+    if (status) {
+      where.status = status
+    }
     if (search) {
       where.OR = [
-        { orderNumber: { contains: search, mode: 'insensitive' } },
+        { id: { contains: search, mode: 'insensitive' } },
         { user: { name: { contains: search, mode: 'insensitive' } } },
         { user: { email: { contains: search, mode: 'insensitive' } } }
       ]
     }
-    
-    if (status) {
-      where.status = status
-    }
-    
-    if (paymentStatus) {
-      where.paymentStatus = paymentStatus
-    }
 
-    // Get orders with pagination
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
         where,
@@ -51,100 +34,51 @@ export async function GET(request: NextRequest) {
             select: {
               id: true,
               name: true,
-              email: true,
-              phone: true
+              email: true
             }
           },
           items: {
             include: {
-              product: true,
-              productVariant: true
+              product: {
+                select: {
+                  name: true,
+                  price: true
+                }
+              }
             }
           }
         },
+        orderBy: { createdAt: 'desc' },
         skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' }
+        take: limit
       }),
       prisma.order.count({ where })
     ])
 
-    return NextResponse.json({
-      orders,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit)
-      }
-    })
-
-  } catch (error) {
-    console.error('Admin orders fetch error:', error)
-    return NextResponse.json(
-      { message: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}
-
-export async function PATCH(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    const { orderId, status, paymentStatus, trackingNumber } = await request.json()
-
-    if (!orderId) {
-      return NextResponse.json(
-        { message: 'Order ID is required' },
-        { status: 400 }
-      )
-    }
-
-    // Update order
-    const order = await prisma.order.update({
-      where: { id: orderId },
-      data: {
-        ...(status && { status }),
-        ...(paymentStatus && { paymentStatus }),
-        ...(trackingNumber && { trackingNumber })
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true
-          }
-        },
-        items: {
-          include: {
-            product: true,
-            productVariant: true
-          }
-        }
-      }
-    })
+    // Format orders for display
+    const formattedOrders = orders.map(order => ({
+      id: order.id,
+      customer: order.user?.name || 'Unknown Customer',
+      product: order.items.length > 0 ? order.items[0].product.name : 'Multiple Items',
+      amount: `৳${order.total.toLocaleString()}`,
+      status: order.status,
+      date: order.createdAt.toLocaleDateString()
+    }))
 
     return NextResponse.json({
-      success: true,
-      order,
-      message: 'Order updated successfully'
+      orders: formattedOrders,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
     })
-
   } catch (error) {
-    console.error('Order update error:', error)
+    console.error('Error fetching orders:', error)
     return NextResponse.json(
-      { message: 'Internal server error' },
+      { error: 'Failed to fetch orders' },
       { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 }

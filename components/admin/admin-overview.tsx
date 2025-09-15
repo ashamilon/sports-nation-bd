@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import {
   ShoppingBag,
   Package,
@@ -17,102 +18,106 @@ import {
   Star
 } from 'lucide-react'
 
+interface DashboardStats {
+  totalRevenue: number
+  totalOrders: number
+  totalProducts: number
+  totalCustomers: number
+}
+
+interface RecentOrder {
+  id: string
+  customer: string
+  product: string
+  amount: string
+  status: string
+  date: string
+}
+
+interface TopProduct {
+  name: string
+  sales: number
+  revenue: string
+  image: string
+}
+
 export default function AdminOverview() {
-  // Mock data - replace with actual data from API
-  const stats = [
+  const [stats, setStats] = useState<DashboardStats>({
+    totalRevenue: 0,
+    totalOrders: 0,
+    totalProducts: 0,
+    totalCustomers: 0
+  })
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
+  const [topProducts, setTopProducts] = useState<TopProduct[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    fetchDashboardData()
+  }, [])
+
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch dashboard statistics
+      const [statsRes, ordersRes, productsRes] = await Promise.all([
+        fetch('/api/admin/dashboard/stats'),
+        fetch('/api/admin/orders?limit=4'),
+        fetch('/api/admin/products?limit=4&sortBy=sales')
+      ])
+
+      if (statsRes.ok) {
+        const statsData = await statsRes.json()
+        setStats(statsData)
+      }
+
+      if (ordersRes.ok) {
+        const ordersData = await ordersRes.json()
+        setRecentOrders(ordersData.orders || [])
+      }
+
+      if (productsRes.ok) {
+        const productsData = await productsRes.json()
+        setTopProducts(productsData.products || [])
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const statsData = [
     {
       title: 'Total Revenue',
-      value: '৳2,450,000',
-      change: '+12.5%',
+      value: `৳${stats.totalRevenue.toLocaleString()}`,
+      change: '+0%',
       changeType: 'positive' as const,
       icon: DollarSign,
       color: 'text-green-500'
     },
     {
       title: 'Total Orders',
-      value: '1,234',
-      change: '+8.2%',
+      value: stats.totalOrders.toLocaleString(),
+      change: '+0%',
       changeType: 'positive' as const,
       icon: ShoppingBag,
       color: 'text-blue-500'
     },
     {
       title: 'Total Products',
-      value: '156',
-      change: '+3.1%',
+      value: stats.totalProducts.toLocaleString(),
+      change: '+0%',
       changeType: 'positive' as const,
       icon: Package,
       color: 'text-purple-500'
     },
     {
       title: 'Total Customers',
-      value: '892',
-      change: '+15.3%',
+      value: stats.totalCustomers.toLocaleString(),
+      change: '+0%',
       changeType: 'positive' as const,
       icon: Users,
       color: 'text-orange-500'
-    }
-  ]
-
-  const recentOrders = [
-    {
-      id: '#ORD-001',
-      customer: 'John Doe',
-      product: 'Barcelona Home Jersey 2024',
-      amount: '৳2,500',
-      status: 'completed',
-      date: '2024-01-15'
-    },
-    {
-      id: '#ORD-002',
-      customer: 'Sarah Wilson',
-      product: 'Nike Air Max 270',
-      amount: '৳8,500',
-      status: 'processing',
-      date: '2024-01-15'
-    },
-    {
-      id: '#ORD-003',
-      customer: 'Mike Johnson',
-      product: 'Real Madrid Away Jersey',
-      amount: '৳2,800',
-      status: 'pending',
-      date: '2024-01-14'
-    },
-    {
-      id: '#ORD-004',
-      customer: 'Emma Davis',
-      product: 'Naviforce Watch NF9026',
-      amount: '৳4,200',
-      status: 'shipped',
-      date: '2024-01-14'
-    }
-  ]
-
-  const topProducts = [
-    {
-      name: 'Barcelona Home Jersey 2024',
-      sales: 45,
-      revenue: '৳112,500',
-      image: '/api/placeholder/60/60'
-    },
-    {
-      name: 'Nike Air Max 270',
-      sales: 32,
-      revenue: '৳272,000',
-      image: '/api/placeholder/60/60'
-    },
-    {
-      name: 'Real Madrid Away Jersey',
-      sales: 28,
-      revenue: '৳78,400',
-      image: '/api/placeholder/60/60'
-    },
-    {
-      name: 'Naviforce Watch NF9026',
-      sales: 22,
-      revenue: '৳92,400',
-      image: '/api/placeholder/60/60'
     }
   ]
 
@@ -180,7 +185,17 @@ export default function AdminOverview() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
+        {isLoading ? (
+          // Loading skeleton
+          Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="glass-card p-6 rounded-xl animate-pulse">
+              <div className="h-4 bg-muted rounded w-1/2 mb-2"></div>
+              <div className="h-8 bg-muted rounded w-3/4 mb-2"></div>
+              <div className="h-3 bg-muted rounded w-1/3"></div>
+            </div>
+          ))
+        ) : (
+          statsData.map((stat, index) => (
           <motion.div
             key={stat.title}
             initial={{ opacity: 0, y: 20 }}
@@ -211,7 +226,8 @@ export default function AdminOverview() {
               </div>
             </div>
           </motion.div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* Main Content Grid */}
@@ -230,7 +246,26 @@ export default function AdminOverview() {
             </Link>
           </div>
           <div className="space-y-4">
-            {recentOrders.map((order, index) => (
+            {isLoading ? (
+              // Loading skeleton
+              Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="flex items-center justify-between p-3 rounded-lg animate-pulse">
+                  <div className="flex items-center space-x-3">
+                    <div className="h-4 w-4 bg-muted rounded"></div>
+                    <div className="h-4 w-20 bg-muted rounded"></div>
+                    <div>
+                      <div className="h-4 w-24 bg-muted rounded mb-1"></div>
+                      <div className="h-3 w-32 bg-muted rounded"></div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="h-4 w-16 bg-muted rounded mb-1"></div>
+                    <div className="h-6 w-20 bg-muted rounded"></div>
+                  </div>
+                </div>
+              ))
+            ) : recentOrders.length > 0 ? (
+              recentOrders.map((order, index) => (
               <motion.div
                 key={order.id}
                 initial={{ opacity: 0, y: 10 }}
@@ -255,7 +290,14 @@ export default function AdminOverview() {
                   </span>
                 </div>
               </motion.div>
-            ))}
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <ShoppingBag className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No orders yet</p>
+                <p className="text-sm text-muted-foreground">Orders will appear here once customers start shopping</p>
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -273,7 +315,23 @@ export default function AdminOverview() {
             </Link>
           </div>
           <div className="space-y-4">
-            {topProducts.map((product, index) => (
+            {isLoading ? (
+              // Loading skeleton
+              Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="flex items-center space-x-3 p-3 rounded-lg animate-pulse">
+                  <div className="w-12 h-12 bg-muted rounded-lg"></div>
+                  <div className="flex-1">
+                    <div className="h-4 w-32 bg-muted rounded mb-1"></div>
+                    <div className="h-3 w-20 bg-muted rounded"></div>
+                  </div>
+                  <div className="text-right">
+                    <div className="h-4 w-16 bg-muted rounded mb-1"></div>
+                    <div className="h-3 w-8 bg-muted rounded"></div>
+                  </div>
+                </div>
+              ))
+            ) : topProducts.length > 0 ? (
+              topProducts.map((product, index) => (
               <motion.div
                 key={product.name}
                 initial={{ opacity: 0, y: 10 }}
@@ -300,7 +358,14 @@ export default function AdminOverview() {
                   </div>
                 </div>
               </motion.div>
-            ))}
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No products yet</p>
+                <p className="text-sm text-muted-foreground">Add products to see them here</p>
+              </div>
+            )}
           </div>
         </motion.div>
       </div>

@@ -26,116 +26,26 @@ export default function OrdersManagement() {
   const [selectedOrderForCourier, setSelectedOrderForCourier] = useState<string | null>(null)
   const [showCourierSelector, setShowCourierSelector] = useState(false)
 
-  // Mock data - replace with actual data from API
-  const orders = [
-    {
-      id: 'ORD-001',
-      customer: {
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        phone: '+880 1234 567890'
-      },
-      items: [
-        { name: 'Barcelona Home Jersey 2024', quantity: 1, price: 2500 },
-        { name: 'Nike Air Max 270', quantity: 1, price: 8500 }
-      ],
-      total: 11000,
-      status: 'completed',
-      paymentStatus: 'paid',
-      paymentMethod: 'bKash',
-      shippingAddress: 'Dhaka, Bangladesh',
-      orderDate: '2024-01-15',
-      deliveryDate: '2024-01-18',
-      trackingNumber: 'TRK123456789',
-      courierService: 'sundarban',
-      courierTrackingId: 'SD123456789'
-    },
-    {
-      id: 'ORD-002',
-      customer: {
-        name: 'Sarah Wilson',
-        email: 'sarah.wilson@example.com',
-        phone: '+880 9876 543210'
-      },
-      items: [
-        { name: 'Real Madrid Away Jersey', quantity: 2, price: 2800 }
-      ],
-      total: 5600,
-      status: 'processing',
-      paymentStatus: 'paid',
-      paymentMethod: 'Bank Transfer',
-      shippingAddress: 'Chittagong, Bangladesh',
-      orderDate: '2024-01-15',
-      deliveryDate: null,
-      trackingNumber: null,
-      courierService: null,
-      courierTrackingId: null
-    },
-    {
-      id: 'ORD-003',
-      customer: {
-        name: 'Mike Johnson',
-        email: 'mike.johnson@example.com',
-        phone: '+880 5555 123456'
-      },
-      items: [
-        { name: 'Naviforce Watch NF9026', quantity: 1, price: 4200 }
-      ],
-      total: 4200,
-      status: 'pending',
-      paymentStatus: 'pending',
-      paymentMethod: 'Cash on Delivery',
-      shippingAddress: 'Sylhet, Bangladesh',
-      orderDate: '2024-01-14',
-      deliveryDate: null,
-      trackingNumber: null,
-      courierService: null,
-      courierTrackingId: null
-    },
-    {
-      id: 'ORD-004',
-      customer: {
-        name: 'Emma Davis',
-        email: 'emma.davis@example.com',
-        phone: '+880 7777 888999'
-      },
-      items: [
-        { name: 'Manchester United Home Jersey', quantity: 1, price: 2600 },
-        { name: 'Adidas Ultraboost 22', quantity: 1, price: 12000 }
-      ],
-      total: 14600,
-      status: 'shipped',
-      paymentStatus: 'paid',
-      paymentMethod: 'Rocket',
-      shippingAddress: 'Rajshahi, Bangladesh',
-      orderDate: '2024-01-14',
-      deliveryDate: '2024-01-20',
-      trackingNumber: 'TRK987654321',
-      courierService: 'pathao',
-      courierTrackingId: 'PT987654321'
-    },
-    {
-      id: 'ORD-005',
-      customer: {
-        name: 'Ahmed Hassan',
-        email: 'ahmed.hassan@example.com',
-        phone: '+880 3333 444555'
-      },
-      items: [
-        { name: 'Barcelona Home Jersey 2024', quantity: 3, price: 2500 }
-      ],
-      total: 7500,
-      status: 'cancelled',
-      paymentStatus: 'refunded',
-      paymentMethod: 'bKash',
-      shippingAddress: 'Khulna, Bangladesh',
-      orderDate: '2024-01-13',
-      deliveryDate: null,
-      trackingNumber: null,
-      courierService: null,
-      courierTrackingId: null
+  const [orders, setOrders] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    fetchOrders()
+  }, [])
+
+  const fetchOrders = async () => {
+    try {
+      const response = await fetch('/api/admin/orders')
+      if (response.ok) {
+        const data = await response.json()
+        setOrders(data.orders || [])
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error)
+    } finally {
+      setIsLoading(false)
     }
-  ]
+  }
 
   const statusOptions = ['all', 'pending', 'processing', 'shipped', 'completed', 'cancelled']
 
