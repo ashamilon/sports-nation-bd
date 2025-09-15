@@ -45,7 +45,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     name: session.user.name || 'User',
     email: session.user.email || '',
     avatar: session.user.image || '/api/placeholder/40/40',
-    memberSince: session.user.createdAt ? new Date(session.user.createdAt).toLocaleDateString() : 'Recently'
+    memberSince: 'Recently' // Default value since createdAt is not available in session
   } : null
 
   return (
