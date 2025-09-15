@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
         phone: customer.phone || '',
         location: customer.address || 'Not provided',
         joinDate: customer.createdAt.toLocaleDateString(),
-        status: customer.status || 'active',
+        status: 'active', // Default status since User model doesn't have status field
         totalOrders,
         totalSpent,
         lastOrder: lastOrder ? lastOrder.createdAt.toLocaleDateString() : 'No orders',
