@@ -18,27 +18,76 @@ import {
 import { RegionalSelector } from './regional-selector'
 import { RegionalTopBar } from './regional-topbar'
 import CategoryDropdown from './category-dropdown'
+import HeaderDropdown from './header-dropdown'
 
 interface Collection {
   id: string
   name: string
   slug: string
+  description?: string
+  image?: string
   _count: {
     products: number
   }
+}
+
+interface MenuConfig {
+  id: string
+  menuType: string
+  title: string
+  collections: string
+  isActive: boolean
+  sortOrder: number
 }
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
+  const [menuConfigs, setMenuConfigs] = useState<MenuConfig[]>([])
+  const [allCollections, setAllCollections] = useState<Collection[]>([])
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const [collections, setCollections] = useState<Record<string, Collection[]>>({})
   const { getTotalItems, toggleCart } = useCartStore()
 
   useEffect(() => {
     setIsMounted(true)
+    fetchMenuConfigs()
   }, [])
+
+  const fetchMenuConfigs = async () => {
+    try {
+      const [menuResponse, collectionsResponse] = await Promise.all([
+        fetch('/api/cms/menu-config'),
+        fetch('/api/collections?isActive=true')
+      ])
+
+      const menuData = await menuResponse.json()
+      const collectionsData = await collectionsResponse.json()
+
+      if (menuData.success) {
+        setMenuConfigs(menuData.data.filter((config: MenuConfig) => 
+          config.menuType === 'header' && config.isActive
+        ))
+      }
+
+      if (collectionsData.success) {
+        setAllCollections(collectionsData.data)
+      }
+    } catch (error) {
+      console.error('Error fetching menu configs:', error)
+    }
+  }
+
+  const getCollectionsForMenu = (config: MenuConfig): Collection[] => {
+    const collectionIds = JSON.parse(config.collections)
+    return allCollections.filter(collection => 
+      collectionIds.includes(collection.id)
+    ).map(collection => ({
+      ...collection,
+      productCount: collection._count?.products || 0
+    }))
+  }
 
   const toggleCategory = async (categoryName: string, parentId: string) => {
     setExpandedCategories(prev => {
@@ -72,17 +121,26 @@ export default function Header() {
     }
   }
 
-  const navigation = [
+  const staticNavigation = [
     { name: 'Home', href: '/' },
-    { name: 'Watches', type: 'category-dropdown', categorySlug: 'watches', parentId: 'watches_collection' },
-    { name: 'Sneakers', type: 'category-dropdown', categorySlug: 'sneakers', parentId: 'sneakers_collection' },
-    { name: 'Jerseys', type: 'category-dropdown', categorySlug: 'jerseys', parentId: 'jerseys_collection' },
-    { name: 'Shorts', type: 'category-dropdown', categorySlug: 'shorts', parentId: 'shorts_collection' },
     { name: 'Custom Jerseys', href: '/custom-jerseys' },
     { name: 'Loyalty Status', href: '/loyalty-status' },
     { name: 'Loyalty Demo', href: '/loyalty-demo' },
     { name: 'About', href: '/about' },
     { name: 'Contact', href: '/contact' },
+  ]
+
+  // Combine static navigation with dynamic menu configurations
+  const navigation = [
+    ...staticNavigation,
+    ...menuConfigs
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map(config => ({
+        name: config.title,
+        type: 'menu-dropdown' as const,
+        config: config,
+        collections: getCollectionsForMenu(config)
+      }))
   ]
 
   return (
@@ -107,6 +165,12 @@ export default function Header() {
                     categoryName={item.name}
                     categorySlug={item.categorySlug}
                     parentCollectionId={item.parentId}
+                  />
+                ) : item.type === 'menu-dropdown' ? (
+                  <HeaderDropdown
+                    title={item.name}
+                    collections={item.collections}
+                    href={`/collections`}
                   />
                 ) : (
                   <Link
@@ -235,6 +299,27 @@ export default function Header() {
                           </Link>
                         </div>
                       )}
+                    </div>
+                  ) : item.type === 'menu-dropdown' ? (
+                    <div className="space-y-1">
+                      <div className="glass-button px-4 py-2 rounded-lg font-medium text-primary">
+                        <span>{item.name}</span>
+                      </div>
+                      <div className="ml-4 space-y-1">
+                        {item.collections.map((collection) => (
+                          <Link
+                            key={collection.id}
+                            href={`/collections/${collection.slug}`}
+                            className="block glass-button px-4 py-2 rounded-lg text-sm"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            {collection.name}
+                            <span className="text-xs text-muted-foreground ml-2">
+                              ({collection.productCount})
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
                     </div>
                   ) : (
                     <Link

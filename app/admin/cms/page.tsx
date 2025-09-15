@@ -462,7 +462,8 @@ export default function CMSPage() {
               { id: 'testimonials', name: 'Testimonials' },
               { id: 'faq', name: 'FAQs' },
               { id: 'collections', name: 'Collections' },
-              { id: 'homepage', name: 'Homepage Sections' }
+              { id: 'homepage', name: 'Homepage Sections' },
+              { id: 'menu-config', name: 'Menu Configuration' }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -926,6 +927,39 @@ export default function CMSPage() {
                 <li>• Hidden sections won't be displayed to visitors</li>
                 <li>• Changes take effect immediately</li>
                 <li>• You can always re-enable sections later</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* Menu Configuration Tab */}
+        {activeTab === 'menu-config' && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Menu Configuration</h2>
+              <p className="text-sm text-muted-foreground">
+                Manage dropdown menus for header navigation
+              </p>
+            </div>
+            <div className="bg-muted/20 rounded-lg p-6 text-center">
+              <h3 className="text-lg font-medium text-foreground mb-2">Menu Configuration</h3>
+              <p className="text-muted-foreground mb-4">
+                Create and manage dropdown menus for your header navigation
+              </p>
+              <a
+                href="/admin/cms/menu-config"
+                className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+              >
+                Open Menu Configuration
+              </a>
+            </div>
+            <div className="mt-6 p-4 bg-muted/20 rounded-lg">
+              <h4 className="font-medium text-foreground mb-2">💡 How it works:</h4>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• Create dropdown menus with collections of your choice</li>
+                <li>• Choose which collections appear in each dropdown</li>
+                <li>• Set the order and visibility of menu items</li>
+                <li>• Menus appear in the header navigation automatically</li>
               </ul>
             </div>
           </div>

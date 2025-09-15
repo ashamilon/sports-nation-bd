@@ -31,8 +31,10 @@ export default function ProductsManagement() {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [products, setProducts] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
+    setIsMounted(true)
     fetchProducts()
   }, [])
 
@@ -103,10 +105,18 @@ export default function ProductsManagement() {
   }
 
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false
     const matchesCategory = selectedCategory === 'all' || product.category?.name === selectedCategory
     return matchesSearch && matchesCategory
   })
+
+  if (!isMounted) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -269,7 +279,7 @@ export default function ProductsManagement() {
               <div className="relative">
                 <Image
                   src={product.images?.[0] || '/api/placeholder/300/400'}
-                  alt={product.name}
+                  alt={product.name || 'Product'}
                   width={300}
                   height={192}
                   className="w-full h-48 object-cover rounded-lg mb-4"
@@ -281,17 +291,17 @@ export default function ProductsManagement() {
               </div>
               
               <div className="space-y-2">
-                <h3 className="font-semibold text-foreground line-clamp-2">{product.name}</h3>
+                <h3 className="font-semibold text-foreground line-clamp-2">{product.name || 'Unnamed Product'}</h3>
                 <p className="text-sm text-muted-foreground">{product.category?.name || 'No Category'}</p>
-                <p className="text-lg font-bold text-foreground">৳{product.price.toLocaleString()}</p>
+                <p className="text-lg font-bold text-foreground">৳{product.price?.toLocaleString() || '0'}</p>
                 
                 <div className="flex items-center justify-between text-sm">
-                  <span className={`font-medium ${getStockColor(product.stock, product.status)}`}>
-                    Stock: {product.stock}
+                  <span className={`font-medium ${getStockColor(product.stock || 0, product.status)}`}>
+                    Stock: {product.stock || 0}
                   </span>
                   <div className="flex items-center">
                     <Star className="h-3 w-3 text-yellow-500 fill-current mr-1" />
-                    <span className="text-muted-foreground">{product.rating}</span>
+                    <span className="text-muted-foreground">{product.rating || '0'}</span>
                   </div>
                 </div>
 
@@ -328,7 +338,7 @@ export default function ProductsManagement() {
                       <Trash2 className="h-4 w-4" />
                     </motion.button>
                   </div>
-                  <span className="text-xs text-muted-foreground">{product.sales} sales</span>
+                  <span className="text-xs text-muted-foreground">{product.sales || 0} sales</span>
                 </div>
               </div>
             </motion.div>
@@ -363,23 +373,23 @@ export default function ProductsManagement() {
                       <div className="flex items-center space-x-3">
                         <Image
                           src={product.images?.[0] || '/api/placeholder/40/40'}
-                          alt={product.name}
+                          alt={product.name || 'Product'}
                           width={48}
                           height={48}
                           className="w-12 h-12 object-cover rounded-lg"
                           unoptimized={product.images?.[0]?.includes('/api/placeholder') || true}
                         />
                         <div>
-                          <p className="font-medium text-foreground">{product.name}</p>
+                          <p className="font-medium text-foreground">{product.name || 'Unnamed Product'}</p>
                           <p className="text-sm text-muted-foreground">ID: #{product.id}</p>
                         </div>
                       </div>
                     </td>
                     <td className="p-4 text-foreground">{product.category?.name || 'No Category'}</td>
-                    <td className="p-4 font-semibold text-foreground">৳{product.price.toLocaleString()}</td>
+                    <td className="p-4 font-semibold text-foreground">৳{product.price?.toLocaleString() || '0'}</td>
                     <td className="p-4">
-                      <span className={`font-medium ${getStockColor(product.stock, product.status)}`}>
-                        {product.stock}
+                      <span className={`font-medium ${getStockColor(product.stock || 0, product.status)}`}>
+                        {product.stock || 0}
                       </span>
                     </td>
                     <td className="p-4">
@@ -387,11 +397,11 @@ export default function ProductsManagement() {
                         {product.status ? product.status.replace('_', ' ') : 'Unknown'}
                       </span>
                     </td>
-                    <td className="p-4 text-foreground">{product.sales}</td>
+                    <td className="p-4 text-foreground">{product.sales || 0}</td>
                     <td className="p-4">
                       <div className="flex items-center">
                         <Star className="h-3 w-3 text-yellow-500 fill-current mr-1" />
-                        <span className="text-foreground">{product.rating}</span>
+                        <span className="text-foreground">{product.rating || '0'}</span>
                       </div>
                     </td>
                     <td className="p-4">

@@ -410,6 +410,18 @@ model PageSection {
   updatedAt   DateTime @updatedAt
 }
 
+model MenuConfig {
+  id          String   @id @default(cuid())
+  menuType    String   // header, footer, sidebar, etc.
+  title       String   // Display name for the menu
+  collections String   // JSON array of collection IDs
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  metadata    String?  // Additional JSON data
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model Navigation {
   id          String   @id @default(cuid())
   title       String
