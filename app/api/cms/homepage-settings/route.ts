@@ -1,18 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { Client } from 'pg'
 
 // GET - Fetch all homepage settings
 export async function GET() {
   try {
-    const settings = await prisma.homepageSettings.findMany({
-      orderBy: { sortOrder: 'asc' }
+    const client = new Client({
+      connectionString: process.env.DATABASE_URL
     })
+
+    await client.connect()
+    
+    const result = await client.query('SELECT * FROM "HomepageSettings" ORDER BY "sortOrder" ASC')
+    
+    await client.end()
 
     return NextResponse.json({
       success: true,
-      data: settings
+      data: result.rows
     })
   } catch (error) {
     console.error('Error fetching homepage settings:', error)
