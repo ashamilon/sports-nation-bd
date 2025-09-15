@@ -373,6 +373,84 @@ async function main() {
     ]
   })
 
+  // Create homepage settings
+  console.log('🌱 Creating homepage settings...')
+  
+  const homepageSections = [
+    {
+      sectionKey: 'banner',
+      sectionName: 'Banner Slideshow',
+      isVisible: true,
+      sortOrder: 1,
+      metadata: JSON.stringify({
+        description: 'Hero banner with promotional content',
+        component: 'BannerSlideshow'
+      })
+    },
+    {
+      sectionKey: 'hero',
+      sectionName: 'Hero Section',
+      isVisible: true,
+      sortOrder: 2,
+      metadata: JSON.stringify({
+        description: 'Main hero section with call-to-action',
+        component: 'HeroSection'
+      })
+    },
+    {
+      sectionKey: 'categories',
+      sectionName: 'Categories Section',
+      isVisible: true,
+      sortOrder: 3,
+      metadata: JSON.stringify({
+        description: 'Product categories showcase',
+        component: 'CategoriesSection'
+      })
+    },
+    {
+      sectionKey: 'collections',
+      sectionName: 'Collections Section',
+      isVisible: true,
+      sortOrder: 4,
+      metadata: JSON.stringify({
+        description: 'Featured product collections',
+        component: 'CollectionsSection'
+      })
+    },
+    {
+      sectionKey: 'featured-products',
+      sectionName: 'Featured Products',
+      isVisible: true,
+      sortOrder: 5,
+      metadata: JSON.stringify({
+        description: 'Featured products showcase',
+        component: 'FeaturedProducts'
+      })
+    },
+    {
+      sectionKey: 'countdown',
+      sectionName: 'Countdown Timer',
+      isVisible: true,
+      sortOrder: 6,
+      metadata: JSON.stringify({
+        description: 'Promotional countdown timer',
+        component: 'CountdownTimer'
+      })
+    }
+  ]
+
+  // Clear existing settings
+  await prisma.homepageSettings.deleteMany()
+  
+  // Create new settings
+  for (const section of homepageSections) {
+    await prisma.homepageSettings.create({
+      data: section
+    })
+  }
+  
+  console.log('✅ Homepage settings created successfully!')
+
   console.log('✅ Database seeded successfully!')
 }
 
