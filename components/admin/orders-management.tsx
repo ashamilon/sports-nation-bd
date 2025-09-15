@@ -337,7 +337,7 @@ export default function OrdersManagement() {
                   </td>
                   <td className="p-4">
                     <div className="space-y-1">
-                      {order.items.map((item, itemIndex) => (
+                      {order.items.map((item: any, itemIndex: number) => (
                         <div key={itemIndex} className="text-sm">
                           <p className="text-foreground">{item.name}</p>
                           <p className="text-muted-foreground">Qty: {item.quantity} × ৳{item.price}</p>
