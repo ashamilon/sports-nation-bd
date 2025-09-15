@@ -141,9 +141,15 @@ export async function DELETE(
       )
     }
 
-    await prisma.homepageSettings.delete({
-      where: { id }
+    const client = new Client({
+      connectionString: process.env.DATABASE_URL
     })
+
+    await client.connect()
+    
+    const result = await client.query('DELETE FROM "HomepageSettings" WHERE id = $1', [id])
+    
+    await client.end()
 
     return NextResponse.json({
       success: true,
