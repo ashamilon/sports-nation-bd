@@ -461,6 +461,7 @@ export default function CMSPage() {
               { id: 'countdowns', name: 'Countdowns' },
               { id: 'testimonials', name: 'Testimonials' },
               { id: 'faq', name: 'FAQs' },
+              { id: 'badges', name: 'Football Badges' },
               { id: 'collections', name: 'Collections' },
               { id: 'homepage', name: 'Homepage Sections' },
               { id: 'menu-config', name: 'Menu Configuration' }
@@ -845,6 +846,44 @@ export default function CMSPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Badges Tab */}
+        {activeTab === 'badges' && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Football Badges</h2>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => window.open('/admin/badges-simple', '_blank')}
+                  className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90"
+                >
+                  Manage Badges
+                </button>
+              </div>
+            </div>
+            <div className="glass-card p-6 text-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Package className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Football Badge Management</h3>
+              <p className="text-muted-foreground mb-4">
+                Create and manage football badges for product customization. Add team badges, tournament logos, and custom designs.
+              </p>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>• Create unlimited football badges</p>
+                <p>• Upload custom badge images</p>
+                <p>• Set prices and categories</p>
+                <p>• Use badges in product customization</p>
+              </div>
+              <button 
+                onClick={() => window.open('/admin/badges-simple', '_blank')}
+                className="mt-4 bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90"
+              >
+                Open Badge Manager
+              </button>
             </div>
           </div>
         )}

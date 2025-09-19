@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const products = await prisma.product.findMany({
       where,
       include: {
-        category: true
+        Category: true
       },
       take: limit,
       skip: offset,
@@ -38,7 +38,14 @@ export async function GET(request: NextRequest) {
       ...product,
       images: product.images || [],
       averageRating: 4.5, // Default rating
-      reviewCount: 0
+      reviewCount: 0,
+      category: product.Category ? {
+        name: product.Category.name,
+        slug: product.Category.slug
+      } : {
+        name: 'Unknown Category',
+        slug: 'unknown'
+      }
     }))
 
     return NextResponse.json({

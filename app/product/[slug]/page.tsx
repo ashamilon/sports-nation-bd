@@ -4,10 +4,29 @@ import CartSidebar from '@/components/cart-sidebar'
 import Footer from '@/components/footer'
 import ProductDetails from '@/components/product-details'
 import { prisma } from '@/lib/prisma'
+import { promises as fs } from 'fs'
+import path from 'path'
 
 interface ProductPageProps {
   params: {
     slug: string
+  }
+}
+
+async function getBadgesFromIds(badgeIds: string[]) {
+  try {
+    const filePath = path.join(process.cwd(), 'lib', 'badges.json')
+    const fileContents = await fs.readFile(filePath, 'utf8')
+    const badgesData = JSON.parse(fileContents)
+    const allBadges = badgesData.badges || []
+    
+    // Filter badges by IDs and only return active ones
+    return allBadges.filter((badge: any) => 
+      badgeIds.includes(badge.id) && badge.isActive
+    )
+  } catch (error) {
+    console.error('Error fetching badges:', error)
+    return []
   }
 }
 
@@ -19,16 +38,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
       isActive: true
     },
     include: {
-      category: true,
-      variants: true,
-      badges: {
-        where: {
-          isActive: true
-        }
-      },
-      reviews: {
+      Category: true,
+      ProductVariant: true,
+      Review: {
         include: {
-          user: {
+          User: {
             select: {
               name: true,
               image: true
@@ -47,42 +61,44 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }
 
   // Calculate average rating
-  const averageRating = product.reviews.length > 0 
-    ? product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length
+  const reviews = product.Review || []
+  const averageRating = reviews.length > 0 
+    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
     : 0
 
   const productWithRating = {
     ...product,
     images: product.images || [],
     averageRating,
-    reviewCount: product.reviews.length,
+    reviewCount: reviews.length,
     comparePrice: product.comparePrice || undefined,
     weight: product.weight || undefined,
     dimensions: product.dimensions || undefined,
     nameNumberPrice: product.nameNumberPrice || undefined,
-    variants: product.variants.map(variant => ({
+    variants: (product.ProductVariant || []).map(variant => ({
       ...variant,
       price: variant.price || undefined
     })),
-    category: {
-      ...product.category,
-      description: product.category.description || undefined,
-      image: product.category.image || undefined
+    category: product.Category ? {
+      ...product.Category,
+      description: product.Category.description || undefined,
+      image: product.Category.image || undefined
+    } : {
+      name: 'Unknown Category',
+      slug: 'unknown',
+      description: undefined,
+      image: undefined
     },
-    reviews: product.reviews.map(review => ({
+    reviews: reviews.map(review => ({
       ...review,
       comment: review.comment || undefined,
       user: {
-        name: review.user.name || undefined,
-        image: review.user.image || undefined
+        name: review.User?.name || undefined,
+        image: review.User?.image || undefined
       },
       createdAt: review.createdAt.toISOString()
     })),
-    badges: product.badges.map(badge => ({
-      ...badge,
-      description: badge.description || undefined,
-      image: badge.image || undefined
-    }))
+    badges: product.selectedBadges ? await getBadgesFromIds(JSON.parse(product.selectedBadges)) : []
   }
 
   return (

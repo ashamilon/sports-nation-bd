@@ -35,6 +35,13 @@ export interface PaymentResponse {
 
 export class PaymentService {
   async createPayment(paymentData: PaymentRequest): Promise<PaymentResponse> {
+    // Check if we're in test mode
+    const isTestMode = process.env.PAYMENT_TEST_MODE === 'true'
+    
+    if (isTestMode) {
+      return await this.createTestPayment(paymentData)
+    }
+    
     // For now, only use SSL Commerz
     const gateway = 'sslcommerz'
     
@@ -96,6 +103,24 @@ export class PaymentService {
     }
   }
 
+  private async createTestPayment(paymentData: PaymentRequest): Promise<PaymentResponse> {
+    console.log('🧪 Creating test payment:', {
+      orderId: paymentData.orderId,
+      amount: paymentData.amount,
+      currency: paymentData.currency
+    })
+
+    // Simulate a successful payment creation
+    const testPaymentUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/payment/test?orderId=${paymentData.orderId}&amount=${paymentData.amount}`
+    
+    return {
+      success: true,
+      gateway: 'test',
+      paymentUrl: testPaymentUrl,
+      orderId: paymentData.orderId,
+      sessionKey: `test-session-${Date.now()}`
+    }
+  }
 
   async validatePayment(
     gateway: 'sslcommerz',

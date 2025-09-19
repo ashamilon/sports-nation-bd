@@ -14,16 +14,7 @@ export async function GET(request: NextRequest) {
     if (position) where.position = position
     if (active) {
       where.isActive = true
-      where.OR = [
-        { startsAt: null },
-        { startsAt: { lte: new Date() } }
-      ]
-      where.AND = [
-        { OR: [
-          { expiresAt: null },
-          { expiresAt: { gte: new Date() } }
-        ]}
-      ]
+      // Temporarily removed startsAt and expiresAt filters until database schema is updated
     } else if (active === false) {
       // When explicitly requesting inactive items, show all (for admin)
       // No additional filters
@@ -53,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { title, description, image, link, position, priority, isActive, startsAt, expiresAt, metadata } = body
+    const { title, description, image, link, position, priority, isActive, metadata } = body
 
     if (!title || !image || !position) {
       return NextResponse.json({ error: 'Title, image, and position are required' }, { status: 400 })
@@ -68,8 +59,6 @@ export async function POST(request: NextRequest) {
         position,
         priority: priority || 0,
         isActive: isActive !== undefined ? isActive : true,
-        startsAt: startsAt ? new Date(startsAt) : null,
-        expiresAt: expiresAt ? new Date(expiresAt) : null,
         metadata: metadata ? JSON.stringify(metadata) : null
       }
     })

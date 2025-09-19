@@ -15,16 +15,16 @@ interface Product {
   slug: string
   price: number
   comparePrice?: number
-  images: string[]
+  images?: string[]
   averageRating: number
   reviewCount: number
-  variants: Array<{
+  variants?: Array<{
     id: string
     name: string
     value: string
     price?: number
   }>
-  category: {
+  category?: {
     name: string
     slug: string
   }
@@ -83,7 +83,7 @@ export default function ProductsGrid() {
   }
 
   const handleAddToCart = (product: Product, variantId?: string) => {
-    const variant = product.variants.find(v => v.id === variantId) || product.variants[0]
+    const variant = product.variants?.find(v => v.id === variantId) || product.variants?.[0]
     
     addItem({
       productId: product.id,
@@ -151,7 +151,7 @@ export default function ProductsGrid() {
 
       {/* Desktop Products Grid - Vertical Layout */}
       <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {products.map((product, index) => (
+        {products && products.map((product, index) => (
           <motion.div
             key={product.id}
             initial={{ opacity: 0, y: 20 }}
@@ -211,7 +211,7 @@ export default function ProductsGrid() {
                     </h3>
                   </Link>
                   
-                  <p className="text-sm text-muted-foreground">{product.category.name}</p>
+                  <p className="text-sm text-muted-foreground">{product.category?.name || 'Unknown Category'}</p>
                   
                   {/* Rating */}
                   <div className="flex items-center gap-2 mt-1">
@@ -246,7 +246,7 @@ export default function ProductsGrid() {
                 </div>
 
                 {/* Variants */}
-                {product.variants.length > 1 && (
+                {product.variants && product.variants.length > 1 && (
                   <div className="flex gap-2 flex-wrap">
                     {product.variants.slice(0, 3).map((variant) => (
                       <button
@@ -273,7 +273,7 @@ export default function ProductsGrid() {
       {/* Mobile Horizontal Scroll */}
       <div className="md:hidden">
         <div className="mobile-scroll gap-4 pb-4">
-          {products.map((product, index) => (
+          {products && products.map((product, index) => (
             <motion.div
               key={product.id}
               initial={{ opacity: 0, x: 20 }}
@@ -333,7 +333,7 @@ export default function ProductsGrid() {
                       </h3>
                     </Link>
                     
-                    <p className="text-sm text-muted-foreground">{product.category.name}</p>
+                    <p className="text-sm text-muted-foreground">{product.category?.name || 'Unknown Category'}</p>
                     
                     {/* Rating */}
                     <div className="flex items-center gap-2 mt-1">
@@ -368,7 +368,7 @@ export default function ProductsGrid() {
                   </div>
 
                   {/* Variants */}
-                  {product.variants.length > 1 && (
+                  {product.variants && product.variants.length > 1 && (
                     <div className="flex gap-2 flex-wrap">
                       {product.variants.slice(0, 2).map((variant) => (
                         <button
@@ -393,7 +393,7 @@ export default function ProductsGrid() {
         </div>
       </div>
 
-      {products.length === 0 && (
+      {(!products || products.length === 0) && (
         <div className="text-center py-12">
           <p className="text-muted-foreground">No products found</p>
         </div>

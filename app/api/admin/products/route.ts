@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
       prisma.product.findMany({
         where,
         include: {
-          category: {
+          Category: {
             select: {
               name: true
             }
@@ -72,6 +72,95 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching products:', error)
     return NextResponse.json(
       { error: 'Failed to fetch products' },
+      { status: 500 }
+    )
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { 
+      name, 
+      description, 
+      price, 
+      categoryId, 
+      images, 
+      variants, 
+      selectedBadges,
+      allowNameNumber,
+      nameNumberPrice
+    } = body
+
+    // Validate required fields
+    if (!name || !price || !categoryId) {
+      return NextResponse.json(
+        { error: 'Name, price, and category are required' },
+        { status: 400 }
+      )
+    }
+
+    // Generate slug and SKU
+    const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+    const timestamp = Date.now()
+    const randomSuffix = Math.random().toString(36).substr(2, 4)
+    const slug = `${baseSlug}-${timestamp}-${randomSuffix}`
+    const sku = `SKU-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`
+
+    const product = await prisma.product.create({
+      data: {
+        name,
+        slug,
+        sku,
+        description: description || '',
+        price: parseFloat(price),
+        categoryId,
+        images: images || [],
+        allowNameNumber: allowNameNumber || false,
+        nameNumberPrice: nameNumberPrice ? parseFloat(nameNumberPrice) : 250,
+        selectedBadges: selectedBadges ? JSON.stringify(selectedBadges) : null,
+        ProductVariant: {
+          create: variants || []
+        }
+      },
+      include: {
+        Category: true,
+        ProductVariant: true
+      }
+    })
+
+    // Handle badge associations if selectedBadges is provided
+    if (selectedBadges && selectedBadges.length > 0) {
+      // For now, we'll just log the selected badges since the ProductBadge model might not be set up yet
+      console.log('Selected badges for product:', selectedBadges)
+      console.log('Product created with customization options:', {
+        allowNameNumber: allowNameNumber || false,
+        nameNumberPrice: nameNumberPrice ? parseFloat(nameNumberPrice) : 250
+      })
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...product,
+        images: product.images || []
+      }
+    })
+  } catch (error) {
+    console.error('Error creating product:', error)
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta
+    })
+    return NextResponse.json(
+      { 
+        error: 'Failed to create product',
+        details: error.message,
+        code: error.code
+      },
       { status: 500 }
     )
   } finally {

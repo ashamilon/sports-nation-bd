@@ -36,9 +36,22 @@ const config: Config = {
           DEFAULT: "var(--destructive)",
           foreground: "var(--destructive-foreground)",
         },
+        success: {
+          DEFAULT: "var(--success)",
+          foreground: "var(--success-foreground)",
+        },
         border: "var(--border)",
         input: "var(--input)",
         ring: "var(--ring)",
+        brand: {
+          light: "var(--brand-light)",
+          "light-gray": "var(--brand-light-gray)",
+          dark: "var(--brand-dark)",
+          medium: "var(--brand-medium)",
+          accent: "var(--brand-accent)",
+          blue: "var(--brand-blue)",
+          green: "var(--brand-green)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

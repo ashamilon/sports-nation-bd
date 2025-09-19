@@ -1,0 +1,44 @@
+{
+  "badges": [
+    {
+      "id": "badge-1758234237039",
+      "name": "Euro",
+      "description": "",
+      "image": "/uploads/badges/1758234231109-__57-removebg-preview.png",
+      "category": "champions-league",
+      "price": 150,
+      "isActive": true,
+      "createdAt": "2025-09-18T22:23:57.039Z"
+    },
+    {
+      "id": "badge-1758234388393",
+      "name": "Copa Final 22",
+      "description": "",
+      "image": "/uploads/badges/1758234379082-patch_final_copa_america_2021_oficial_conmebol_103_1_0e85a9a3f3733bc8b76c3c1a152fd0d9.webp",
+      "category": "national-teams",
+      "price": 150,
+      "isActive": true,
+      "createdAt": "2025-09-18T22:26:28.393Z"
+    },
+    {
+      "id": "badge-1758234442911",
+      "name": "Copa Champ 22",
+      "description": "",
+      "image": "/uploads/badges/1758234428052-patch_campeao_copa_america_2021_231_1_c411853dc9a1ffff09c202333f498e5d.webp",
+      "category": "national-teams",
+      "price": 150,
+      "isActive": true,
+      "createdAt": "2025-09-18T22:27:22.911Z"
+    },
+    {
+      "id": "badge-1758234474158",
+      "name": "Euro",
+      "description": "",
+      "image": "/uploads/badges/1758234463527-s-l1200__3_-removebg-preview.png",
+      "category": "champions-league",
+      "price": 150,
+      "isActive": true,
+      "createdAt": "2025-09-18T22:27:54.158Z"
+    }
+  ]
+}

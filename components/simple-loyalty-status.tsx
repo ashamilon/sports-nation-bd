@@ -47,14 +47,21 @@ export default async function SimpleLoyaltyStatus() {
   }
 
   try {
-    // Get user data directly from database
+    // Get user data directly from database with error handling
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      include: {
-        orders: {
-          where: { status: 'completed' }
-        }
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        country: true,
+        loyaltyLevel: true,
+        createdAt: true
       }
+    }).catch((dbError) => {
+      console.error('Database error in loyalty status:', dbError)
+      return null
     })
 
     if (!user) {
@@ -97,10 +104,16 @@ export default async function SimpleLoyaltyStatus() {
       )
     }
 
-    // Calculate loyalty data
+    // Get real order data for loyalty calculation
+    const orderStats = await prisma.order.aggregate({
+      where: { userId: user.id },
+      _count: { id: true },
+      _sum: { total: true }
+    }).catch(() => ({ _count: { id: 0 }, _sum: { total: 0 } }))
+
     const currentLevel = user.loyaltyLevel || 'bronze'
-    const totalOrders = user.orders.length
-    const totalSpent = user.orders.reduce((sum, order) => sum + order.total, 0)
+    const totalOrders = orderStats._count.id || 0
+    const totalSpent = orderStats._sum.total || 0
 
     // Define loyalty levels
     const loyaltyLevels = {
@@ -221,8 +234,8 @@ export default async function SimpleLoyaltyStatus() {
 
             {/* Next Level Info */}
             {nextConfig && (
-              <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                <p className="text-sm text-blue-800 dark:text-blue-200">
+              <div className="p-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg">
+                <p className="text-sm font-medium text-foreground">
                   Complete {currentConfig.nextLevelOrders} orders in 3 months to reach {nextConfig.name} level and get {nextConfig.discount}৳ discount on every order!
                 </p>
               </div>
@@ -243,9 +256,15 @@ export default async function SimpleLoyaltyStatus() {
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <p className="text-muted-foreground">Error loading loyalty status</p>
-            <p className="text-xs text-muted-foreground mt-2">
-              Please try refreshing the page or contact support if the issue persists.
+            <div className="w-16 h-16 bg-primary/10 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <Crown className="h-8 w-8 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Loyalty Status Unavailable</h3>
+            <p className="text-muted-foreground mb-4">
+              We're having trouble loading your loyalty information right now.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              This is usually temporary. Please try refreshing the page.
             </p>
           </div>
         </CardContent>

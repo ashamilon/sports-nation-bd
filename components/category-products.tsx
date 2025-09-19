@@ -149,7 +149,7 @@ export default function CategoryProducts({ category, products }: CategoryProduct
           >
             <div className="product-card glass-card rounded-2xl overflow-hidden">
               {/* Product Image */}
-              <div className="relative aspect-[3/4] overflow-hidden">
+              <div className="relative aspect-square overflow-hidden">
                 {product.images && product.images.length > 0 && !product.images[0].startsWith('blob:') ? (
                   <Image
                     src={product.images[0]}
@@ -261,7 +261,7 @@ export default function CategoryProducts({ category, products }: CategoryProduct
         {sortedProducts.map((product, index) => (
           <div key={product.id} className="group">
             <div className="product-card glass-card rounded-2xl overflow-hidden">
-              <div className="relative aspect-[3/4] overflow-hidden">
+              <div className="relative aspect-square overflow-hidden">
                 {product.images && product.images.length > 0 && !product.images[0].startsWith('blob:') ? (
                   <Image
                     src={product.images[0]}

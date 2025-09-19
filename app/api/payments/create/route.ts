@@ -41,12 +41,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Customer information is required' }, { status: 400 })
     }
 
-    // Use provided total amount or calculate from items
-    const calculatedTotal = totalAmount || items.reduce((sum: number, item: any) => {
+    // Calculate the full order total from items
+    const calculatedSubtotal = items.reduce((sum: number, item: any) => {
       return sum + (item.price * item.quantity)
     }, 0)
     
-    const finalTotal = calculatedTotal + (deliveryCharge || 0) + (tipAmount || 0)
+    // Calculate the full order total (subtotal + delivery + tip)
+    const fullOrderTotal = calculatedSubtotal + (deliveryCharge || 0) + (tipAmount || 0)
+    
+    // The final total should be the full order amount for the order record
+    const finalTotal = fullOrderTotal
 
     // Generate unique order ID
     const orderId = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
@@ -82,7 +86,7 @@ export async function POST(request: NextRequest) {
         orderNumber: orderNumber,
         userId: userId,
         status: 'pending',
-        subtotal: subtotal || calculatedTotal,
+        subtotal: subtotal || calculatedSubtotal,
         shippingCost: deliveryCharge || 0,
         tipAmount: tipAmount || 0,
         total: finalTotal,
@@ -94,7 +98,7 @@ export async function POST(request: NextRequest) {
           tipAmount: tipAmount || 0,
           remainingAmount: remainingAmount || 0
         }),
-        items: {
+        OrderItem: {
           create: validItems.map((item: any) => ({
             productId: item.productId,
             quantity: item.quantity,
@@ -104,17 +108,19 @@ export async function POST(request: NextRequest) {
         }
       },
       include: {
-        items: {
+        OrderItem: {
           include: {
-            product: true
+            Product: true
           }
         }
       }
     })
 
     // Prepare payment request
+    // Use the totalAmount passed from checkout (which is already the correct payment amount)
+    const paymentAmount = totalAmount || finalTotal
     const paymentRequest: PaymentRequest = {
-      amount: paymentType === 'partial' ? (finalTotal * 0.2) : finalTotal,
+      amount: paymentAmount,
       currency,
       orderId,
       customerInfo,
@@ -137,7 +143,7 @@ export async function POST(request: NextRequest) {
       await prisma.payment.create({
         data: {
           orderId: order.id, // Use the actual order ID, not orderNumber
-          amount: paymentType === 'partial' ? (finalTotal * 0.2) : finalTotal,
+          amount: paymentAmount,
           currency,
           status: paymentStatus.PENDING,
           transactionId: paymentResponse.orderId || orderId,

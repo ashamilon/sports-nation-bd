@@ -1,40 +1,57 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #3d1a1a;
-  --primary: #8b0000;
-  --primary-foreground: #ffffff;
-  --secondary: #fff0f0;
-  --secondary-foreground: #3d1a1a;
-  --muted: #faf5f5;
-  --muted-foreground: #7a5a5a;
-  --accent: #f5e6e6;
-  --accent-foreground: #3d1a1a;
+  /* Brand Colors - Light Mode (Exact from palette) */
+  --background: #FEFEFE;
+  --foreground: #051747;
+  --primary: #051747;
+  --primary-foreground: #FEFEFE;
+  --secondary: #E7E9F0;
+  --secondary-foreground: #051747;
+  --muted: #E7E9F0;
+  --muted-foreground: #535F80;
+  --accent: #081F62;
+  --accent-foreground: #FEFEFE;
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --border: #f0d5d5;
-  --input: #f0d5d5;
-  --ring: #8b0000;
+  --success: #16a34a;
+  --success-foreground: #ffffff;
+  --border: #E7E9F0;
+  --input: #E7E9F0;
+  --ring: #051747;
   --radius: 0.5rem;
+  
+  /* Brand Color Variables (Exact from palette) */
+  --brand-light: #FEFEFE;
+  --brand-light-gray: #E7E9F0;
+  --brand-dark: #051747;
+  --brand-medium: #535F80;
+  --brand-accent: #081F62;
+  
+  /* Additional colors for better contrast */
+  --brand-blue: #3B82F6;
+  --brand-green: #10B981;
 }
 
 .dark {
-  --background: #0f0a1a;
-  --foreground: #f3f0ff;
-  --primary: #8b5cf6;
-  --primary-foreground: #ffffff;
-  --secondary: #1a0f2d;
-  --secondary-foreground: #f3f0ff;
-  --muted: #1a0f2d;
-  --muted-foreground: #8b7a9a;
-  --accent: #2d1a3d;
-  --accent-foreground: #f3f0ff;
+  /* Brand Colors - Dark Mode */
+  --background: #051747;
+  --foreground: #FEFEFE;
+  --primary: #081F62;
+  --primary-foreground: #FEFEFE;
+  --secondary: #535F80;
+  --secondary-foreground: #FEFEFE;
+  --muted: #535F80;
+  --muted-foreground: #E7E9F0;
+  --accent: #E7E9F0;
+  --accent-foreground: #051747;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #2d1a3d;
-  --input: #2d1a3d;
-  --ring: #8b5cf6;
+  --success: #22c55e;
+  --success-foreground: #ffffff;
+  --border: #535F80;
+  --input: #535F80;
+  --ring: #081F62;
 }
 
 @theme inline {
@@ -50,6 +67,8 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -57,7 +76,39 @@
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-bebas-neue);
   --radius: var(--radius);
+  
+  /* Brand Colors */
+  --color-brand-light: var(--brand-light);
+  --color-brand-light-gray: var(--brand-light-gray);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-medium: var(--brand-medium);
+  --color-brand-accent: var(--brand-accent);
 }
+
+/* Brand Color Utility Classes */
+.bg-brand-light { background-color: var(--brand-light); }
+.bg-brand-light-gray { background-color: var(--brand-light-gray); }
+.bg-brand-dark { background-color: var(--brand-dark); }
+.bg-brand-medium { background-color: var(--brand-medium); }
+.bg-brand-accent { background-color: var(--brand-accent); }
+
+.text-brand-light { color: var(--brand-light); }
+.text-brand-light-gray { color: var(--brand-light-gray); }
+.text-brand-dark { color: var(--brand-dark); }
+.text-brand-medium { color: var(--brand-medium); }
+.text-brand-accent { color: var(--brand-accent); }
+
+.border-brand-light { border-color: var(--brand-light); }
+.border-brand-light-gray { border-color: var(--brand-light-gray); }
+.border-brand-dark { border-color: var(--brand-dark); }
+.border-brand-medium { border-color: var(--brand-medium); }
+.border-brand-accent { border-color: var(--brand-accent); }
+
+/* Hover states for brand colors */
+.hover\:bg-brand-dark:hover { background-color: var(--brand-dark); }
+.hover\:bg-brand-accent:hover { background-color: var(--brand-accent); }
+.hover\:text-brand-light:hover { color: var(--brand-light); }
+.hover\:border-brand-dark:hover { border-color: var(--brand-dark); }
 
 * {
   border-color: var(--border);
@@ -198,90 +249,90 @@ body {
 
 /* Glassmorphism Effects */
 .glass-card {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(254, 254, 254, 0.1);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(139, 0, 0, 0.2);
-  box-shadow: 0 8px 32px rgba(139, 0, 0, 0.1);
+  border: 1px solid rgba(5, 23, 71, 0.2);
+  box-shadow: 0 8px 32px rgba(5, 23, 71, 0.1);
 }
 
 .dark .glass-card {
-  background: rgba(15, 10, 26, 0.3);
-  border: 1px solid rgba(139, 92, 246, 0.2);
-  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.2);
+  background: rgba(5, 23, 71, 0.3);
+  border: 1px solid rgba(8, 31, 98, 0.2);
+  box-shadow: 0 8px 32px rgba(8, 31, 98, 0.2);
 }
 
 .glass-button {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(254, 254, 254, 0.15);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(139, 0, 0, 0.2);
-  box-shadow: 0 4px 16px rgba(139, 0, 0, 0.1);
+  border: 1px solid rgba(5, 23, 71, 0.2);
+  box-shadow: 0 4px 16px rgba(5, 23, 71, 0.1);
   transition: all 0.3s ease;
 }
 
 .glass-button:hover {
-  background: rgba(139, 0, 0, 0.2);
-  border: 1px solid rgba(139, 0, 0, 0.3);
-  box-shadow: 0 6px 20px rgba(139, 0, 0, 0.2);
+  background: rgba(5, 23, 71, 0.2);
+  border: 1px solid rgba(5, 23, 71, 0.3);
+  box-shadow: 0 6px 20px rgba(5, 23, 71, 0.2);
   transform: translateY(-2px);
 }
 
 .dark .glass-button {
-  background: rgba(15, 10, 26, 0.4);
-  border: 1px solid rgba(139, 92, 246, 0.2);
-  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.2);
+  background: rgba(5, 23, 71, 0.4);
+  border: 1px solid rgba(8, 31, 98, 0.2);
+  box-shadow: 0 4px 16px rgba(8, 31, 98, 0.2);
 }
 
 .dark .glass-button:hover {
-  background: rgba(139, 92, 246, 0.3);
-  border: 1px solid rgba(139, 92, 246, 0.4);
-  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.3);
+  background: rgba(8, 31, 98, 0.3);
+  border: 1px solid rgba(8, 31, 98, 0.4);
+  box-shadow: 0 6px 20px rgba(8, 31, 98, 0.3);
 }
 
 .glass-nav {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(254, 254, 254, 0.9);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(139, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(5, 23, 71, 0.2);
 }
 
 .dark .glass-nav {
-  background: rgba(15, 10, 26, 0.8);
-  border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+  background: rgba(5, 23, 71, 0.9);
+  border-bottom: 1px solid rgba(231, 233, 240, 0.2);
 }
 
 .glass-topbar {
-  background: linear-gradient(135deg, rgba(139, 0, 0, 0.8), rgba(107, 70, 193, 0.8));
+  background: linear-gradient(135deg, rgba(5, 23, 71, 0.9), rgba(8, 31, 98, 0.8));
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(231, 233, 240, 0.1);
 }
 
 .glass-input {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(254, 254, 254, 0.1);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(139, 0, 0, 0.2);
-  box-shadow: 0 4px 16px rgba(139, 0, 0, 0.1);
+  border: 1px solid rgba(5, 23, 71, 0.2);
+  box-shadow: 0 4px 16px rgba(5, 23, 71, 0.1);
 }
 
 .dark .glass-input {
-  background: rgba(15, 10, 26, 0.3);
-  border: 1px solid rgba(139, 92, 246, 0.2);
-  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.2);
+  background: rgba(5, 23, 71, 0.3);
+  border: 1px solid rgba(8, 31, 98, 0.2);
+  box-shadow: 0 4px 16px rgba(8, 31, 98, 0.2);
 }
 
 .glass-sidebar {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(254, 254, 254, 0.9);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-left: 1px solid rgba(139, 0, 0, 0.2);
-  box-shadow: -10px 0 30px rgba(139, 0, 0, 0.1);
+  border-left: 1px solid rgba(5, 23, 71, 0.2);
+  box-shadow: -10px 0 30px rgba(5, 23, 71, 0.1);
 }
 
 .dark .glass-sidebar {
-  background: rgba(15, 10, 26, 0.9);
-  border-left: 1px solid rgba(139, 92, 246, 0.2);
-  box-shadow: -10px 0 30px rgba(139, 92, 246, 0.2);
+  background: rgba(5, 23, 71, 0.9);
+  border-left: 1px solid rgba(8, 31, 98, 0.2);
+  box-shadow: -10px 0 30px rgba(8, 31, 98, 0.2);
 }

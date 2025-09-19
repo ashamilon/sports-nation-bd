@@ -5,20 +5,22 @@ import Link from 'next/link'
 import { useCartStore } from '@/lib/store/cart-store'
 import { ThemeToggle } from '@/components/theme-toggle'
 import Logo from '@/components/logo'
-import { 
-  ShoppingCart, 
-  User, 
-  Search, 
-  Menu, 
+import {
+  ShoppingCart,
+  User,
+  Search,
+  Menu,
   X,
-  Heart,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Crown,
+  Star,
+  Gift
 } from 'lucide-react'
 import { RegionalSelector } from './regional-selector'
 import { RegionalTopBar } from './regional-topbar'
-import CategoryDropdown from './category-dropdown'
 import HeaderDropdown from './header-dropdown'
+import LoyaltyDropdown from './loyalty-dropdown'
 
 interface Collection {
   id: string
@@ -46,8 +48,6 @@ export default function Header() {
   const [isMounted, setIsMounted] = useState(false)
   const [menuConfigs, setMenuConfigs] = useState<MenuConfig[]>([])
   const [allCollections, setAllCollections] = useState<Collection[]>([])
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
-  const [collections, setCollections] = useState<Record<string, Collection[]>>({})
   const { getTotalItems, toggleCart } = useCartStore()
 
   useEffect(() => {
@@ -57,91 +57,78 @@ export default function Header() {
 
   const fetchMenuConfigs = async () => {
     try {
+      // Fetch menu configs and collections in parallel with optimized queries
       const [menuResponse, collectionsResponse] = await Promise.all([
-        fetch('/api/cms/menu-config'),
-        fetch('/api/collections?isActive=true')
+        fetch('/api/cms/menu-config', { 
+          cache: 'force-cache',
+          next: { revalidate: 300 } // Cache for 5 minutes
+        }),
+        fetch('/api/collections?isActive=true&limit=50', { 
+          cache: 'force-cache',
+          next: { revalidate: 300 } // Cache for 5 minutes
+        })
       ])
-
+      
       const menuData = await menuResponse.json()
       const collectionsData = await collectionsResponse.json()
-
+      
       if (menuData.success) {
-        setMenuConfigs(menuData.data.filter((config: MenuConfig) => 
+        const filteredConfigs = menuData.data.filter((config: MenuConfig) => 
           config.menuType === 'header' && config.isActive
-        ))
+        )
+        setMenuConfigs(filteredConfigs)
       }
-
+      
       if (collectionsData.success) {
         setAllCollections(collectionsData.data)
       }
+      
     } catch (error) {
       console.error('Error fetching menu configs:', error)
     }
   }
 
   const getCollectionsForMenu = (config: MenuConfig): Collection[] => {
-    const collectionIds = JSON.parse(config.collections)
-    return allCollections.filter(collection => 
-      collectionIds.includes(collection.id)
-    ).map(collection => ({
-      ...collection,
-      productCount: collection._count?.products || 0
-    }))
-  }
-
-  const toggleCategory = async (categoryName: string, parentId: string) => {
-    setExpandedCategories(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(categoryName)) {
-        newSet.delete(categoryName)
-      } else {
-        newSet.add(categoryName)
-        // Fetch collections when expanding
-        if (!collections[categoryName]) {
-          fetchCollections(categoryName, parentId)
-        }
-      }
-      return newSet
-    })
-  }
-
-  const fetchCollections = async (categoryName: string, parentId: string) => {
     try {
-      const response = await fetch(`/api/collections?isActive=true&parentId=${parentId}`)
-      const data = await response.json()
-      
-      if (data.success) {
-        setCollections(prev => ({
-          ...prev,
-          [categoryName]: data.data
-        }))
-      }
+      const collectionIds = JSON.parse(config.collections)
+      return allCollections.filter(collection => 
+        collectionIds.includes(collection.id)
+      ).map(collection => ({
+        ...collection,
+        productCount: collection._count?.products || 0
+      }))
     } catch (error) {
-      console.error('Error fetching collections:', error)
+      console.error('Error parsing collections for menu:', error)
+      return []
     }
   }
 
+
   const staticNavigation = [
     { name: 'Home', href: '/' },
-    { name: 'Custom Jerseys', href: '/custom-jerseys' },
-    { name: 'Loyalty Status', href: '/loyalty-status' },
-    { name: 'Loyalty Demo', href: '/loyalty-demo' },
+    { name: 'Loyalty', type: 'loyalty-dropdown' },
     { name: 'About', href: '/about' },
     { name: 'Contact', href: '/contact' },
   ]
 
   // Combine static navigation with dynamic menu configurations
+  // Put existing dropdown menus (Jerseys, Sneakers, Shorts, Watches) right after Home
+  const existingDropdowns = menuConfigs
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map(config => ({
+      name: config.title,
+      type: 'menu-dropdown' as const,
+      config: config,
+      collections: getCollectionsForMenu(config)
+    }))
+
   const navigation = [
-    ...staticNavigation,
-    ...menuConfigs
-      .sort((a, b) => a.sortOrder - b.sortOrder)
-      .map(config => ({
-        name: config.title,
-        type: 'menu-dropdown' as const,
-        config: config,
-        collections: getCollectionsForMenu(config)
-      }))
+    staticNavigation[0], // Home
+    ...existingDropdowns, // Existing dropdown menus (Jerseys, Sneakers, Shorts, Watches)
+    ...staticNavigation.slice(1) // Rest of static navigation (Loyalty, Custom Jerseys, About, Contact)
   ]
+
+
 
   return (
     <header className="sticky top-0 z-50 w-full glass-nav">
@@ -160,17 +147,15 @@ export default function Header() {
           <nav className="hidden md:flex items-center space-x-8 flex-1 justify-center">
             {navigation.map((item) => (
               <div key={item.name}>
-                {item.type === 'category-dropdown' ? (
-                  <CategoryDropdown
-                    categoryName={item.name}
-                    categorySlug={item.categorySlug}
-                    parentCollectionId={item.parentId}
-                  />
-                ) : item.type === 'menu-dropdown' ? (
+                {item.type === 'menu-dropdown' ? (
                   <HeaderDropdown
                     title={item.name}
                     collections={item.collections}
                     href={`/collections`}
+                  />
+                ) : item.type === 'loyalty-dropdown' ? (
+                  <LoyaltyDropdown
+                    title={item.name}
                   />
                 ) : (
                   <Link
@@ -194,10 +179,6 @@ export default function Header() {
               <Search className="h-5 w-5" />
             </button>
 
-            {/* Wishlist */}
-            <button className="glass-button p-2 rounded-lg">
-              <Heart className="h-5 w-5" />
-            </button>
 
             {/* Regional Selector */}
             <RegionalSelector />
@@ -253,54 +234,7 @@ export default function Header() {
             <nav className="flex flex-col space-y-2">
               {navigation.map((item) => (
                 <div key={item.name}>
-                  {item.type === 'category-dropdown' ? (
-                    <div className="space-y-1">
-                      <button
-                        onClick={() => toggleCategory(item.name, item.parentId)}
-                        className="w-full flex items-center justify-between glass-button px-4 py-2 rounded-lg font-medium text-primary"
-                      >
-                        <span>{item.name}</span>
-                        {expandedCategories.has(item.name) ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
-                        )}
-                      </button>
-                      {expandedCategories.has(item.name) && (
-                        <div className="ml-4 space-y-1">
-                          {/* Show actual collections */}
-                          {collections[item.name] && collections[item.name].length > 0 ? (
-                            collections[item.name].map((collection) => (
-                              <Link
-                                key={collection.id}
-                                href={`/collections/${collection.slug}`}
-                                className="block glass-button px-4 py-2 rounded-lg text-sm"
-                                onClick={() => setIsMenuOpen(false)}
-                              >
-                                {collection.name}
-                                <span className="text-xs text-muted-foreground ml-2">
-                                  ({collection._count.products})
-                                </span>
-                              </Link>
-                            ))
-                          ) : (
-                            <div className="text-xs text-muted-foreground px-4 py-2">
-                              Loading collections...
-                            </div>
-                          )}
-                          
-                          {/* View All Category Link */}
-                          <Link
-                            href={`/category/${item.categorySlug}`}
-                            className="block glass-button px-4 py-2 rounded-lg text-sm border-t border-border/50 mt-2 pt-2"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            View All {item.name}
-                          </Link>
-                        </div>
-                      )}
-                    </div>
-                  ) : item.type === 'menu-dropdown' ? (
+                  {item.type === 'menu-dropdown' ? (
                     <div className="space-y-1">
                       <div className="glass-button px-4 py-2 rounded-lg font-medium text-primary">
                         <span>{item.name}</span>
@@ -319,6 +253,35 @@ export default function Header() {
                             </span>
                           </Link>
                         ))}
+                      </div>
+                    </div>
+                  ) : item.type === 'loyalty-dropdown' ? (
+                    <div className="space-y-1">
+                      <div className="glass-button px-4 py-2 rounded-lg font-medium text-primary flex items-center space-x-2">
+                        <Crown className="w-4 h-4 text-yellow-500" />
+                        <span>{item.name}</span>
+                      </div>
+                      <div className="ml-4 space-y-1">
+                        <Link
+                          href="/loyalty-status"
+                          className="block glass-button px-4 py-2 rounded-lg text-sm"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <Star className="w-4 h-4 text-yellow-500" />
+                            <span>Loyalty Status</span>
+                          </div>
+                        </Link>
+                        <Link
+                          href="/loyalty-demo"
+                          className="block glass-button px-4 py-2 rounded-lg text-sm"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <Gift className="w-4 h-4 text-purple-500" />
+                            <span>Loyalty Demo</span>
+                          </div>
+                        </Link>
                       </div>
                     </div>
                   ) : (

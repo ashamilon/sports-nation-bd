@@ -266,17 +266,17 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">Checkout</h1>
-          <p className="text-muted-foreground">Complete your order securely</p>
+          <h1 className="text-4xl font-bold text-gray-800 mb-2">Checkout</h1>
+          <p className="text-gray-600">Complete your order securely</p>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Customer Information */}
-          <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-            <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+          <Card className="bg-white/95 backdrop-blur-sm shadow-2xl border border-blue-200/40 rounded-2xl hover:shadow-3xl transition-all duration-300 transform hover:-translate-y-1" style={{boxShadow: '0 25px 50px -12px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1)'}}>
+            <CardHeader className="bg-gradient-to-r from-brand-accent to-brand-dark text-white rounded-t-2xl">
               <CardTitle className="flex items-center gap-2 text-xl">
                 <User className="h-6 w-6" />
                 Customer Information
@@ -330,7 +330,7 @@ export default function CheckoutPage() {
                         size="sm"
                         variant="outline"
                         onClick={handleSaveAsDefault}
-                        className="text-blue-600 border-blue-300 hover:bg-blue-100"
+                        className="text-blue-700 border-blue-300 hover:bg-blue-100"
                       >
                         <CheckCircle className="h-4 w-4 mr-1" />
                         Save as Default Address
@@ -436,8 +436,8 @@ export default function CheckoutPage() {
           {/* Order Summary & Payment */}
           <div className="space-y-6">
             {/* Order Summary */}
-            <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-              <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
+            <Card className="bg-white/95 backdrop-blur-sm shadow-2xl border border-green-200/40 rounded-2xl hover:shadow-3xl transition-all duration-300 transform hover:-translate-y-1" style={{boxShadow: '0 25px 50px -12px rgba(34, 197, 94, 0.15), 0 0 0 1px rgba(34, 197, 94, 0.1)'}}>
+              <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-2xl">
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <Star className="h-6 w-6" />
                   Order Summary
@@ -446,9 +446,9 @@ export default function CheckoutPage() {
               <CardContent className="p-6">
                 <div className="space-y-4">
                   {items.map((item, index) => (
-                    <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div key={index} className="flex justify-between items-center p-3 bg-gray-50/80 rounded-lg border border-gray-200/60 shadow-sm">
                       <div>
-                        <p className="font-medium text-gray-900">{item.name}</p>
+                        <p className="font-medium text-gray-800">{item.name}</p>
                         {item.variantName && (
                           <p className="text-sm text-gray-600">{item.variantName}</p>
                         )}
@@ -472,19 +472,19 @@ export default function CheckoutPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Subtotal</span>
-                      <span className="font-medium">৳{getSubtotal().toFixed(2)}</span>
+                      <span className="font-medium text-gray-800">৳{getSubtotal().toFixed(2)}</span>
                     </div>
                     
                     {/* Delivery Charge */}
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Delivery</span>
-                      <span className={`font-medium ${getDeliveryCharge() === 0 ? 'text-green-600' : 'text-gray-900'}`}>
+                      <span className={`font-medium ${getDeliveryCharge() === 0 ? 'text-green-600' : 'text-gray-800'}`}>
                         {getDeliveryCharge() === 0 ? 'FREE' : `৳${getDeliveryCharge().toFixed(2)}`}
                       </span>
                     </div>
                     
                     {getDeliveryCharge() > 0 && (
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-600">
                         * Free delivery on orders over ৳2,000
                       </p>
                     )}
@@ -492,7 +492,7 @@ export default function CheckoutPage() {
                     {/* Tips Section */}
                     <div className="space-y-3">
                       <div className="flex items-center gap-2">
-                        <Heart className="h-4 w-4 text-pink-500" />
+                        <Heart className="h-4 w-4 text-red-500" />
                         <span className="text-gray-600 font-medium">Add a tip</span>
                       </div>
                       
@@ -518,13 +518,13 @@ export default function CheckoutPage() {
                           onChange={(e) => handleCustomTipChange(e.target.value)}
                           className="flex-1"
                         />
-                        <span className="text-gray-500 text-sm">৳</span>
+                        <span className="text-gray-600 text-sm">৳</span>
                       </div>
                       
                       {getTipAmount() > 0 && (
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-gray-600">Tip</span>
-                          <span className="font-medium text-pink-600">৳{getTipAmount().toFixed(2)}</span>
+                          <span className="font-medium text-red-600">৳{getTipAmount().toFixed(2)}</span>
                         </div>
                       )}
                     </div>
@@ -532,7 +532,7 @@ export default function CheckoutPage() {
                     <Separator className="my-4" />
                     
                     <div className="flex justify-between items-center text-lg font-bold">
-                      <span>Total</span>
+                      <span className="text-gray-800">Total</span>
                       <span className="text-green-600">৳{(getSubtotal() + getDeliveryCharge() + getTipAmount()).toFixed(2)}</span>
                     </div>
                   </div>
@@ -541,8 +541,8 @@ export default function CheckoutPage() {
             </Card>
 
             {/* Payment Methods */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-              <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-t-lg">
+            <Card className="bg-white/95 backdrop-blur-sm shadow-2xl border border-blue-200/40 rounded-2xl hover:shadow-3xl transition-all duration-300 transform hover:-translate-y-1" style={{boxShadow: '0 25px 50px -12px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1)'}}>
+              <CardHeader className="bg-gradient-to-r from-brand-accent to-brand-dark text-white rounded-t-2xl">
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <CreditCard className="h-6 w-6" />
                   Payment Options
@@ -573,10 +573,10 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* Payment Summary */}
-                <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                <div className="bg-white/90 p-4 rounded-lg space-y-2 border border-gray-200/60 shadow-lg">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Order Total</span>
-                    <span className="font-medium">৳{(getSubtotal() + getDeliveryCharge() + getTipAmount()).toFixed(2)}</span>
+                    <span className="font-medium text-gray-800">৳{(getSubtotal() + getDeliveryCharge() + getTipAmount()).toFixed(2)}</span>
                   </div>
                   
                   {paymentType === 'partial' && (
@@ -585,11 +585,11 @@ export default function CheckoutPage() {
                         <span>Payment Now (20%)</span>
                         <span className="font-bold">৳{getTotalAmount().toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between items-center text-orange-600">
+                      <div className="flex justify-between items-center text-blue-600">
                         <span>Remaining (80%)</span>
                         <span className="font-medium">৳{getRemainingAmount().toFixed(2)}</span>
                       </div>
-                      <p className="text-xs text-gray-500 mt-2">
+                      <p className="text-xs text-gray-600 mt-2">
                         * Remaining amount will be collected upon delivery
                       </p>
                     </>
@@ -607,7 +607,7 @@ export default function CheckoutPage() {
                 <Button
                   onClick={handlePayment}
                   disabled={isLoading}
-                  className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                  className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   {isLoading ? (
                     <Loader2 className="h-6 w-6 animate-spin mr-2" />
@@ -620,7 +620,7 @@ export default function CheckoutPage() {
                   }
                 </Button>
                 
-                <p className="text-xs text-gray-500 text-center">
+                <p className="text-xs text-gray-600 text-center">
                   Secure payment powered by SSL Commerz
                 </p>
                 

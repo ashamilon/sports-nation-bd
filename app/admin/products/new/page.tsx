@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, Upload, X, Plus, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'react-hot-toast'
+import FootballBadgeSelector from '@/components/admin/football-badge-selector'
 
 interface ProductVariant {
   id?: string
@@ -22,6 +23,7 @@ export default function NewProductPage() {
   const [images, setImages] = useState<string[]>([])
   const [variants, setVariants] = useState<ProductVariant[]>([])
   const [categories, setCategories] = useState<any[]>([])
+  const [selectedBadges, setSelectedBadges] = useState<string[]>([])
   
   const [formData, setFormData] = useState({
     name: '',
@@ -201,7 +203,8 @@ export default function NewProductPage() {
         body: JSON.stringify({
           ...formData,
           images,
-          variants
+          variants,
+          selectedBadges
         })
       })
 
@@ -573,6 +576,25 @@ export default function NewProductPage() {
                   </div>
                 )}
               </div>
+            </motion.div>
+
+            {/* Football Badges Customization */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45 }}
+              className="glass-card p-6 rounded-xl"
+            >
+              <h2 className="text-lg font-semibold text-foreground mb-4">Football Badges</h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Select football badges that can be added to this product for customization
+              </p>
+              
+              <FootballBadgeSelector
+                selectedBadges={selectedBadges}
+                onBadgeSelect={setSelectedBadges}
+                maxSelections={5}
+              />
             </motion.div>
 
             {/* Physical Properties */}

@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
+import Logo from '@/components/logo'
 import {
   LayoutDashboard,
   Package,
@@ -21,7 +22,8 @@ import {
   TrendingUp,
   DollarSign,
   Eye,
-  FileText
+  FileText,
+  Truck
 } from 'lucide-react'
 
 interface AdminLayoutProps {
@@ -32,6 +34,7 @@ const navigation = [
   { name: 'Overview', href: '/admin', icon: LayoutDashboard },
   { name: 'Products', href: '/admin/products', icon: Package },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingBag },
+  { name: 'Courier', href: '/admin/courier', icon: Truck },
   { name: 'Customers', href: '/admin/customers', icon: Users },
   { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
   { name: 'Content CMS', href: '/admin/cms', icon: FileText },
@@ -70,9 +73,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           {/* Logo and Close Button */}
           <div className="flex items-center justify-between p-4 border-b border-border/50">
             <Link href="/admin" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-primary to-primary/80 rounded-lg flex items-center justify-center">
-                <Shield className="h-5 w-5 text-white" />
-              </div>
+              <Logo size="sm" showText={false} />
               <span className="text-xl font-bold text-foreground">Admin Panel</span>
             </Link>
             <button
@@ -140,7 +141,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           {/* Logout */}
           <div className="p-4 border-t border-border/50">
             <motion.button
-              onClick={() => signOut({ callbackUrl: '/' })}
+              onClick={async () => {
+                await signOut({ 
+                  callbackUrl: '/',
+                  redirect: true 
+                })
+                // Force reload to clear any cached data
+                window.location.href = '/'
+              }}
               whileHover={{ scale: 1.02, backgroundColor: 'rgba(255,255,255,0.1)' }}
               whileTap={{ scale: 0.98 }}
               className="flex items-center space-x-3 p-3 w-full rounded-lg text-destructive hover:bg-destructive/10 transition-colors duration-200 glass-button"

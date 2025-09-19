@@ -1,13 +1,11 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Account {
@@ -23,10 +21,456 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+}
+
+model Banner {
+  id          String    @id
+  title       String
+  description String?
+  image       String
+  link        String?
+  position    String
+  priority    Int       @default(0)
+  isActive    Boolean   @default(true)
+  startsAt    DateTime?
+  expiresAt   DateTime?
+  metadata    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+}
+
+model BlogPost {
+  id              String    @id
+  title           String
+  slug            String    @unique
+  content         String
+  excerpt         String?
+  featuredImage   String?
+  metaTitle       String?
+  metaDescription String?
+  metaKeywords    String?
+  isPublished     Boolean   @default(false)
+  publishedAt     DateTime?
+  authorId        String?
+  category        String?
+  tags            String?
+  viewCount       Int       @default(0)
+  isFeatured      Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime
+  User            User?     @relation(fields: [authorId], references: [id])
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime
+  CartItem  CartItem[]
+}
+
+model CartItem {
+  id             String          @id @default(cuid())
+  cartId         String
+  productId      String
+  variantId      String?
+  quantity       Int
+  customOptions  String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime
+  Cart           Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  Product        Product         @relation(fields: [productId], references: [id])
+  ProductVariant ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@unique([cartId, productId, variantId])
+}
+
+model Category {
+  id             String     @id
+  name           String
+  slug           String     @unique
+  description    String?
+  image          String?
+  parentId       String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime
+  Category       Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
+  other_Category Category[] @relation("CategoryToCategory")
+  Product        Product[]
+}
+
+model Collection {
+  id                String              @id
+  name              String
+  slug              String              @unique
+  description       String?
+  image             String?
+  parentId          String?
+  isActive          Boolean             @default(true)
+  isFeatured        Boolean             @default(false)
+  sortOrder         Int                 @default(0)
+  metadata          String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime
+  Collection        Collection?         @relation("CollectionToCollection", fields: [parentId], references: [id])
+  other_Collection  Collection[]        @relation("CollectionToCollection")
+  CollectionProduct CollectionProduct[]
+}
+
+model CollectionProduct {
+  id           String     @id
+  collectionId String
+  productId    String
+  sortOrder    Int        @default(0)
+  isFeatured   Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime
+  Collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  Product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, productId])
+}
+
+model ContactForm {
+  id          String    @id
+  name        String
+  email       String
+  phone       String?
+  subject     String
+  message     String
+  status      String    @default("new")
+  priority    String    @default("normal")
+  assignedTo  String?
+  response    String?
+  respondedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+  User        User?     @relation(fields: [assignedTo], references: [id])
+}
+
+model CountdownTimer {
+  id          String   @id
+  title       String
+  description String?
+  targetDate  DateTime @default(now())
+  type        String   @default("offer")
+  targetId    String?
+  isActive    Boolean  @default(true)
+  position    String   @default("home")
+  priority    Int      @default(0)
+  metadata    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+}
+
+model Coupon {
+  id              String    @id
+  code            String    @unique
+  description     String?
+  type            String
+  value           Float
+  minimumAmount   Float?
+  maximumDiscount Float?
+  usageLimit      Int?
+  usedCount       Int       @default(0)
+  isActive        Boolean   @default(true)
+  startsAt        DateTime?
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime
+}
+
+model FAQ {
+  id        String   @id
+  question  String
+  answer    String
+  category  String   @default("general")
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
+
+model HomepageSettings {
+  id          String   @id
+  sectionKey  String   @unique
+  sectionName String
+  isVisible   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  metadata    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+}
+
+model LoyaltyHistory {
+  id          String   @id
+  userId      String
+  fromLevel   String
+  toLevel     String
+  reason      String
+  ordersCount Int
+  periodStart DateTime
+  periodEnd   DateTime
+  totalSpent  Float
+  createdAt   DateTime @default(now())
+  User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Media {
+  id           String   @id
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  url          String
+  alt          String?
+  caption      String?
+  category     String   @default("general")
+  tags         String?
+  isActive     Boolean  @default(true)
+  uploadedBy   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+  User         User?    @relation(fields: [uploadedBy], references: [id])
+}
+
+model MenuConfig {
+  id          String   @id
+  menuType    String
+  title       String
+  collections String
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  metadata    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+}
+
+model Navigation {
+  id               String       @id
+  title            String
+  url              String
+  parentId         String?
+  order            Int          @default(0)
+  isActive         Boolean      @default(true)
+  isExternal       Boolean      @default(false)
+  target           String       @default("_self")
+  icon             String?
+  metadata         String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime
+  Navigation       Navigation?  @relation("NavigationToNavigation", fields: [parentId], references: [id])
+  other_Navigation Navigation[] @relation("NavigationToNavigation")
+}
+
+model Newsletter {
+  id             String    @id
+  email          String    @unique
+  firstName      String?
+  lastName       String?
+  isActive       Boolean   @default(true)
+  subscribedAt   DateTime  @default(now())
+  unsubscribedAt DateTime?
+  source         String?
+  tags           String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime
+}
+
+model Offer {
+  id               String    @id
+  title            String
+  description      String?
+  type             String
+  value            Float
+  code             String?
+  minimumAmount    Float?
+  maximumDiscount  Float?
+  usageLimit       Int?
+  usedCount        Int       @default(0)
+  isActive         Boolean   @default(true)
+  startsAt         DateTime?
+  expiresAt        DateTime?
+  targetProducts   String?
+  targetCategories String?
+  metadata         String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime
+}
+
+model Order {
+  id                String           @id @default(cuid())
+  orderNumber       String           @unique
+  userId            String
+  status            String           @default("pending")
+  paymentStatus     String           @default("pending")
+  paymentMethod     String?
+  paymentIntentId   String?
+  transactionId     String?
+  subtotal          Float
+  shippingCost      Float            @default(0)
+  tipAmount         Float?           @default(0)
+  total             Float
+  currency          String           @default("BDT")
+  customerLocation  String?
+  shippingAddress   String
+  billingAddress    String?
+  trackingNumber    String?
+  courierService    String?
+  courierTrackingId String?
+  notes             String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt @default(now())
+  User              User             @relation(fields: [userId], references: [id])
+  OrderItem         OrderItem[]
+  Payment           Payment[]
+  TrackingUpdate    TrackingUpdate[]
+}
+
+model OrderItem {
+  id               String          @id @default(cuid())
+  orderId          String
+  productId        String
+  productVariantId String?
+  quantity         Int
+  price            Float
+  customOptions    String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt @default(now())
+  Order            Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  Product          Product         @relation(fields: [productId], references: [id])
+  ProductVariant   ProductVariant? @relation(fields: [productVariantId], references: [id])
+}
+
+model Page {
+  id              String        @id
+  title           String
+  slug            String        @unique
+  content         String
+  excerpt         String?
+  metaTitle       String?
+  metaDescription String?
+  metaKeywords    String?
+  template        String        @default("default")
+  isPublished     Boolean       @default(false)
+  publishedAt     DateTime?
+  authorId        String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime
+  User            User?         @relation(fields: [authorId], references: [id])
+  PageSection     PageSection[]
+}
+
+model PageSection {
+  id        String   @id
+  pageId    String
+  title     String?
+  content   String
+  type      String   @default("text")
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  metadata  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  Page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id              String   @id @default(cuid())
+  orderId         String
+  amount          Float
+  currency        String   @default("BDT")
+  status          String   @default("pending")
+  paymentMethod   String
+  transactionId   String?
+  paymentIntentId String?
+  metadata        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt @default(now())
+  Order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Product {
+  id                String              @id @default(cuid())
+  name              String
+  slug              String              @unique
+  description       String
+  price             Float
+  comparePrice      Float?
+  sku               String              @unique
+  stock             Int                 @default(0)
+  images            String[]
+  isActive          Boolean             @default(true)
+  isFeatured        Boolean             @default(false)
+  weight            Float?
+  dimensions        String?
+  categoryId        String
+  allowNameNumber   Boolean             @default(false)
+  nameNumberPrice   Float?              @default(250)
+  selectedBadges    String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  CartItem          CartItem[]
+  CollectionProduct CollectionProduct[]
+  OrderItem         OrderItem[]
+  Category          Category            @relation(fields: [categoryId], references: [id])
+  ProductVariant    ProductVariant[]
+  Review            Review[]
+  WishlistItem      WishlistItem[]
+  product_badges    product_badges[]
+}
+
+model ProductVariant {
+  id           String         @id @default(cuid())
+  name         String
+  value        String
+  price        Float?
+  stock        Int            @default(0)
+  productId    String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  CartItem     CartItem[]
+  OrderItem    OrderItem[]
+  Product      Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  WishlistItem WishlistItem[]
+}
+
+model Review {
+  id         String   @id
+  userId     String
+  productId  String
+  rating     Int
+  comment    String?
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+  Product    Product  @relation(fields: [productId], references: [id])
+  User       User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, productId])
+}
+
+model SEO {
+  id                 String   @id
+  page               String   @unique
+  title              String?
+  description        String?
+  keywords           String?
+  ogTitle            String?
+  ogDescription      String?
+  ogImage            String?
+  twitterTitle       String?
+  twitterDescription String?
+  twitterImage       String?
+  canonical          String?
+  robots             String?
+  schema             String?
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime
 }
 
 model Session {
@@ -34,48 +478,87 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SiteContent {
+  id        String   @id
+  key       String   @unique
+  title     String?
+  content   String   @default("")
+  type      String   @default("text")
+  category  String   @default("general")
+  isActive  Boolean  @default(true)
+  metadata  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
+
+model Testimonial {
+  id         String   @id
+  name       String
+  email      String?
+  company    String?
+  position   String?
+  content    String
+  rating     Int      @default(5)
+  avatar     String?
+  isActive   Boolean  @default(true)
+  isFeatured Boolean  @default(false)
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+}
+
+model TrackingUpdate {
+  id          String   @id
+  orderId     String
+  status      String
+  location    String?
+  description String?
+  timestamp   DateTime @default(now())
+  courierData String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  Order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  role          String    @default("customer") // customer, admin, moderator
-  phone         String?
-  password      String?   // For credentials auth
-  address       String?
-  city          String?
-  country       String?
-  postalCode    String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // Loyalty System Fields
-  loyaltyLevel     String    @default("bronze") // bronze, silver, gold, platinum
-  loyaltyPoints    Int       @default(0)
-  totalOrders      Int       @default(0)
-  totalSpent       Float     @default(0)
-  currentPeriodOrders Int    @default(0) // Orders in current promotion period
-  currentPeriodStart DateTime? // Start of current promotion period
-  lastOrderDate    DateTime? // Last order date for demotion tracking
-  firstOrderDiscountUsed Boolean @default(false) // Track if 50tk first order discount used
-  platinumDiscountUsed DateTime? // Track when platinum discount was last used
-  isEligibleForLoyalty Boolean @default(true) // Only for Bangladesh users
-
-  accounts Account[]
-  sessions Session[]
-  orders   Order[]
-  reviews  Review[]
-  wishlist Wishlist?
-  loyaltyHistory LoyaltyHistory[]
-  // CMS Relations
-  pages         Page[]
-  blogPosts     BlogPost[]
-  media         Media[]
-  contactForms  ContactForm[]
+  id                     String           @id @default(cuid())
+  name                   String?
+  email                  String           @unique
+  emailVerified          DateTime?
+  image                  String?
+  role                   String           @default("customer")
+  phone                  String?
+  password               String?
+  address                String?
+  city                   String?
+  country                String?
+  postalCode             String?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime @updatedAt
+  loyaltyLevel           String           @default("bronze")
+  loyaltyPoints          Int              @default(0)
+  totalOrders            Int              @default(0)
+  totalSpent             Float            @default(0)
+  currentPeriodOrders    Int              @default(0)
+  currentPeriodStart     DateTime?
+  lastOrderDate          DateTime?
+  firstOrderDiscountUsed Boolean          @default(false)
+  platinumDiscountUsed   DateTime?
+  isEligibleForLoyalty   Boolean          @default(true)
+  Account                Account[]
+  BlogPost               BlogPost[]
+  ContactForm            ContactForm[]
+  LoyaltyHistory         LoyaltyHistory[]
+  Media                  Media[]
+  Order                  Order[]
+  Page                   Page[]
+  Review                 Review[]
+  Session                Session[]
+  Wishlist               Wishlist?
 }
 
 model VerificationToken {
@@ -86,531 +569,48 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// Loyalty System Models
-model LoyaltyHistory {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  fromLevel     String   // Previous level
-  toLevel       String   // New level
-  reason        String   // "promotion", "demotion", "reset"
-  ordersCount   Int      // Number of orders that triggered the change
-  periodStart   DateTime // Start of the period
-  periodEnd     DateTime // End of the period
-  totalSpent    Float    // Total spent in the period
-  createdAt     DateTime @default(now())
-}
-
-model Category {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  description String?
-  image       String?
-  parentId    String?
-  parent      Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children    Category[] @relation("CategoryHierarchy")
-  products    Product[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Product {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  description String
-  price       Float
-  comparePrice Float?
-  sku         String   @unique
-  stock       Int      @default(0)
-  images      String[] // Array of image URLs
-  isActive    Boolean  @default(true)
-  isFeatured  Boolean  @default(false)
-  weight      Float?
-  dimensions  String?
-  categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id])
-  variants    ProductVariant[]
-  reviews     Review[]
-  orderItems  OrderItem[]
-  cartItems   CartItem[]
-  wishlistItems WishlistItem[]
-  badges      ProductBadge[]
-  collections CollectionProduct[] // Many-to-many with collections
-  // Customization options
-  allowNameNumber Boolean @default(false) // For jerseys
-  nameNumberPrice Float? @default(250) // Additional price for name/number
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model ProductVariant {
-  id        String   @id @default(cuid())
-  name      String
-  value     String
-  price     Float?
-  stock     Int      @default(0)
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  orderItems OrderItem[]
-  cartItems  CartItem[]
-  wishlistItems WishlistItem[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Cart {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  items     CartItem[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model CartItem {
-  id        String   @id @default(cuid())
-  cartId    String
-  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product  @relation(fields: [productId], references: [id])
-  variantId String?
-  variant   ProductVariant? @relation(fields: [variantId], references: [id])
-  quantity  Int
-  customOptions String? // JSON string for custom jerseys, badges, names, numbers
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([cartId, productId, variantId])
-}
-
 model Wishlist {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items     WishlistItem[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String         @id
+  userId       String         @unique
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime
+  User         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  WishlistItem WishlistItem[]
 }
 
 model WishlistItem {
-  id        String   @id @default(cuid())
-  wishlistId String
-  wishlist  Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  variantId String?
-  variant   ProductVariant? @relation(fields: [variantId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String          @id
+  wishlistId     String
+  productId      String
+  variantId      String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime
+  Product        Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  ProductVariant ProductVariant? @relation(fields: [variantId], references: [id])
+  Wishlist       Wishlist        @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
 
   @@unique([wishlistId, productId, variantId])
 }
 
-model Order {
-  id              String      @id @default(cuid())
-  orderNumber     String      @unique
-  userId          String
-  user            User        @relation(fields: [userId], references: [id])
-  status          String      @default("pending") // pending, confirmed, processing, shipped, completed, cancelled, refunded
-  paymentStatus   String      @default("pending") // pending, paid, partial, failed, refunded
-  paymentMethod   String?
-  paymentIntentId String?
-  transactionId   String?
-  subtotal        Float
-  shippingCost    Float       @default(0)
-  tipAmount       Float?      @default(0)
-  total           Float
-  currency        String      @default("BDT")
-  customerLocation String?    // bangladesh, europe
-  shippingAddress String      // JSON string
-  billingAddress  String?     // JSON string
-  trackingNumber  String?
-  courierService  String?     // sundarban, pathao
-  courierTrackingId String?   // Courier's tracking ID
-  notes           String?
-  items           OrderItem[]
-  payments        Payment[]
-  trackingUpdates TrackingUpdate[]
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+model badges {
+  id             String           @id
+  name           String
+  description    String?
+  image          String
+  category       String
+  price          Float            @default(150)
+  isActive       Boolean          @default(true)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
+  product_badges product_badges[]
 }
 
-model OrderItem {
-  id            String         @id @default(cuid())
-  orderId       String
-  order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId     String
-  product       Product        @relation(fields: [productId], references: [id])
-  productVariantId String?
-  productVariant ProductVariant? @relation(fields: [productVariantId], references: [id])
-  quantity      Int
-  price         Float
-  customOptions String? // JSON string for custom jerseys, badges, names, numbers
-  createdAt     DateTime       @default(now())
-}
-
-model Review {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+model product_badges {
+  id        String  @id
   productId String
-  product   Product  @relation(fields: [productId], references: [id])
-  rating    Int
-  comment   String?
-  isVerified Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  badgeId   String
+  badges    badges  @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  Product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, productId])
-}
-
-model Payment {
-  id              String   @id @default(cuid())
-  orderId         String
-  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  amount          Float
-  currency        String   @default("BDT")
-  status          String   @default("pending") // pending, completed, failed, refunded
-  paymentMethod   String   // card, bKash, Rocket, bank_transfer, cash_on_delivery
-  transactionId   String?
-  paymentIntentId String?
-  metadata        String?  // JSON string for additional payment data
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-}
-
-model Coupon {
-  id          String     @id @default(cuid())
-  code        String     @unique
-  description String?
-  type        String     // percentage, fixed
-  value       Float
-  minimumAmount Float?
-  maximumDiscount Float?
-  usageLimit  Int?
-  usedCount   Int        @default(0)
-  isActive    Boolean    @default(true)
-  startsAt    DateTime?
-  expiresAt   DateTime?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-}
-
-model ProductBadge {
-  id        String   @id @default(cuid())
-  name      String
-  description String?
-  price     Float
-  image     String?  // Badge image URL
-  isActive  Boolean  @default(true)
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// CMS Models for Content Management
-model SiteContent {
-  id          String   @id @default(cuid())
-  key         String   @unique // e.g., "home_hero_title", "contact_email"
-  title       String?
-  content     String   // Main content (can be HTML, JSON, or plain text)
-  type        String   @default("text") // text, html, json, image, number, boolean
-  category    String   @default("general") // hero, footer, contact, offers, etc.
-  isActive    Boolean  @default(true)
-  metadata    String?  // Additional JSON data
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Banner {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  image       String   // Banner image URL
-  link        String?  // Optional link URL
-  position    String   // home_hero, home_top, product_page, etc.
-  priority    Int      @default(0) // Higher number = higher priority
-  isActive    Boolean  @default(true)
-  startsAt    DateTime?
-  expiresAt   DateTime?
-  metadata    String?  // Additional JSON data
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model CountdownTimer {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  targetDate  DateTime
-  type        String   @default("offer") // offer, product, event, etc.
-  targetId    String?  // Product ID or other target
-  isActive    Boolean  @default(true)
-  position    String   @default("home") // home, product, category, etc.
-  priority    Int      @default(0)
-  metadata    String?  // Additional JSON data
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Offer {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  type        String   // percentage, fixed_amount, buy_x_get_y, etc.
-  value       Float
-  code        String?  // Coupon code if applicable
-  minimumAmount Float?
-  maximumDiscount Float?
-  usageLimit  Int?
-  usedCount   Int      @default(0)
-  isActive    Boolean  @default(true)
-  startsAt    DateTime?
-  expiresAt   DateTime?
-  targetProducts String? // JSON array of product IDs
-  targetCategories String? // JSON array of category IDs
-  metadata    String?  // Additional JSON data
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-// Comprehensive CMS Models
-model Page {
-  id          String   @id @default(cuid())
-  title       String
-  slug        String   @unique
-  content     String   // HTML content
-  excerpt     String?
-  metaTitle   String?
-  metaDescription String?
-  metaKeywords String?
-  template    String   @default("default") // page template
-  isPublished Boolean  @default(false)
-  publishedAt DateTime?
-  authorId    String?
-  author      User?    @relation(fields: [authorId], references: [id])
-  sections    PageSection[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model PageSection {
-  id          String   @id @default(cuid())
-  pageId      String
-  page        Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
-  title       String?
-  content     String   // HTML content
-  type        String   @default("text") // text, image, video, gallery, etc.
-  order       Int      @default(0)
-  isActive    Boolean  @default(true)
-  metadata    String?  // Additional JSON data
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model MenuConfig {
-  id          String   @id @default(cuid())
-  menuType    String   // header, footer, sidebar, etc.
-  title       String   // Display name for the menu
-  collections String   // JSON array of collection IDs
-  isActive    Boolean  @default(true)
-  sortOrder   Int      @default(0)
-  metadata    String?  // Additional JSON data
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Navigation {
-  id          String   @id @default(cuid())
-  title       String
-  url         String
-  parentId    String?
-  parent      Navigation? @relation("NavigationHierarchy", fields: [parentId], references: [id])
-  children    Navigation[] @relation("NavigationHierarchy")
-  order       Int      @default(0)
-  isActive    Boolean  @default(true)
-  isExternal  Boolean  @default(false)
-  target      String   @default("_self") // _self, _blank
-  icon        String?
-  metadata    String?  // Additional JSON data
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Media {
-  id          String   @id @default(cuid())
-  filename    String
-  originalName String
-  mimeType    String
-  size        Int
-  url         String
-  alt         String?
-  caption     String?
-  category    String   @default("general") // images, videos, documents, etc.
-  tags        String?  // JSON array of tags
-  isActive    Boolean  @default(true)
-  uploadedBy  String?
-  uploader    User?    @relation(fields: [uploadedBy], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model BlogPost {
-  id          String   @id @default(cuid())
-  title       String
-  slug        String   @unique
-  content     String   // HTML content
-  excerpt     String?
-  featuredImage String?
-  metaTitle   String?
-  metaDescription String?
-  metaKeywords String?
-  isPublished Boolean  @default(false)
-  publishedAt DateTime?
-  authorId    String?
-  author      User?    @relation(fields: [authorId], references: [id])
-  category    String?
-  tags        String?  // JSON array of tags
-  viewCount   Int      @default(0)
-  isFeatured  Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Testimonial {
-  id          String   @id @default(cuid())
-  name        String
-  email       String?
-  company     String?
-  position    String?
-  content     String
-  rating      Int      @default(5) // 1-5 stars
-  avatar      String?
-  isActive    Boolean  @default(true)
-  isFeatured  Boolean  @default(false)
-  order       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model FAQ {
-  id          String   @id @default(cuid())
-  question    String
-  answer      String
-  category    String   @default("general")
-  order       Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model ContactForm {
-  id          String   @id @default(cuid())
-  name        String
-  email       String
-  phone       String?
-  subject     String
-  message     String
-  status      String   @default("new") // new, read, replied, closed
-  priority    String   @default("normal") // low, normal, high, urgent
-  assignedTo  String?
-  assignee    User?    @relation(fields: [assignedTo], references: [id])
-  response    String?
-  respondedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Newsletter {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  firstName   String?
-  lastName    String?
-  isActive    Boolean  @default(true)
-  subscribedAt DateTime @default(now())
-  unsubscribedAt DateTime?
-  source      String?  // where they subscribed from
-  tags        String?  // JSON array of interests
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model SEO {
-  id          String   @id @default(cuid())
-  page        String   @unique // page path or identifier
-  title       String?
-  description String?
-  keywords    String?
-  ogTitle     String?
-  ogDescription String?
-  ogImage     String?
-  twitterTitle String?
-  twitterDescription String?
-  twitterImage String?
-  canonical   String?
-  robots      String?  // index, noindex, follow, nofollow
-  schema      String?  // JSON-LD structured data
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model TrackingUpdate {
-  id          String   @id @default(cuid())
-  orderId     String
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  status      String   // picked_up, in_transit, out_for_delivery, delivered, failed_delivery, returned
-  location    String?  // Current location
-  description String?  // Status description
-  timestamp   DateTime @default(now())
-  courierData String?  // JSON data from courier API
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-// Collection Management System
-model Collection {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  description String?
-  image       String?  // Collection banner/cover image
-  parentId    String?  // For sub-collections
-  parent      Collection? @relation("CollectionHierarchy", fields: [parentId], references: [id])
-  children    Collection[] @relation("CollectionHierarchy")
-  products    CollectionProduct[] // Many-to-many with products
-  isActive    Boolean  @default(true)
-  isFeatured  Boolean  @default(false)
-  sortOrder   Int      @default(0)
-  metadata    String?  // Additional JSON data
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model CollectionProduct {
-  id           String     @id @default(cuid())
-  collectionId String
-  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  productId    String
-  product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
-  sortOrder    Int        @default(0)
-  isFeatured   Boolean    @default(false)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-
-  @@unique([collectionId, productId])
-}
-
-model HomepageSettings {
-  id          String   @id @default(cuid())
-  sectionKey  String   @unique // e.g., 'hero', 'banners', 'collections', 'products', 'testimonials'
-  sectionName String   // Display name for the section
-  isVisible   Boolean  @default(true)
-  sortOrder   Int      @default(0)
-  metadata    String?  // JSON string for additional settings
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  @@unique([productId, badgeId])
 }

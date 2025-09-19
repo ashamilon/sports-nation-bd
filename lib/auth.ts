@@ -1,7 +1,6 @@
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
-import { Client } from 'pg'
 import bcrypt from 'bcryptjs'
 
 export const authOptions: NextAuthOptions = {
@@ -21,28 +20,22 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
-        const client = new Client({
-          connectionString: process.env.DATABASE_URL
-        })
-
         try {
-          await client.connect()
+          // Use Prisma instead of direct PostgreSQL client
+          const { prisma } = await import('@/lib/prisma')
           
-          const result = await client.query(`
-            SELECT id, email, name, role, password
-            FROM "User" 
-            WHERE email = $1
-          `, [credentials.email])
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              role: true,
+              password: true
+            }
+          })
 
-          await client.end()
-
-          if (result.rows.length === 0) {
-            return null
-          }
-
-          const user = result.rows[0]
-
-          if (!user.password) {
+          if (!user || !user.password) {
             return null
           }
 
@@ -54,6 +47,13 @@ export const authOptions: NextAuthOptions = {
           if (!isPasswordValid) {
             return null
           }
+
+          console.log('Authentication successful for user:', {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role
+          })
 
           return {
             id: user.id,
@@ -75,15 +75,20 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        console.log('JWT callback - user:', user)
         token.role = user.role
+        token.id = user.id
       }
+      console.log('JWT callback - token:', token)
       return token
     },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.sub!
+        console.log('Session callback - token:', token)
+        session.user.id = token.id as string
         session.user.role = token.role as string
       }
+      console.log('Session callback - session:', session)
       return session
     }
   },

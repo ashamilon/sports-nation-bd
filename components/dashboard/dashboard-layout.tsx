@@ -119,7 +119,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* Footer */}
           <div className="p-4 border-t border-white/10">
             <button 
-              onClick={() => signOut({ callbackUrl: '/' })}
+              onClick={async () => {
+                await signOut({ 
+                  callbackUrl: '/',
+                  redirect: true 
+                })
+                // Force reload to clear any cached data
+                window.location.href = '/'
+              }}
               className="flex items-center space-x-3 w-full px-4 py-3 text-muted-foreground hover:text-foreground hover:glass-button rounded-lg transition-all duration-200"
             >
               <LogOut className="h-5 w-5" />

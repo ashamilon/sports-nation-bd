@@ -7,14 +7,17 @@ export default withAuth(
     const isAdmin = token?.role === 'admin'
     const pathname = req.nextUrl.pathname
 
-    // Redirect non-admin users trying to access admin routes
-    if (pathname.startsWith('/admin') && !isAdmin) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
-    }
+    // Only apply redirects if user is authenticated
+    if (token) {
+      // Redirect non-admin users trying to access admin routes
+      if (pathname.startsWith('/admin') && !isAdmin) {
+        return NextResponse.redirect(new URL('/dashboard', req.url))
+      }
 
-    // Redirect admin users from user dashboard to admin dashboard
-    if (pathname.startsWith('/dashboard') && isAdmin) {
-      return NextResponse.redirect(new URL('/admin', req.url))
+      // Redirect admin users from user dashboard to admin dashboard
+      if (pathname.startsWith('/dashboard') && isAdmin) {
+        return NextResponse.redirect(new URL('/admin', req.url))
+      }
     }
   },
   {

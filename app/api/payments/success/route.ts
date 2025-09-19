@@ -141,7 +141,7 @@ export async function GET(request: NextRequest) {
 
     if (orderId && transactionId && status === 'success') {
       // Process the payment success
-      const result = await POST(new NextRequest(request.url, {
+      const result = await POST(new NextRequest(request.url || 'http://localhost:3000', {
         method: 'POST',
         body: JSON.stringify({
           orderId,
@@ -152,15 +152,15 @@ export async function GET(request: NextRequest) {
 
       if (result.ok) {
         // Redirect to success page
-        return NextResponse.redirect(new URL('/payment/success', request.url))
+        return NextResponse.redirect(new URL('/payment/success', request.url || 'http://localhost:3000'))
       }
     }
 
     // Default redirect to success page
-    return NextResponse.redirect(new URL('/payment/success', request.url))
+    return NextResponse.redirect(new URL('/payment/success', request.url || 'http://localhost:3000'))
 
   } catch (error) {
     console.error('Payment success GET error:', error)
-    return NextResponse.redirect(new URL('/payment/success', request.url))
+    return NextResponse.redirect(new URL('/payment/success', request.url || 'http://localhost:3000'))
   }
 }

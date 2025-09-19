@@ -16,6 +16,25 @@ import {
   MapPin
 } from 'lucide-react'
 
+// Wrapper component to handle loyalty status errors gracefully
+function LoyaltyStatusWrapper() {
+  try {
+    return <SimpleLoyaltyStatus />
+  } catch (error) {
+    console.error('Error in loyalty status wrapper:', error)
+    return (
+      <div className="glass-card p-4 rounded-2xl">
+        <div className="text-center py-4">
+          <h3 className="text-lg font-semibold mb-2">Loyalty Status</h3>
+          <p className="text-muted-foreground text-sm">
+            Loyalty status temporarily unavailable
+          </p>
+        </div>
+      </div>
+    )
+  }
+}
+
 export default async function DashboardOverviewReal() {
   const session = await getServerSession(authOptions)
 
@@ -37,37 +56,143 @@ export default async function DashboardOverviewReal() {
   }
 
   try {
-    // Fetch real user data
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      include: {
-        orders: {
-          orderBy: { createdAt: 'desc' },
-          take: 5
-        },
-        _count: {
-          select: {
-            orders: true,
-            reviews: true
-          }
-        }
-      }
+    // Debug: Log session information
+    console.log('Dashboard session:', {
+      userId: session.user.id,
+      userEmail: session.user.email,
+      userName: session.user.name,
+      sessionFull: session
     })
 
-    if (!user) {
-      return (
-        <div className="space-y-1 p-1 pt-4">
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">User not found</p>
-          </div>
-        </div>
-      )
+    // Fetch real user data with error handling
+    console.log('Attempting to find user with ID:', session.user.id)
+    
+    // First, get the user without the problematic relations
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        country: true,
+        loyaltyLevel: true,
+        createdAt: true
+      }
+    }).catch((dbError) => {
+      console.error('Database error in dashboard:', dbError)
+      console.error('Error details:', {
+        message: dbError.message,
+        code: dbError.code,
+        meta: dbError.meta
+      })
+      return null
+    })
+    
+    console.log('Database query result:', user ? 'User found' : 'User not found')
+    if (user) {
+      console.log('User data:', {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        country: user.country
+      })
     }
 
-    // Calculate real stats
-    const totalOrders = user._count.orders
-    const totalSpent = user.orders.reduce((sum, order) => sum + order.total, 0)
-    const totalReviews = user._count.reviews
+    let finalUser = user
+
+    if (!finalUser) {
+      // Try to find user by email as fallback
+      console.log('Trying to find user by email...')
+      const userByEmail = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          country: true,
+          loyaltyLevel: true,
+          createdAt: true
+        }
+      }).catch((dbError) => {
+        console.error('Database error finding user by email:', dbError)
+        return null
+      })
+
+      if (userByEmail) {
+        console.log('User found by email, using that data')
+        finalUser = userByEmail
+      } else {
+        return (
+          <div className="space-y-1 p-1 pt-4">
+            <div className="text-center py-8">
+              <h1 className="text-2xl font-bold mb-4">Welcome back!</h1>
+              <p className="text-muted-foreground mb-6">User account not found</p>
+              <div className="bg-muted/50 p-4 rounded-lg mb-4 text-left max-w-md mx-auto">
+                <p className="text-sm font-medium mb-2">Debug Information:</p>
+                <p className="text-xs text-muted-foreground mb-1">
+                  Session User ID: {session.user.id}
+                </p>
+                <p className="text-xs text-muted-foreground mb-1">
+                  Session Email: {session.user.email}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  This information is being logged to the console for debugging.
+                </p>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Your session is valid, but we couldn't find your user account in our database.
+                This usually means there's a mismatch between your session and database records.
+              </p>
+              <div className="space-y-2">
+                <Link 
+                  href="/auth/signin"
+                  className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors mr-2"
+                >
+                  Sign In Again
+                </Link>
+                <Link 
+                  href="/auth/signup"
+                  className="inline-flex items-center gap-2 border border-primary text-primary px-6 py-3 rounded-lg hover:bg-primary/10 transition-colors"
+                >
+                  Create Account
+                </Link>
+              </div>
+            </div>
+          </div>
+        )
+      }
+    }
+
+    // Fetch real order data from database
+    const [orderStats, recentOrders] = await Promise.all([
+      // Get order statistics
+      prisma.order.aggregate({
+        where: { userId: finalUser.id },
+        _count: { id: true },
+        _sum: { total: true }
+      }).catch(() => ({ _count: { id: 0 }, _sum: { total: 0 } })),
+      
+      // Get recent orders
+      prisma.order.findMany({
+        where: { userId: finalUser.id },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        include: {
+          OrderItem: {
+            include: {
+              Product: true
+            }
+          }
+        }
+      }).catch(() => [])
+    ])
+
+    const totalOrders = orderStats._count.id || 0
+    const totalSpent = orderStats._sum.total || 0
+    const totalReviews = 0 // TODO: Implement reviews functionality
     const wishlistCount = 0 // TODO: Implement wishlist functionality
 
     const stats = [
@@ -140,7 +265,7 @@ export default async function DashboardOverviewReal() {
         {/* Header */}
         <div>
           <h1 className="text-base font-bold text-foreground">
-            Welcome back, {user.name || 'User'}!
+            Welcome back, {finalUser.name || 'User'}!
           </h1>
           <p className="text-muted-foreground text-xs">
             Here's what's happening with your account.
@@ -173,7 +298,7 @@ export default async function DashboardOverviewReal() {
 
         {/* Loyalty Status */}
         <div>
-          <SimpleLoyaltyStatus />
+          <LoyaltyStatusWrapper />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
@@ -190,20 +315,24 @@ export default async function DashboardOverviewReal() {
             </div>
             
             <div className="space-y-4">
-              {user.orders.length > 0 ? (
-                user.orders.map((order) => (
-                  <div key={order.id} className="flex items-center justify-between p-4 glass-card rounded-lg">
+              {recentOrders.length > 0 ? (
+                recentOrders.map((order) => (
+                  <div key={order.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                     <div className="flex items-center space-x-3">
                       {getStatusIcon(order.status)}
                       <div>
-                        <p className="font-medium text-foreground">{order.orderNumber}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="font-medium text-foreground text-sm">
+                          Order #{order.orderNumber}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {order.OrderItem.length} item{order.OrderItem.length !== 1 ? 's' : ''} • ৳{order.total.toLocaleString()}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
                           {new Date(order.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-foreground">৳{order.total.toLocaleString()}</p>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                         {order.status}
                       </span>
@@ -217,7 +346,7 @@ export default async function DashboardOverviewReal() {
                   <p className="text-muted-foreground mb-4">
                     Start shopping to see your orders here!
                   </p>
-                  <Link 
+                  <Link
                     href="/products"
                     className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
                   >
@@ -278,10 +407,29 @@ export default async function DashboardOverviewReal() {
       <div className="space-y-1 p-1 pt-4">
         <div className="text-center py-8">
           <h1 className="text-2xl font-bold mb-4">Welcome back!</h1>
-          <p className="text-muted-foreground mb-6">Error loading dashboard data</p>
-          <p className="text-sm text-muted-foreground">
-            Please try refreshing the page or contact support if the issue persists.
+          <p className="text-muted-foreground mb-6">Unable to load dashboard data</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            There was an issue loading your dashboard information. This might be due to:
           </p>
+          <ul className="text-sm text-muted-foreground text-left max-w-md mx-auto mb-6">
+            <li>• Database connection issues</li>
+            <li>• Missing user data</li>
+            <li>• Authentication problems</li>
+          </ul>
+          <div className="space-y-2">
+            <button 
+              onClick={() => window.location.reload()}
+              className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors mr-2"
+            >
+              Refresh Page
+            </button>
+            <Link 
+              href="/auth/signin"
+              className="inline-flex items-center gap-2 border border-primary text-primary px-6 py-3 rounded-lg hover:bg-primary/10 transition-colors"
+            >
+              Sign In Again
+            </Link>
+          </div>
         </div>
       </div>
     )

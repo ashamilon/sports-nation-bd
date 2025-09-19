@@ -9,16 +9,16 @@ export default function PaymentFailedPage() {
   const router = useRouter()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
-          <Card className="border-red-200 bg-white/80 backdrop-blur-sm shadow-lg">
-            <CardHeader className="text-center bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-t-lg">
+          <Card className="glass-card shadow-2xl border border-red-200/40 rounded-2xl hover:shadow-3xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader className="text-center bg-gradient-to-r from-red-600 to-red-500 text-white rounded-t-2xl">
               <div className="mx-auto mb-4">
                 <AlertTriangle className="h-16 w-16 text-white mx-auto" />
               </div>
               <CardTitle className="text-2xl">Payment Failed</CardTitle>
-              <p className="text-red-100">
+              <p className="text-white/90">
                 We encountered an issue processing your payment. Please try again.
               </p>
             </CardHeader>
@@ -31,9 +31,9 @@ export default function PaymentFailedPage() {
                 </p>
               </div>
 
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h4 className="font-medium text-blue-900 mb-2">What you can do:</h4>
-                <ul className="text-blue-700 text-sm space-y-1">
+              <div className="bg-brand-accent/10 p-4 rounded-lg border border-brand-accent/20">
+                <h4 className="font-medium text-brand-accent mb-2">What you can do:</h4>
+                <ul className="text-brand-dark text-sm space-y-1">
                   <li>• Check your payment method details</li>
                   <li>• Ensure sufficient funds are available</li>
                   <li>• Try a different payment method</li>
@@ -41,22 +41,22 @@ export default function PaymentFailedPage() {
                 </ul>
               </div>
 
-              <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                <h4 className="font-medium text-yellow-900 mb-2">Need help?</h4>
-                <p className="text-yellow-700 text-sm">
+              <div className="bg-gray-50/80 p-4 rounded-lg border border-gray-200/60 shadow-sm">
+                <h4 className="font-medium text-foreground mb-2">Need help?</h4>
+                <p className="text-muted-foreground text-sm">
                   If you continue to experience issues, please contact our support team. 
                   We're here to help you complete your purchase.
                 </p>
                 <div className="flex items-center gap-2 mt-2">
-                  <Phone className="h-4 w-4 text-yellow-600" />
-                  <span className="text-sm text-yellow-700">+880 1234 567890</span>
+                  <Phone className="h-4 w-4 text-brand-dark" />
+                  <span className="text-sm text-muted-foreground">+880 1234 567890</span>
                 </div>
               </div>
 
               <div className="flex gap-4">
                 <Button
                   onClick={() => router.push('/checkout')}
-                  className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                  className="flex-1 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   Try Again
@@ -64,7 +64,7 @@ export default function PaymentFailedPage() {
                 <Button
                   onClick={() => router.push('/')}
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 border-brand-dark/30 text-brand-dark hover:bg-brand-accent/10 hover:border-brand-accent"
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Continue Shopping
@@ -72,9 +72,9 @@ export default function PaymentFailedPage() {
               </div>
 
               <div className="text-center">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Questions about your order? Contact us at{' '}
-                  <a href="mailto:support@sportsnationbd.com" className="text-primary hover:underline">
+                  <a href="mailto:support@sportsnationbd.com" className="text-brand-accent hover:underline">
                     support@sportsnationbd.com
                   </a>
                 </p>

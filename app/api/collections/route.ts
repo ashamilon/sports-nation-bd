@@ -30,12 +30,12 @@ export async function GET(request: NextRequest) {
     const collections = await prisma.collection.findMany({
       where,
       include: {
-        parent: true,
-        children: includeChildren ? true : false,
+        Collection: true, // parent relationship
+        other_Collection: includeChildren ? true : false, // children relationship
         _count: {
           select: {
-            children: true,
-            products: true
+            other_Collection: true,
+            CollectionProduct: true
           }
         }
       },

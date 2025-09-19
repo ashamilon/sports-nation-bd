@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     if (type) where.type = type
     if (active) {
       where.isActive = true
-      where.targetDate = { gte: new Date() } // Only future countdowns
+      // Temporarily removed targetDate filter until database schema is updated
     } else if (active === false) {
       // When explicitly requesting inactive items, show all (for admin)
       // No additional filters
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       where,
       orderBy: [
         { priority: 'desc' },
-        { targetDate: 'asc' }
+        { createdAt: 'desc' }
       ]
     })
 
@@ -46,17 +46,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { title, description, endDate, type, targetId, isActive, position, priority, metadata } = body
+    const { title, description, type, targetId, isActive, position, priority, metadata } = body
 
-    if (!title || !endDate) {
-      return NextResponse.json({ error: 'Title and end date are required' }, { status: 400 })
+    if (!title) {
+      return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
 
     const countdown = await prisma.countdownTimer.create({
       data: {
         title,
         description,
-        targetDate: new Date(endDate),
         type: type || 'offer',
         targetId,
         isActive: isActive !== undefined ? isActive : true,

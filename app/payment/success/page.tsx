@@ -9,16 +9,16 @@ export default function PaymentSuccessPage() {
   const router = useRouter()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
-          <Card className="border-green-200 bg-white/80 backdrop-blur-sm shadow-lg">
-            <CardHeader className="text-center bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
+          <Card className="bg-white/95 backdrop-blur-sm shadow-2xl border border-green-200/40 rounded-2xl hover:shadow-3xl transition-all duration-300 transform hover:-translate-y-1" style={{boxShadow: '0 25px 50px -12px rgba(34, 197, 94, 0.15), 0 0 0 1px rgba(34, 197, 94, 0.1)'}}>
+            <CardHeader className="text-center bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-2xl">
               <div className="mx-auto mb-4">
                 <CheckCircle className="h-16 w-16 text-white mx-auto" />
               </div>
               <CardTitle className="text-2xl">Payment Successful!</CardTitle>
-              <p className="text-green-100">
+              <p className="text-white/90">
                 Thank you for your purchase. Your order has been confirmed.
               </p>
             </CardHeader>
@@ -32,7 +32,7 @@ export default function PaymentSuccessPage() {
               </div>
 
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h4 className="font-medium text-blue-900 mb-2">What happens next?</h4>
+                <h4 className="font-medium text-blue-800 mb-2">What happens next?</h4>
                 <ul className="text-blue-700 text-sm space-y-1">
                   <li>• You'll receive an email confirmation</li>
                   <li>• We'll prepare your order for shipping</li>
@@ -41,9 +41,9 @@ export default function PaymentSuccessPage() {
                 </ul>
               </div>
 
-              <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                <h4 className="font-medium text-yellow-900 mb-2">Order Support</h4>
-                <p className="text-yellow-700 text-sm">
+              <div className="bg-gray-50/80 p-4 rounded-lg border border-gray-200/60 shadow-sm">
+                <h4 className="font-medium text-gray-800 mb-2">Order Support</h4>
+                <p className="text-gray-600 text-sm">
                   Need to track your order or have questions? You can view your order 
                   status in your account dashboard or contact our support team.
                 </p>
@@ -52,7 +52,7 @@ export default function PaymentSuccessPage() {
               <div className="flex gap-4">
                 <Button
                   onClick={() => router.push('/dashboard')}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   <Package className="h-4 w-4 mr-2" />
                   View Orders
@@ -60,7 +60,7 @@ export default function PaymentSuccessPage() {
                 <Button
                   onClick={() => router.push('/')}
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400"
                 >
                   <ShoppingBag className="h-4 w-4 mr-2" />
                   Continue Shopping
@@ -70,7 +70,7 @@ export default function PaymentSuccessPage() {
               <div className="text-center">
                 <p className="text-sm text-gray-600">
                   Questions about your order? Contact us at{' '}
-                  <a href="mailto:support@sportsnationbd.com" className="text-primary hover:underline">
+                  <a href="mailto:support@sportsnationbd.com" className="text-blue-600 hover:underline">
                     support@sportsnationbd.com
                   </a>
                 </p>
