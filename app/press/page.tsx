@@ -48,7 +48,7 @@ export default function PressPage() {
                 </p>
                 <div className="space-y-2">
                   <p className="text-sm">📧 Email: press@sportsnationbd.com</p>
-                  <p className="text-sm">📞 Phone: +880 1234 567890</p>
+                  <p className="text-sm">📞 Phone: +880 1868 556390</p>
                   <p className="text-sm">📧 General: info@sportsnationbd.com</p>
                 </div>
               </div>

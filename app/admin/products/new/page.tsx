@@ -10,10 +10,12 @@ import FootballBadgeSelector from '@/components/admin/football-badge-selector'
 
 interface ProductVariant {
   id?: string
-  name: string
-  value: string
-  price: number
-  stock: number
+  fabricType: 'Fan Version' | 'Player Version'
+  sizes: {
+    size: string
+    price: number
+    stock: number
+  }[]
 }
 
 export default function NewProductPage() {
@@ -24,6 +26,14 @@ export default function NewProductPage() {
   const [variants, setVariants] = useState<ProductVariant[]>([])
   const [categories, setCategories] = useState<any[]>([])
   const [selectedBadges, setSelectedBadges] = useState<string[]>([])
+  const [selectedFabrics, setSelectedFabrics] = useState<('Fan Version' | 'Player Version')[]>([])
+  const [fabricPrices, setFabricPrices] = useState<{
+    'Fan Version': number
+    'Player Version': number
+  }>({
+    'Fan Version': 0,
+    'Player Version': 0
+  })
   
   const [formData, setFormData] = useState({
     name: '',
@@ -77,11 +87,7 @@ export default function NewProductPage() {
 
     // Update variant prices when base price changes
     if (name === 'price' && variants.length > 0) {
-      const newPrice = parseFloat(value) || 0
-      setVariants(prev => prev.map(variant => ({
-        ...variant,
-        price: newPrice
-      })))
+      updateVariantPrices(parseFloat(value) || 0)
     }
   }
 
@@ -89,46 +95,118 @@ export default function NewProductPage() {
     const category = categories.find(cat => cat.id === categoryId)
     if (!category) return
 
-    let newVariants: ProductVariant[] = []
-
-    if (category.slug === 'jerseys') {
-      // Generate jersey variants: Separate Size and Fabric options
-      const sizes = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL']
-      const fabrics = ['Fan Version', 'Player Version']
+    if (category.slug === 'jersey') {
+      // Reset fabric selection and variants for jersey
+      setSelectedFabrics([])
+      setVariants([])
+    } else {
+      // For other categories, use simple variant system
+      let newVariants: any[] = []
       
-      // Add size variants
-      sizes.forEach(size => {
+      if (category.slug === 'sneaker') {
+        // Generate sneaker variants: Sizes 25-46
+        for (let size = 25; size <= 46; size++) {
+          newVariants.push({
+            name: 'Size',
+            value: size.toString(),
+            price: formData.price,
+            stock: 0
+          })
+        }
+      } else if (category.slug === 'shorts') {
+        // Generate shorts variants: Sizes S-5XL
+        const sizes = ['S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL']
+        sizes.forEach(size => {
+          newVariants.push({
+            name: 'Size',
+            value: size,
+            price: formData.price,
+            stock: 0
+          })
+        })
+      } else if (category.slug === 'watch') {
+        // Generate watch variants: One size fits all
         newVariants.push({
           name: 'Size',
-          value: size,
-          price: formData.price, // Set to current base price
-          stock: 0
-        })
-      })
-      
-      // Add fabric variants
-      fabrics.forEach(fabric => {
-        newVariants.push({
-          name: 'Fabric',
-          value: fabric,
-          price: formData.price, // Set to current base price
-          stock: 0
-        })
-      })
-    } else if (category.slug === 'sneakers') {
-      // Generate sneaker variants: Sizes 25-46
-      for (let size = 25; size <= 46; size++) {
-        newVariants.push({
-          name: 'Size',
-          value: size.toString(),
-          price: formData.price, // Set to current base price
+          value: 'One Size',
+          price: formData.price,
           stock: 0
         })
       }
+      
+      setVariants(newVariants)
     }
+  }
+
+  const updateVariantPrices = (basePrice: number) => {
+    setVariants(prev => prev.map(variant => {
+      if (variant.fabricType) {
+        // Jersey variant with fabric type
+        const priceMultiplier = variant.fabricType === 'Player Version' ? 1.3 : 1.0
+        return {
+          ...variant,
+          sizes: variant.sizes.map(sizeItem => {
+            const isLargeSize = ['3XL', '4XL', '5XL'].includes(sizeItem.size)
+            const largeSizePremium = isLargeSize ? 250 : 0
+            return {
+              ...sizeItem,
+              price: (basePrice * priceMultiplier) + largeSizePremium
+            }
+          })
+        }
+      } else {
+        // Other category variants
+        return {
+          ...variant,
+          price: basePrice
+        }
+      }
+    }))
+  }
+
+  const handleFabricSelection = (fabric: 'Fan Version' | 'Player Version', selected: boolean) => {
+    if (selected) {
+      setSelectedFabrics(prev => [...prev, fabric])
+    } else {
+      setSelectedFabrics(prev => prev.filter(f => f !== fabric))
+      setVariants(prev => prev.filter(v => v.fabricType !== fabric))
+    }
+  }
+
+  const generateJerseyVariants = () => {
+    if (selectedFabrics.length === 0) return
+
+    const sizes = ['S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL']
+    const newVariants: ProductVariant[] = []
+
+    selectedFabrics.forEach(fabric => {
+      const basePrice = fabricPrices[fabric] || formData.price
+      const fabricSizes = sizes.map(size => {
+        const isLargeSize = ['3XL', '4XL', '5XL'].includes(size)
+        const largeSizePremium = isLargeSize ? 250 : 0
+        return {
+          size,
+          price: basePrice + largeSizePremium,
+          stock: 0
+        }
+      })
+
+      newVariants.push({
+        fabricType: fabric,
+        sizes: fabricSizes
+      })
+    })
 
     setVariants(newVariants)
   }
+
+  // Generate variants when fabric selection or prices change
+  useEffect(() => {
+    const category = categories.find(cat => cat.id === formData.categoryId)
+    if (category?.slug === 'jersey' && selectedFabrics.length > 0) {
+      generateJerseyVariants()
+    }
+  }, [selectedFabrics, fabricPrices, formData.price, formData.categoryId])
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -171,6 +249,41 @@ export default function NewProductPage() {
     setImages(prev => prev.filter((_, i) => i !== index))
   }
 
+  const updateJerseyVariantStock = (fabricType: 'Fan Version' | 'Player Version', size: string, stock: number) => {
+    setVariants(prev => prev.map(variant => {
+      if (variant.fabricType === fabricType) {
+        return {
+          ...variant,
+          sizes: variant.sizes.map(sizeItem => 
+            sizeItem.size === size ? { ...sizeItem, stock } : sizeItem
+          )
+        }
+      }
+      return variant
+    }))
+  }
+
+  const updateFabricPrice = (fabricType: 'Fan Version' | 'Player Version', price: number) => {
+    setFabricPrices(prev => ({
+      ...prev,
+      [fabricType]: price
+    }))
+  }
+
+  const updateJerseyVariantPrice = (fabricType: 'Fan Version' | 'Player Version', size: string, price: number) => {
+    setVariants(prev => prev.map(variant => {
+      if (variant.fabricType === fabricType) {
+        return {
+          ...variant,
+          sizes: variant.sizes.map(sizeItem => 
+            sizeItem.size === size ? { ...sizeItem, price } : sizeItem
+          )
+        }
+      }
+      return variant
+    }))
+  }
+
   const addVariant = () => {
     setVariants(prev => [...prev, {
       name: '',
@@ -180,7 +293,7 @@ export default function NewProductPage() {
     }])
   }
 
-  const updateVariant = (index: number, field: keyof ProductVariant, value: string | number) => {
+  const updateVariant = (index: number, field: keyof any, value: string | number) => {
     setVariants(prev => prev.map((variant, i) => 
       i === index ? { ...variant, [field]: value } : variant
     ))
@@ -414,28 +527,142 @@ export default function NewProductPage() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-lg font-semibold text-foreground">Product Variants</h2>
-                  {variants.length > 0 && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {variants.length} variants generated automatically
-                    </p>
+                  {formData.categoryId && categories.find(cat => cat.id === formData.categoryId)?.slug === 'jersey' && (
+                    <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <p className="text-sm text-blue-700 dark:text-blue-300">
+                        <strong>Jersey Variants:</strong> Select fabric types and manage sizes with individual pricing. 
+                        3XL, 4XL, 5XL sizes have 250tk premium. Player Version has 30% price premium.
+                      </p>
+                    </div>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={addVariant}
-                  className="glass-button px-3 py-2 rounded-lg flex items-center space-x-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Add Variant</span>
-                </button>
+                {formData.categoryId && categories.find(cat => cat.id === formData.categoryId)?.slug !== 'jersey' && (
+                  <button
+                    type="button"
+                    onClick={addVariant}
+                    className="glass-button px-3 py-2 rounded-lg flex items-center space-x-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Add Variant</span>
+                  </button>
+                )}
               </div>
 
-              {variants.length > 0 ? (
+              {/* Jersey Fabric Selection */}
+              {formData.categoryId && categories.find(cat => cat.id === formData.categoryId)?.slug === 'jersey' && (
+                <div className="mb-6">
+                  <h3 className="text-md font-medium text-foreground mb-3">Select Fabric Types & Set Prices</h3>
+                  <div className="space-y-4">
+                    {(['Fan Version', 'Player Version'] as const).map(fabric => (
+                      <div key={fabric} className="glass-card p-4 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <label className="flex items-center space-x-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={selectedFabrics.includes(fabric)}
+                              onChange={(e) => handleFabricSelection(fabric, e.target.checked)}
+                              className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary focus:ring-2"
+                            />
+                            <span className="text-sm font-medium text-foreground">{fabric}</span>
+                          </label>
+                          
+                          {selectedFabrics.includes(fabric) && (
+                            <div className="flex items-center space-x-2">
+                              <label className="text-xs text-muted-foreground">Base Price (BDT):</label>
+                              <input
+                                type="number"
+                                value={fabricPrices[fabric] || formData.price}
+                                onChange={(e) => updateFabricPrice(fabric, parseFloat(e.target.value) || 0)}
+                                className="glass-input w-24 px-2 py-1 rounded text-sm"
+                                min="0"
+                                step="0.01"
+                                placeholder="0"
+                              />
+                            </div>
+                          )}
+                        </div>
+                        {selectedFabrics.includes(fabric) && (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            All sizes will use this base price. 3XL, 4XL, 5XL will have +250tk added automatically.
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Jersey Variants Display */}
+              {formData.categoryId && categories.find(cat => cat.id === formData.categoryId)?.slug === 'jersey' && variants.length > 0 ? (
+                <div className="space-y-6">
+                  {variants.map((variant, index) => (
+                    <div key={index} className="glass-card p-6 rounded-lg">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-foreground">
+                          {variant.fabricType}
+                        </h3>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-muted-foreground">
+                            Base: {fabricPrices[variant.fabricType] || formData.price} BDT
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleFabricSelection(variant.fabricType, false)}
+                            className="text-destructive hover:text-destructive/80"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {variant.sizes.map((sizeItem, sizeIndex) => (
+                          <div key={sizeIndex} className="glass-card p-3 rounded-lg">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-medium text-foreground">{sizeItem.size}</span>
+                              {['3XL', '4XL', '5XL'].includes(sizeItem.size) && (
+                                <span className="text-xs text-orange-600">+250tk</span>
+                              )}
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <div>
+                                <label className="text-xs text-muted-foreground">Price (BDT)</label>
+                                <div className="glass-input w-full px-2 py-1 rounded text-sm bg-muted/50 text-muted-foreground">
+                                  {sizeItem.price.toLocaleString()}
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {['3XL', '4XL', '5XL'].includes(sizeItem.size) ? 'Base + 250tk' : 'Base price'}
+                                </p>
+                              </div>
+                              <div>
+                                <label className="text-xs text-muted-foreground">Stock</label>
+                                <input
+                                  type="number"
+                                  value={sizeItem.stock}
+                                  onChange={(e) => updateJerseyVariantStock(variant.fabricType, sizeItem.size, parseInt(e.target.value) || 0)}
+                                  className="glass-input w-full px-2 py-1 rounded text-sm"
+                                  min="0"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : formData.categoryId && categories.find(cat => cat.id === formData.categoryId)?.slug === 'jersey' ? (
+                <p className="text-muted-foreground text-center py-8">
+                  Select fabric types above to generate variants.
+                </p>
+              ) : variants.length > 0 ? (
+                /* Other Category Variants */
                 <div className="space-y-4">
                   {variants.map((variant, index) => (
                     <div key={index} className="glass-card p-4 rounded-lg">
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-medium text-foreground">Variant {index + 1}</h3>
+                        <h3 className="font-medium text-foreground">{variant.name}</h3>
                         <button
                           type="button"
                           onClick={() => removeVariant(index)}
@@ -467,7 +694,7 @@ export default function NewProductPage() {
                           />
                         </div>
                         <div>
-                          <label className="text-sm text-muted-foreground">Price</label>
+                          <label className="text-sm text-muted-foreground">Price (BDT)</label>
                           <input
                             type="number"
                             value={variant.price}
@@ -495,7 +722,10 @@ export default function NewProductPage() {
                 </div>
               ) : (
                 <p className="text-muted-foreground text-center py-8">
-                  No variants added. Click "Add Variant" to create product variations.
+                  {formData.categoryId && categories.find(cat => cat.id === formData.categoryId)?.slug === 'jersey' 
+                    ? 'Select fabric types above to generate variants.'
+                    : 'No variants added. Click "Add Variant" to create product variations.'
+                  }
                 </p>
               )}
             </motion.div>

@@ -5,7 +5,8 @@ interface WishlistItem {
   id: string
   productId: string
   variantId?: string
-  product: {
+  createdAt: string
+  product?: {
     id: string
     name: string
     slug: string
@@ -34,7 +35,6 @@ interface WishlistItem {
     price?: number
     stock: number
   }
-  createdAt: string
 }
 
 interface WishlistStore {
@@ -45,9 +45,10 @@ interface WishlistStore {
   // Actions
   fetchWishlist: () => Promise<void>
   addToWishlist: (productId: string, variantId?: string) => Promise<boolean>
-  removeFromWishlist: (itemId: string) => Promise<boolean>
+  removeFromWishlist: (itemId: string, productId?: string, variantId?: string) => Promise<boolean>
   clearError: () => void
   isInWishlist: (productId: string, variantId?: string) => boolean
+  setState: (fn: (state: WishlistStore) => Partial<WishlistStore>) => void
 }
 
 export const useWishlistStore = create<WishlistStore>()(
@@ -90,8 +91,14 @@ export const useWishlistStore = create<WishlistStore>()(
           const data = await response.json()
           
           if (data.success) {
+            // Optimistically add the item to the wishlist
             set((state) => ({
-              items: [...state.items, data.data],
+              items: [...state.items, {
+                id: data.data.id,
+                productId: data.data.productId,
+                variantId: data.data.variantId,
+                createdAt: new Date().toISOString()
+              }],
               isLoading: false
             }))
             return true
@@ -108,10 +115,18 @@ export const useWishlistStore = create<WishlistStore>()(
         }
       },
 
-      removeFromWishlist: async (itemId: string) => {
+      removeFromWishlist: async (itemId: string, productId?: string, variantId?: string) => {
         set({ isLoading: true, error: null })
         try {
-          const response = await fetch(`/api/wishlist?itemId=${itemId}`, {
+          let url = `/api/wishlist?itemId=${itemId}`
+          if (productId) {
+            url = `/api/wishlist?productId=${productId}`
+            if (variantId) {
+              url += `&variantId=${variantId}`
+            }
+          }
+          
+          const response = await fetch(url, {
             method: 'DELETE',
           })
           
@@ -119,7 +134,14 @@ export const useWishlistStore = create<WishlistStore>()(
           
           if (data.success) {
             set((state) => ({
-              items: state.items.filter(item => item.id !== itemId),
+              items: state.items.filter(item => {
+                if (itemId) {
+                  return item.id !== itemId
+                } else if (productId) {
+                  return !(item.productId === productId && item.variantId === (variantId || null))
+                }
+                return true
+              }),
               isLoading: false
             }))
             return true
@@ -145,6 +167,8 @@ export const useWishlistStore = create<WishlistStore>()(
           item.variantId === (variantId || null)
         )
       },
+
+      setState: (fn) => set(fn),
     }),
     {
       name: 'wishlist-store',

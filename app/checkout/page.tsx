@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { useCartStore } from '@/lib/store/cart-store'
 import { useSession } from 'next-auth/react'
+import { behaviorTracker } from '@/lib/behavior-tracker'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -42,11 +43,11 @@ export default function CheckoutPage() {
   const [paymentType, setPaymentType] = useState<'full' | 'partial'>('full')
   const [tipAmount, setTipAmount] = useState(0)
   const [customTip, setCustomTip] = useState('')
-  const [useDefaultAddress, setUseDefaultAddress] = useState(true)
+  const [useDefaultAddress, setUseDefaultAddress] = useState(false)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
-    name: session?.user?.name || '',
-    email: session?.user?.email || '',
+    name: '',
+    email: '',
     phone: '',
     address: '',
     city: '',
@@ -54,11 +55,57 @@ export default function CheckoutPage() {
   })
 
   useEffect(() => {
-    if (items.length === 0) {
+    // Check for buyNowItem in sessionStorage
+    const buyNowItem = sessionStorage.getItem('buyNowItem')
+    const buyNowAction = sessionStorage.getItem('buyNowAction')
+    
+    if (items.length === 0 && !buyNowItem) {
       router.push('/')
       return
     }
+
+    // If buyNowItem exists, handle Buy Now action
+    if (buyNowItem) {
+      try {
+        const item = JSON.parse(buyNowItem)
+        const { addItem, clearCart } = useCartStore.getState()
+        
+        // If this is a Buy Now action, clear existing cart first
+        if (buyNowAction === 'true') {
+          clearCart()
+          sessionStorage.removeItem('buyNowAction')
+        }
+        
+        // Add the item to cart
+        addItem(item)
+        
+        // Clear the buyNowItem from sessionStorage
+        sessionStorage.removeItem('buyNowItem')
+        toast.success('Item added to checkout!')
+      } catch (error) {
+        console.error('Error parsing buyNowItem:', error)
+        sessionStorage.removeItem('buyNowItem')
+        sessionStorage.removeItem('buyNowAction')
+      }
+    }
+
+    // Track checkout behavior
+    const currentItems = items.length > 0 ? items : (buyNowItem ? [JSON.parse(buyNowItem)] : [])
+    const totalValue = currentItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+    const itemCount = currentItems.reduce((sum, item) => sum + item.quantity, 0)
+    behaviorTracker.trackCheckout(totalValue, itemCount)
   }, [items, router])
+
+  // Auto-fill with session data when session becomes available
+  useEffect(() => {
+    if (session?.user && !userProfile) {
+      setCustomerInfo(prev => ({
+        ...prev,
+        name: session.user.name || prev.name,
+        email: session.user.email || prev.email
+      }))
+    }
+  }, [session, userProfile])
 
   // Fetch user profile and auto-fill form
   useEffect(() => {
@@ -73,14 +120,24 @@ export default function CheckoutPage() {
           if (data.success && data.user) {
             setUserProfile(data.user)
             // Auto-fill the form with user's default information
-            setCustomerInfo({
+            const newCustomerInfo = {
               name: data.user.name || session.user.name || '',
               email: data.user.email || session.user.email || '',
               phone: data.user.phone || '',
               address: data.user.address || '',
               city: data.user.city || '',
               country: data.user.country || 'BD'
-            })
+            }
+            setCustomerInfo(newCustomerInfo)
+            // Set useDefaultAddress to true if user has a default address
+            if (data.user.address) {
+              setUseDefaultAddress(true)
+            } else {
+              // Even if no saved address, auto-fill with session data if available
+              if (session.user.name || session.user.email) {
+                setUseDefaultAddress(true)
+              }
+            }
           }
         }
       } catch (error) {
@@ -316,8 +373,11 @@ export default function CheckoutPage() {
                   
                   {useDefaultAddress && userProfile.address && (
                     <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <p className="text-sm text-green-800 font-medium">Using your default address:</p>
-                      <p className="text-sm text-green-700">
+                      <p className="text-sm text-green-800 font-medium flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4" />
+                        Using your default address:
+                      </p>
+                      <p className="text-sm text-green-700 mt-1">
                         {userProfile.address}, {userProfile.city}, {userProfile.country}
                       </p>
                     </div>

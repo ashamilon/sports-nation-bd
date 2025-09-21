@@ -35,7 +35,7 @@ export default function AddressBook() {
       city: 'Dhaka',
       postalCode: '1205',
       country: 'Bangladesh',
-      phone: '+880 1234 567890',
+      phone: '+880 1868 556390',
       isDefault: true
     },
     {
@@ -170,7 +170,7 @@ export default function AddressBook() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-2">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -301,7 +301,7 @@ export default function AddressBook() {
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
-                placeholder="+880 1234 567890"
+                placeholder="+880 1868 556390"
                 className="glass-input w-full px-4 py-2 rounded-lg"
                 required
               />

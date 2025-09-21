@@ -42,7 +42,7 @@ export default function RefundPolicyPage() {
               <div>
                 <h3 className="text-xl font-semibold mb-3">📋 Return Process</h3>
                 <ol className="text-muted-foreground space-y-2">
-                  <li>1. Contact us at info@sportsnationbd.com or call +880 1234 567890</li>
+                  <li>1. Contact us at info@sportsnationbd.com or call +880 1868 556390</li>
                   <li>2. Provide your order number and reason for return</li>
                   <li>3. We'll provide return instructions and authorization</li>
                   <li>4. Package the item securely with original packaging</li>
@@ -83,7 +83,7 @@ export default function RefundPolicyPage() {
                 </p>
                 <div className="space-y-2">
                   <p className="text-sm">📧 Email: returns@sportsnationbd.com</p>
-                  <p className="text-sm">📞 Phone: +880 1234 567890</p>
+                  <p className="text-sm">📞 Phone: +880 1868 556390</p>
                   <p className="text-sm">📧 General: info@sportsnationbd.com</p>
                 </div>
               </div>

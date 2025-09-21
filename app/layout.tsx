@@ -6,6 +6,10 @@ import { CartProvider } from "@/components/cart-provider";
 import { WishlistProvider } from "@/components/wishlist-provider";
 import { RegionalProvider } from "@/components/regional-provider";
 import AuthSessionProvider from "@/components/session-provider";
+import { LoadingProvider } from "@/lib/loading-context";
+import LoadingOverlay from "@/components/loading-overlay";
+import WhatsAppButton from "@/components/whatsapp-button";
+import VisitorTracking from "@/components/visitor-tracking";
 import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
@@ -64,24 +68,29 @@ export default function RootLayout({
             defaultTheme="system"
             storageKey="sports-nation-theme"
           >
-            <CartProvider>
-              <WishlistProvider>
-                <RegionalProvider>
-                  {children}
-                  <Toaster
-                    position="top-right"
-                    toastOptions={{
-                      duration: 4000,
-                      style: {
-                        background: 'var(--background)',
-                        color: 'var(--foreground)',
-                        border: '1px solid var(--border)',
-                      },
-                    }}
-                  />
-                </RegionalProvider>
-              </WishlistProvider>
-            </CartProvider>
+            <LoadingProvider>
+              <CartProvider>
+                <WishlistProvider>
+                  <RegionalProvider>
+                    {children}
+                    <LoadingOverlay />
+                    <WhatsAppButton />
+                    <VisitorTracking />
+                    <Toaster
+                      position="top-right"
+                      toastOptions={{
+                        duration: 4000,
+                        style: {
+                          background: 'var(--background)',
+                          color: 'var(--foreground)',
+                          border: '1px solid var(--border)',
+                        },
+                      }}
+                    />
+                  </RegionalProvider>
+                </WishlistProvider>
+              </CartProvider>
+            </LoadingProvider>
           </ThemeProvider>
         </AuthSessionProvider>
       </body>

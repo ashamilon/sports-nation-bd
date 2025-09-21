@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     let message = ''
 
     // Calculate discount based on level
-    if (userLevel === 'iron' && isFirstOrder && !user.firstOrderDiscountUsed) {
+    if (userLevel === 'bronze' && isFirstOrder && !user.firstOrderDiscountUsed) {
       discount = LoyaltySystem.calculateDiscount(session.user.id, userLevel, orderAmount, true)
       message = 'First order bonus applied!'
     } else if (userLevel === 'platinum') {

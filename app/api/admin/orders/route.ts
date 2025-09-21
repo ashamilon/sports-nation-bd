@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user || session.user.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+    
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '10')
     const page = parseInt(searchParams.get('page') || '1')
@@ -21,8 +30,8 @@ export async function GET(request: NextRequest) {
     if (search) {
       where.OR = [
         { id: { contains: search, mode: 'insensitive' } },
-        { user: { name: { contains: search, mode: 'insensitive' } } },
-        { user: { email: { contains: search, mode: 'insensitive' } } }
+        { User: { name: { contains: search, mode: 'insensitive' } } },
+        { User: { email: { contains: search, mode: 'insensitive' } } }
       ]
     }
 
@@ -37,9 +46,9 @@ export async function GET(request: NextRequest) {
               email: true
             }
           },
-          items: {
+          OrderItem: {
             include: {
-              product: {
+              Product: {
                 select: {
                   name: true,
                   price: true
@@ -55,14 +64,28 @@ export async function GET(request: NextRequest) {
       prisma.order.count({ where })
     ])
 
-    // Format orders for display
+    // Format orders for display to match frontend expectations
     const formattedOrders = orders.map(order => ({
       id: order.id,
-      customer: order.user?.name || 'Unknown Customer',
-      product: order.items.length > 0 ? order.items[0].product.name : 'Multiple Items',
-      amount: `৳${order.total.toLocaleString()}`,
+      customer: {
+        name: order.User?.name || 'Unknown Customer',
+        email: order.User?.email || '',
+        phone: '' // Add phone if available
+      },
+      items: order.OrderItem.map(item => ({
+        name: item.Product.name,
+        quantity: item.quantity,
+        price: item.price
+      })),
+      total: order.total,
       status: order.status,
-      date: order.createdAt.toLocaleDateString()
+      paymentStatus: order.paymentStatus,
+      paymentMethod: order.paymentMethod || 'Unknown',
+      courierService: order.courierService,
+      courierTrackingId: order.courierTrackingId,
+      trackingNumber: order.trackingNumber,
+      orderDate: order.createdAt.toLocaleDateString(),
+      deliveryDate: order.status === 'completed' ? order.updatedAt.toLocaleDateString() : null
     }))
 
     return NextResponse.json({
@@ -78,7 +101,5 @@ export async function GET(request: NextRequest) {
       { error: 'Failed to fetch orders' },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }

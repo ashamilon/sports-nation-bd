@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import AdminLayout from '@/components/admin/admin-layout'
-import AdminOverview from '@/components/admin/admin-overview'
+import AdminOverviewSimple from '@/components/admin/admin-overview-simple'
 
 export const metadata: Metadata = {
   title: 'Admin Dashboard | Sports Nation BD',
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function AdminPage() {
   return (
     <AdminLayout>
-      <AdminOverview />
+      <AdminOverviewSimple />
     </AdminLayout>
   )
 }

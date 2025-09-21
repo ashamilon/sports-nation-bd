@@ -28,7 +28,20 @@ export async function GET(request: NextRequest) {
       ]
     })
 
-    return NextResponse.json({ success: true, data: banners })
+    const response = NextResponse.json({ success: true, data: banners })
+    
+    // Add caching headers for better performance (only for public requests)
+    if (active !== false) {
+      response.headers.set('Cache-Control', 'public, max-age=600, s-maxage=600') // 10 minutes cache
+      response.headers.set('Vary', 'Accept-Encoding')
+    } else {
+      // Disable caching for admin requests (when active=false)
+      response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+      response.headers.set('Pragma', 'no-cache')
+      response.headers.set('Expires', '0')
+    }
+    
+    return response
   } catch (error) {
     console.error('Error fetching banners:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -52,6 +65,7 @@ export async function POST(request: NextRequest) {
 
     const banner = await prisma.banner.create({
       data: {
+        id: `banner_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         title,
         description,
         image,
@@ -59,7 +73,8 @@ export async function POST(request: NextRequest) {
         position,
         priority: priority || 0,
         isActive: isActive !== undefined ? isActive : true,
-        metadata: metadata ? JSON.stringify(metadata) : null
+        metadata: metadata ? JSON.stringify(metadata) : null,
+        updatedAt: new Date()
       }
     })
 

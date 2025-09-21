@@ -16,7 +16,7 @@ async function main() {
       email: 'admin@sportsnationbd.com',
       password: hashedPassword,
       role: 'admin',
-      phone: '+880 1234 567890'
+      phone: '+880 1868 556390'
     }
   })
 
@@ -27,10 +27,12 @@ async function main() {
     where: { slug: 'watches' },
     update: {},
     create: {
+      id: 'cat_watches_001',
       name: 'Naviforce Watches',
       slug: 'watches',
       description: 'Premium sports watches and timepieces',
-      image: '/categories/watches.jpg'
+      image: '/categories/watches.jpg',
+      updatedAt: new Date()
     }
   })
 
@@ -38,10 +40,12 @@ async function main() {
     where: { slug: 'jerseys' },
     update: {},
     create: {
+      id: 'cat_jerseys_001',
       name: 'Club Jerseys',
       slug: 'jerseys',
       description: 'Official and replica club jerseys',
-      image: '/categories/jerseys.jpg'
+      image: '/categories/jerseys.jpg',
+      updatedAt: new Date()
     }
   })
 
@@ -49,10 +53,12 @@ async function main() {
     where: { slug: 'sneakers' },
     update: {},
     create: {
+      id: 'cat_sneakers_001',
       name: 'Premium Sneakers',
       slug: 'sneakers',
       description: 'Top brand sneakers and athletic shoes',
-      image: '/categories/sneakers.jpg'
+      image: '/categories/sneakers.jpg',
+      updatedAt: new Date()
     }
   })
 
@@ -60,10 +66,12 @@ async function main() {
     where: { slug: 'shorts' },
     update: {},
     create: {
+      id: 'cat_shorts_001',
       name: 'Club Shorts',
       slug: 'shorts',
       description: 'Matching shorts for your jerseys',
-      image: '/categories/shorts.jpg'
+      image: '/categories/shorts.jpg',
+      updatedAt: new Date()
     }
   })
 
@@ -71,10 +79,12 @@ async function main() {
     where: { slug: 'custom' },
     update: {},
     create: {
+      id: 'cat_custom_001',
       name: 'Custom Jerseys',
       slug: 'custom',
       description: 'Custom made jerseys (minimum 11 pieces)',
-      image: '/categories/custom.jpg'
+      image: '/categories/custom.jpg',
+      updatedAt: new Date()
     }
   })
 
@@ -82,10 +92,12 @@ async function main() {
     where: { slug: 'badges' },
     update: {},
     create: {
+      id: 'cat_badges_001',
       name: 'Premium Badges',
       slug: 'badges',
       description: 'League, UCL and FIFA badges',
-      image: '/categories/badges.jpg'
+      image: '/categories/badges.jpg',
+      updatedAt: new Date()
     }
   })
 
@@ -320,55 +332,70 @@ async function main() {
     ]
   })
 
+  // Clear existing badges
+  await prisma.badges.deleteMany()
+  
   // Create premium badges for jerseys
-  const realMadridBadges = await prisma.productBadge.createMany({
+  const realMadridBadges = await prisma.badges.createMany({
     data: [
       {
+        id: 'badge_ucl_001',
         name: 'UCL Badge',
         description: 'UEFA Champions League badge',
         price: 150,
         image: '/api/placeholder/50/50',
-        productId: realMadridJersey.id
+        category: 'premium',
+        updatedAt: new Date()
       },
       {
+        id: 'badge_laliga_001',
         name: 'La Liga Badge',
         description: 'Spanish La Liga badge',
         price: 100,
         image: '/api/placeholder/50/50',
-        productId: realMadridJersey.id
+        category: 'league',
+        updatedAt: new Date()
       },
       {
+        id: 'badge_cwc_001',
         name: 'Club World Cup Badge',
         description: 'FIFA Club World Cup badge',
         price: 200,
         image: '/api/placeholder/50/50',
-        productId: realMadridJersey.id
+        category: 'premium',
+        updatedAt: new Date()
       }
     ]
   })
 
-  const barcelonaBadges = await prisma.productBadge.createMany({
+  const barcelonaBadges = await prisma.badges.createMany({
     data: [
       {
+        id: 'badge_ucl_002',
         name: 'UCL Badge',
         description: 'UEFA Champions League badge',
         price: 150,
         image: '/api/placeholder/50/50',
-        productId: barcelonaJersey.id
+        category: 'premium',
+        updatedAt: new Date()
       },
       {
+        id: 'badge_laliga_002',
         name: 'La Liga Badge',
         description: 'Spanish La Liga badge',
         price: 100,
         image: '/api/placeholder/50/50',
-        productId: barcelonaJersey.id
+        category: 'league',
+        updatedAt: new Date()
       },
       {
+        id: 'badge_copa_001',
         name: 'Copa del Rey Badge',
         description: 'Spanish Copa del Rey badge',
         price: 120,
         image: '/api/placeholder/50/50',
-        productId: barcelonaJersey.id
+        category: 'cup',
+        updatedAt: new Date()
       }
     ]
   })
@@ -378,6 +405,7 @@ async function main() {
   
   const homepageSections = [
     {
+      id: 'banner-section',
       sectionKey: 'banner',
       sectionName: 'Banner Slideshow',
       isVisible: true,
@@ -385,9 +413,11 @@ async function main() {
       metadata: JSON.stringify({
         description: 'Hero banner with promotional content',
         component: 'BannerSlideshow'
-      })
+      }),
+      updatedAt: new Date()
     },
     {
+      id: 'hero-section',
       sectionKey: 'hero',
       sectionName: 'Hero Section',
       isVisible: true,
@@ -395,9 +425,11 @@ async function main() {
       metadata: JSON.stringify({
         description: 'Main hero section with call-to-action',
         component: 'HeroSection'
-      })
+      }),
+      updatedAt: new Date()
     },
     {
+      id: 'categories-section',
       sectionKey: 'categories',
       sectionName: 'Categories Section',
       isVisible: true,
@@ -405,9 +437,11 @@ async function main() {
       metadata: JSON.stringify({
         description: 'Product categories showcase',
         component: 'CategoriesSection'
-      })
+      }),
+      updatedAt: new Date()
     },
     {
+      id: 'collections-section',
       sectionKey: 'collections',
       sectionName: 'Collections Section',
       isVisible: true,
@@ -415,9 +449,11 @@ async function main() {
       metadata: JSON.stringify({
         description: 'Featured product collections',
         component: 'CollectionsSection'
-      })
+      }),
+      updatedAt: new Date()
     },
     {
+      id: 'featured-products-section',
       sectionKey: 'featured-products',
       sectionName: 'Featured Products',
       isVisible: true,
@@ -425,9 +461,11 @@ async function main() {
       metadata: JSON.stringify({
         description: 'Featured products showcase',
         component: 'FeaturedProducts'
-      })
+      }),
+      updatedAt: new Date()
     },
     {
+      id: 'countdown-section',
       sectionKey: 'countdown',
       sectionName: 'Countdown Timer',
       isVisible: true,
@@ -435,7 +473,8 @@ async function main() {
       metadata: JSON.stringify({
         description: 'Promotional countdown timer',
         component: 'CountdownTimer'
-      })
+      }),
+      updatedAt: new Date()
     }
   ]
 

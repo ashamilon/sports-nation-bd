@@ -37,9 +37,10 @@ export default function LoadingSpinner({
           <Image
             src="/logo.png"
             alt="Sports Nation BD Logo"
-            width={64}
-            height={64}
+            width={80}
+            height={80}
             className="w-full h-full object-contain"
+            priority
           />
         </motion.div>
       )}
@@ -51,24 +52,24 @@ export default function LoadingSpinner({
         transition={{ delay: 0.2 }}
       >
         <motion.div
-          className="w-2 h-2 bg-brand-dark rounded-full"
+          className="w-2 h-2 bg-primary rounded-full"
           animate={{ scale: [1, 1.2, 1] }}
           transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
         />
         <motion.div
-          className="w-2 h-2 bg-brand-accent rounded-full"
+          className="w-2 h-2 bg-primary/70 rounded-full"
           animate={{ scale: [1, 1.2, 1] }}
           transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
         />
         <motion.div
-          className="w-2 h-2 bg-brand-medium rounded-full"
+          className="w-2 h-2 bg-primary/50 rounded-full"
           animate={{ scale: [1, 1.2, 1] }}
           transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
         />
       </motion.div>
       
       <motion.p
-        className={`${textSizeClasses[size]} text-brand-medium font-medium`}
+        className={`${textSizeClasses[size]} text-primary font-medium`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}

@@ -15,7 +15,6 @@ import {
   Download
 } from 'lucide-react'
 import OrderDetailsModal from './order-details-modal'
-import { downloadInvoice } from '@/lib/invoice-generator'
 
 interface OrderItem {
   id: string
@@ -146,12 +145,20 @@ export default function OrdersList() {
         throw new Error('Failed to fetch invoice data')
       }
       
-      const data = await response.json()
-      if (data.success) {
-        downloadInvoice(data.invoice, `invoice-${order.orderNumber}.html`)
-      } else {
-        throw new Error(data.error || 'Failed to generate invoice')
-      }
+      // Get the HTML content
+      const htmlContent = await response.text()
+      
+      // Create a blob and download it
+      const blob = new Blob([htmlContent], { type: 'text/html' })
+      const url = URL.createObjectURL(blob)
+      
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `invoice-${order.orderNumber}.html`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
     } catch (error) {
       console.error('Error downloading invoice:', error)
       alert('Failed to download invoice. Please try again.')
@@ -161,7 +168,7 @@ export default function OrdersList() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-2">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground">My Orders</h1>

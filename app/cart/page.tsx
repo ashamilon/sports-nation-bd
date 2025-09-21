@@ -9,6 +9,117 @@ import { Plus, Minus, Trash2, ShoppingBag, ArrowLeft } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { resolveBadgeNames } from '@/lib/badge-helper'
+
+// Cart Item Component with Badge Name Resolution
+function CartItem({ item, onQuantityChange, onRemove }: { 
+  item: any, 
+  onQuantityChange: (id: string, quantity: number) => void, 
+  onRemove: (id: string) => void 
+}) {
+  const [badgeNames, setBadgeNames] = useState<string[]>([])
+
+  useEffect(() => {
+    const loadBadgeNames = async () => {
+      if (item.customOptions?.badges && item.customOptions.badges.length > 0) {
+        try {
+          const names = await resolveBadgeNames(item.customOptions.badges)
+          setBadgeNames(names)
+        } catch (error) {
+          console.error('Error resolving badge names:', error)
+          setBadgeNames(item.customOptions.badges) // Fallback to IDs
+        }
+      }
+    }
+    loadBadgeNames()
+  }, [item.customOptions?.badges])
+
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <div className="flex gap-4">
+          {/* Product Image */}
+          <div className="w-24 h-24 bg-muted rounded-lg flex-shrink-0 relative overflow-hidden">
+            <Image
+              src={item.image}
+              alt={item.name}
+              fill
+              className="object-cover"
+            />
+          </div>
+
+          {/* Product Details */}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-lg mb-2">{item.name}</h3>
+            
+            {item.variantName && (
+              <p className="text-sm text-muted-foreground mb-2">
+                {item.variantName}
+              </p>
+            )}
+            
+            {item.customOptions && (
+              <div className="text-sm text-muted-foreground mb-3">
+                <h4 className="font-medium mb-1">Customizations:</h4>
+                {item.customOptions.name && (
+                  <p>• Name: {item.customOptions.name}</p>
+                )}
+                {item.customOptions.number && (
+                  <p>• Number: {item.customOptions.number}</p>
+                )}
+                {badgeNames.length > 0 && (
+                  <p>• Badges: {badgeNames.join(', ')}</p>
+                )}
+                {(item.customOptions as any).badgeTotal && (item.customOptions as any).badgeTotal > 0 && (
+                  <p>• Badge Total: {formatCurrency((item.customOptions as any).badgeTotal)}</p>
+                )}
+              </div>
+            )}
+            
+            <div className="flex items-center justify-between">
+              <span className="text-lg font-bold">
+                {formatCurrency(item.price)}
+              </span>
+              
+              <div className="flex items-center gap-4">
+                {/* Quantity Controls */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onQuantityChange(item.id, item.quantity - 1)}
+                    disabled={item.quantity <= 1}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="w-8 text-center">{item.quantity}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onQuantityChange(item.id, item.quantity + 1)}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                {/* Remove Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onRemove(item.id)}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
 
 export default function CartPage() {
   const router = useRouter()
@@ -18,7 +129,7 @@ export default function CartPage() {
     removeItem, 
     getTotalPrice,
     getTotalItems,
-    clearCart 
+    clearCart
   } = useCartStore()
 
   const handleQuantityChange = (id: string, newQuantity: number) => {
@@ -76,98 +187,12 @@ export default function CartPage() {
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => (
-            <Card key={item.id}>
-              <CardContent className="p-6">
-                <div className="flex gap-4">
-                  {/* Product Image */}
-                  <div className="w-24 h-24 bg-muted rounded-lg flex-shrink-0 relative overflow-hidden">
-                    <Image
-                      src={item.image}
-                      alt={item.name}
-                      fill
-                      className="object-cover"
-                      unoptimized={item.image.includes('/api/placeholder')}
-                    />
-                  </div>
-
-                  {/* Product Details */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-lg mb-2">{item.name}</h3>
-                    
-                    {item.variantName && (
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Variant: {item.variantName}
-                      </p>
-                    )}
-                    
-                    {item.customOptions && (
-                      <div className="text-sm text-muted-foreground mb-3">
-                        <h4 className="font-medium mb-1">Customizations:</h4>
-                        {item.customOptions.name && (
-                          <p>• Name: {item.customOptions.name}</p>
-                        )}
-                        {item.customOptions.number && (
-                          <p>• Number: {item.customOptions.number}</p>
-                        )}
-                        {item.customOptions.badges && item.customOptions.badges.length > 0 && (
-                          <p>• Badges: {item.customOptions.badges.length} selected</p>
-                        )}
-                        {(item.customOptions as any).badgeTotal && (item.customOptions as any).badgeTotal > 0 && (
-                          <p>• Badge Total: {formatCurrency((item.customOptions as any).badgeTotal)}</p>
-                        )}
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold">
-                        {formatCurrency(item.price)}
-                      </span>
-                      
-                      <div className="flex items-center gap-4">
-                        {/* Quantity Controls */}
-                        <div className="flex items-center border rounded-lg">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                            className="rounded-r-none"
-                          >
-                            <Minus className="h-4 w-4" />
-                          </Button>
-                          <span className="px-4 py-2 min-w-[3rem] text-center">
-                            {item.quantity}
-                          </span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                            className="rounded-l-none"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        
-                        {/* Remove Button */}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRemoveItem(item.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-2 text-right">
-                      <span className="text-lg font-bold">
-                        Total: {formatCurrency((item.price || 0) * (item.quantity || 0))}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <CartItem
+              key={item.id}
+              item={item}
+              onQuantityChange={handleQuantityChange}
+              onRemove={removeItem}
+            />
           ))}
         </div>
 

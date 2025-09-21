@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
 
     const testimonial = await prisma.testimonial.create({
       data: {
+        id: `testimonial_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         name,
         email,
         company,
@@ -87,7 +88,8 @@ export async function POST(request: NextRequest) {
         avatar,
         isActive: isActive !== false,
         isFeatured: isFeatured || false,
-        order: order || 0
+        order: order || 0,
+        updatedAt: new Date()
       }
     })
 

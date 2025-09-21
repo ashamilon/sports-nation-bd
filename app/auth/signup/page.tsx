@@ -233,7 +233,7 @@ export default function SignUpPage() {
                   value={formData.phone}
                   onChange={handleChange}
                   className="glass-input pl-10 pr-4 py-3 w-full rounded-lg"
-                  placeholder="+880 1234 567890"
+                  placeholder="+880 1868 556390"
                   required
                 />
               </div>

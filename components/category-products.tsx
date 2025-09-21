@@ -20,10 +20,16 @@ interface Product {
   reviewCount: number
   variants: Array<{
     id: string
-    name: string
-    value: string
+    name?: string
+    value?: string
     price?: number
+    fabricType?: string
+    sizes?: string
   }>
+  category?: {
+    name: string
+    slug: string
+  }
 }
 
 interface Category {
@@ -47,6 +53,68 @@ export default function CategoryProducts({ category, products }: CategoryProduct
   const [sortBy, setSortBy] = useState('newest')
   const [filterSubcategory, setFilterSubcategory] = useState('all')
   const { addItem } = useCartStore()
+
+  // Function to get variant information for display
+  const getVariantInfo = (product: Product) => {
+    if (!product.variants || product.variants.length === 0) return null
+    
+    // Check if this is a Jersey with new variant structure
+    if (product.category?.slug === 'jersey' && product.variants.some(v => v.fabricType)) {
+      const fabricTypes = product.variants
+        .filter(v => v.fabricType)
+        .map(v => v.fabricType)
+        .filter(Boolean)
+      
+      if (fabricTypes.length > 0) {
+        return {
+          type: 'jersey',
+          fabrics: fabricTypes,
+          priceRange: getJerseyPriceRange(product.variants)
+        }
+      }
+    }
+    
+    // For other variants, show the first few
+    const otherVariants = product.variants
+      .filter(v => v.name && v.value)
+      .slice(0, 2)
+    
+    if (otherVariants.length > 0) {
+      return {
+        type: 'other',
+        variants: otherVariants
+      }
+    }
+    
+    return null
+  }
+
+  // Function to get price range for Jersey variants
+  const getJerseyPriceRange = (variants: Product['variants']) => {
+    if (!variants) return null
+    
+    const prices: number[] = []
+    
+    variants.forEach(variant => {
+      if (variant.sizes) {
+        try {
+          const sizes = JSON.parse(variant.sizes)
+          sizes.forEach((size: any) => {
+            if (size.price) prices.push(size.price)
+          })
+        } catch (error) {
+          console.error('Error parsing sizes:', error)
+        }
+      }
+    })
+    
+    if (prices.length === 0) return null
+    
+    const minPrice = Math.min(...prices)
+    const maxPrice = Math.max(...prices)
+    
+    return minPrice === maxPrice ? minPrice : { min: minPrice, max: maxPrice }
+  }
 
   const handleAddToCart = (product: Product, variantId?: string) => {
     const variant = product.variants.find(v => v.id === variantId) || product.variants[0]
@@ -199,6 +267,7 @@ export default function CategoryProducts({ category, products }: CategoryProduct
                     </h3>
                   </Link>
                   
+                  
                   {/* Rating */}
                   <div className="flex items-center gap-2 mt-1">
                     <div className="flex items-center">
@@ -231,25 +300,54 @@ export default function CategoryProducts({ category, products }: CategoryProduct
                   )}
                 </div>
 
-                {/* Variants */}
-                {product.variants.length > 1 && (
-                  <div className="flex gap-2 flex-wrap">
-                    {product.variants.slice(0, 2).map((variant) => (
-                      <button
-                        key={variant.id}
-                        onClick={() => handleAddToCart(product, variant.id)}
-                        className="text-xs px-2 py-1 border rounded hover:bg-accent transition-colors"
-                      >
-                        {variant.value}
-                      </button>
-                    ))}
-                    {product.variants.length > 2 && (
-                      <span className="text-xs text-muted-foreground">
-                        +{product.variants.length - 2} more
-                      </span>
-                    )}
-                  </div>
-                )}
+                {/* Variant Information */}
+                {(() => {
+                  const variantInfo = getVariantInfo(product)
+                  if (!variantInfo) return null
+                  
+                  if (variantInfo.type === 'jersey' && variantInfo.fabrics) {
+                    return (
+                      <div className="space-y-1 mt-2">
+                        <div className="flex flex-wrap gap-1">
+                          {variantInfo.fabrics.map((fabric, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20"
+                            >
+                              {fabric}
+                            </span>
+                          ))}
+                        </div>
+                        {variantInfo.priceRange && (
+                          <div className="text-xs text-muted-foreground">
+                            {typeof variantInfo.priceRange === 'number' 
+                              ? `From ${formatCurrency(variantInfo.priceRange)}`
+                              : `${formatCurrency(variantInfo.priceRange.min)} - ${formatCurrency(variantInfo.priceRange.max)}`
+                            }
+                          </div>
+                        )}
+                      </div>
+                    )
+                  }
+                  
+                  if (variantInfo.type === 'other' && variantInfo.variants) {
+                    return (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {variantInfo.variants.map((variant, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground"
+                          >
+                            {variant.name}: {variant.value}
+                          </span>
+                        ))}
+                      </div>
+                    )
+                  }
+                  
+                  return null
+                })()}
+
               </div>
             </div>
           </motion.div>

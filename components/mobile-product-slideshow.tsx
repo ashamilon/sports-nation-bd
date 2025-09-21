@@ -156,7 +156,12 @@ export default function MobileProductSlideshow({
                     )}
                     
                     {/* Badges */}
-                    <div className="absolute top-2 left-2">
+                    <div className="absolute top-2 left-2 flex flex-col gap-1">
+                      {product.comparePrice && product.comparePrice > product.price && (
+                        <span className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full shadow-lg">
+                          -{Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)}%
+                        </span>
+                      )}
                       {product.isNew && (
                         <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
                           New

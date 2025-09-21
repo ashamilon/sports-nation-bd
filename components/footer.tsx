@@ -56,7 +56,7 @@ export default function Footer() {
         <div className="py-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Brand Section */}
           <div className="lg:col-span-1 space-y-4">
-            <Logo size="md" />
+            <Logo size="sm" />
             
             <p className="text-sm text-muted-foreground">
               Your one-stop destination for premium sports gear, custom jerseys, 
@@ -67,7 +67,7 @@ export default function Footer() {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
                 <Phone className="h-4 w-4 text-primary" />
-                <span>+880 1234 567890</span>
+                <span>+880 1868 556390</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Mail className="h-4 w-4 text-primary" />

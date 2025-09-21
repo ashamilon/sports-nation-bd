@@ -181,34 +181,25 @@ async function getSundarbanTracking(trackingId: string) {
 // Pathao tracking
 async function getPathaoTracking(trackingId: string) {
   try {
-    // Mock data for now - replace with actual Pathao API
+    // Import Pathao courier service
+    const { pathaoCourier } = await import('@/lib/courier/pathao')
+    
+    // Get order status from Pathao
+    const statusResponse = await pathaoCourier.getOrderStatus(trackingId)
+    
+    if (!statusResponse || statusResponse.error) {
+      throw new Error(statusResponse?.error || 'Failed to get tracking information')
+    }
+
+    // Transform Pathao response to our format
     return {
       service: 'pathao',
       trackingId,
-      status: 'out_for_delivery',
-      location: 'Local Hub',
-      updates: [
-        {
-          status: 'picked_up',
-          location: 'Warehouse',
-          timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-          description: 'Package picked up from warehouse'
-        },
-        {
-          status: 'in_transit',
-          location: 'Local Hub',
-          timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-          description: 'Package arrived at local hub'
-        },
-        {
-          status: 'out_for_delivery',
-          location: 'Local Hub',
-          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          description: 'Package out for delivery'
-        }
-      ],
-      estimatedDelivery: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
-      lastUpdated: new Date().toISOString()
+      status: statusResponse.status || 'unknown',
+      location: statusResponse.currentLocation || 'Unknown',
+      updates: statusResponse.trackingHistory || [],
+      estimatedDelivery: statusResponse.estimatedDelivery,
+      lastUpdated: statusResponse.lastUpdated || new Date().toISOString()
     }
   } catch (error) {
     console.error('Pathao tracking error:', error)

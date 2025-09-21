@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import DashboardLayout from '@/components/dashboard/dashboard-layout'
-import DashboardOverviewReal from '@/components/dashboard/dashboard-overview-real'
+import DashboardOverviewOptimized from '@/components/dashboard/dashboard-overview-optimized'
 
 export const metadata: Metadata = {
   title: 'Dashboard | Sports Nation BD',
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function DashboardPage() {
   return (
     <DashboardLayout>
-      <DashboardOverviewReal />
+      <DashboardOverviewOptimized />
     </DashboardLayout>
   )
 }

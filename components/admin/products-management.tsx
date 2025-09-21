@@ -80,6 +80,29 @@ export default function ProductsManagement() {
     router.push(`/admin/products/${productId}/edit`)
   }
 
+  const handleToggleActive = async (productId: string, isCurrentlyActive: boolean) => {
+    try {
+      const response = await fetch(`/api/admin/products/${productId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          isActive: !isCurrentlyActive
+        })
+      })
+
+      if (response.ok) {
+        toast.success(`Product ${!isCurrentlyActive ? 'activated' : 'deactivated'} successfully`)
+        fetchProducts() // Refresh the list
+      } else {
+        toast.error('Failed to update product status')
+      }
+    } catch (error) {
+      toast.error('Failed to update product status')
+    }
+  }
+
 
   const categories = ['all', 'Jerseys', 'Sneakers', 'Watches', 'Shorts', 'Accessories']
 
@@ -118,6 +141,20 @@ export default function ProductsManagement() {
     )
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 relative">
+            <div className="w-full h-full border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+          </div>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Loading Products</h3>
+          <p className="text-muted-foreground">Fetching your products...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -144,14 +181,14 @@ export default function ProductsManagement() {
             <span>Export</span>
           </motion.button>
           <Link href="/admin/products/new">
-            <motion.button
+            <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="glass-button px-4 py-2 rounded-lg flex items-center space-x-2 bg-primary text-primary-foreground hover:bg-primary/90"
+              className="glass-button px-4 py-2 rounded-lg flex items-center space-x-2 bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
             >
               <Plus className="h-4 w-4" />
               <span>Add Product</span>
-            </motion.button>
+            </motion.div>
           </Link>
         </div>
       </div>
@@ -267,35 +304,39 @@ export default function ProductsManagement() {
 
       {/* Products Grid/List */}
       {viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {filteredProducts.map((product, index) => (
             <motion.div
               key={product.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="glass-card p-4 rounded-lg hover:shadow-lg transition-shadow"
+              className="glass-card p-3 rounded-lg hover:shadow-lg transition-shadow"
             >
               <div className="relative">
                 <Image
-                  src={product.images?.[0] || '/api/placeholder/300/400'}
+                  src={product.images?.[0] || '/api/placeholder/200/200'}
                   alt={product.name || 'Product'}
-                  width={300}
-                  height={192}
-                  className="w-full h-48 object-cover rounded-lg mb-4"
+                  width={200}
+                  height={200}
+                  className="w-full h-32 object-cover rounded-lg mb-3"
                   unoptimized={product.images?.[0]?.includes('/api/placeholder') || true}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/api/placeholder/200/200';
+                  }}
                 />
-                <span className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(product.status)}`}>
+                <span className={`absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(product.status)}`}>
                   {product.status ? product.status.replace('_', ' ') : 'Unknown'}
                 </span>
               </div>
               
-              <div className="space-y-2">
-                <h3 className="font-semibold text-foreground line-clamp-2">{product.name || 'Unnamed Product'}</h3>
-                <p className="text-sm text-muted-foreground">{product.category?.name || 'No Category'}</p>
-                <p className="text-lg font-bold text-foreground">৳{product.price?.toLocaleString() || '0'}</p>
+              <div className="space-y-1.5">
+                <h3 className="font-medium text-foreground line-clamp-2 text-sm">{product.name || 'Unnamed Product'}</h3>
+                <p className="text-xs text-muted-foreground">{product.category?.name || 'No Category'}</p>
+                <p className="text-base font-bold text-foreground">৳{product.price?.toLocaleString() || '0'}</p>
                 
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-xs">
                   <span className={`font-medium ${getStockColor(product.stock || 0, product.status)}`}>
                     Stock: {product.stock || 0}
                   </span>
@@ -305,24 +346,41 @@ export default function ProductsManagement() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center justify-between pt-1">
                   <div className="flex items-center space-x-1">
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
-                      className="glass-button p-2 rounded-lg"
+                      className="glass-button p-1.5 rounded-lg"
                       title="View"
                     >
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-3 w-3" />
                     </motion.button>
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
-                      className="glass-button p-2 rounded-lg"
+                      className="glass-button p-1.5 rounded-lg"
                       title="Edit"
                       onClick={() => handleEditProduct(product.id)}
                     >
-                      <Edit className="h-4 w-4" />
+                      <Edit className="h-3 w-3" />
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      className={`glass-button p-1.5 rounded-lg ${
+                        product.status === 'active' 
+                          ? 'text-green-500 hover:bg-green-500/10' 
+                          : 'text-gray-500 hover:bg-gray-500/10'
+                      }`}
+                      title={product.status === 'active' ? 'Deactivate' : 'Activate'}
+                      onClick={() => handleToggleActive(product.id, product.status === 'active')}
+                    >
+                      {product.status === 'active' ? (
+                        <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                      ) : (
+                        <div className="h-3 w-3 rounded-full bg-gray-400"></div>
+                      )}
                     </motion.button>
                     <SimpleCollectionManager 
                       product={product} 
@@ -331,14 +389,14 @@ export default function ProductsManagement() {
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
-                      className="glass-button p-2 rounded-lg text-red-500 hover:bg-red-500/10"
+                      className="glass-button p-1.5 rounded-lg text-red-500 hover:bg-red-500/10"
                       title="Delete"
                       onClick={() => handleDeleteProduct(product.id)}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3 w-3" />
                     </motion.button>
                   </div>
-                  <span className="text-xs text-muted-foreground">{product.sales || 0} sales</span>
+                  <span className="text-xs text-muted-foreground">{product.sales || 0}</span>
                 </div>
               </div>
             </motion.div>
@@ -378,6 +436,10 @@ export default function ProductsManagement() {
                           height={48}
                           className="w-12 h-12 object-cover rounded-lg"
                           unoptimized={product.images?.[0]?.includes('/api/placeholder') || true}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/api/placeholder/40/40';
+                          }}
                         />
                         <div>
                           <p className="font-medium text-foreground">{product.name || 'Unnamed Product'}</p>
@@ -422,6 +484,23 @@ export default function ProductsManagement() {
                           onClick={() => handleEditProduct(product.id)}
                         >
                           <Edit className="h-4 w-4" />
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          className={`glass-button p-2 rounded-lg ${
+                            product.status === 'active' 
+                              ? 'text-green-500 hover:bg-green-500/10' 
+                              : 'text-gray-500 hover:bg-gray-500/10'
+                          }`}
+                          title={product.status === 'active' ? 'Deactivate' : 'Activate'}
+                          onClick={() => handleToggleActive(product.id, product.status === 'active')}
+                        >
+                          {product.status === 'active' ? (
+                            <div className="h-4 w-4 rounded-full bg-green-500"></div>
+                          ) : (
+                            <div className="h-4 w-4 rounded-full bg-gray-400"></div>
+                          )}
                         </motion.button>
                         <SimpleCollectionManager 
                           product={product} 

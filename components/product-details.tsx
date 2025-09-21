@@ -1,10 +1,16 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useCartStore } from '@/lib/store/cart-store'
+import { useWishlistStore } from '@/lib/store/wishlist-store'
 import { formatCurrency } from '@/lib/currency'
-import { Star, Heart, ShoppingCart, Plus, Minus, Truck, Shield, RotateCcw, Share2 } from 'lucide-react'
+import { Star, Heart, ShoppingCart, Plus, Minus, Truck, Shield, RotateCcw, Share2, Ruler } from 'lucide-react'
+import SizeChart from './size-chart'
+import ReviewsSummary from './reviews-summary'
+import ReviewsList from './reviews-list'
+import ReviewForm from './review-form'
+import RelatedProducts from './related-products'
 import Image from 'next/image'
 import toast from 'react-hot-toast'
 
@@ -20,9 +26,11 @@ interface Product {
   reviewCount: number
   variants: Array<{
     id: string
-    name: string
-    value: string
+    name?: string
+    value?: string
     price?: number
+    fabricType?: string
+    sizes?: string
   }>
   category: {
     name: string
@@ -61,25 +69,151 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
   const [customNumber, setCustomNumber] = useState('')
   const [selectedBadges, setSelectedBadges] = useState<string[]>([])
   const { addItem } = useCartStore()
+  const { addToWishlist, removeFromWishlist, isInWishlist, fetchWishlist } = useWishlistStore()
+  const [isHydrated, setIsHydrated] = useState(false)
+  const [showSizeChart, setShowSizeChart] = useState(false)
+  const [activeTooltip, setActiveTooltip] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'description' | 'wash-care' | 'reviews'>('description')
+  const [reviewsKey, setReviewsKey] = useState(0) // Key to force re-render of reviews
 
-  const handleVariantChange = (variantName: string, value: string) => {
+  // Hydrate the wishlist store on client side
+  useEffect(() => {
+    setIsHydrated(true)
+    fetchWishlistForProduct()
+  }, [])
+
+  // Handle tooltip display for mobile
+  const handleTooltipShow = (tooltipId: string) => {
+    setActiveTooltip(tooltipId)
+    // Auto-hide after 2 seconds
+    setTimeout(() => {
+      setActiveTooltip(null)
+    }, 2000)
+  }
+
+  const handleTooltipHide = () => {
+    setActiveTooltip(null)
+  }
+
+  // Handle review updates
+  const handleReviewUpdate = () => {
+    setReviewsKey(prev => prev + 1)
+  }
+
+  // Auto-select fabric type if there's only one available
+  useEffect(() => {
+    if (product.category.slug === 'jersey' && product.variants.some(v => v.fabricType)) {
+      // Get fabric types that have available sizes
+      const availableFabricTypes = product.variants
+        .filter((variant) => {
+          if (!variant.fabricType || !variant.sizes) return false
+          
+          try {
+            const sizes = JSON.parse(variant.sizes)
+            const availableSizes = sizes.filter((sizeItem: any) => sizeItem.stock > 0)
+            return availableSizes.length > 0
+          } catch (error) {
+            return false
+          }
+        })
+        .map(v => v.fabricType)
+        .filter((value, index, self) => self.indexOf(value) === index) // Remove duplicates
+      
+      // If there's only one fabric type with available sizes, auto-select it
+      if (availableFabricTypes.length === 1 && !selectedVariants['Fabric']) {
+        setSelectedVariants(prev => ({
+          ...prev,
+          Fabric: availableFabricTypes[0] || ''
+        }))
+        
+        // Don't auto-show size chart - let user decide when to view it
+      }
+    }
+  }, [product.variants, product.category.slug, selectedVariants])
+
+  const fetchWishlistForProduct = async () => {
+    try {
+      const response = await fetch(`/api/wishlist/check?productIds=${product.id}`)
+      const data = await response.json()
+      if (data.success) {
+        const { setState } = useWishlistStore.getState()
+        setState((state) => ({
+          ...state,
+          items: data.data
+        }))
+      }
+    } catch (error) {
+      console.error('Error fetching wishlist for product:', error)
+    }
+  }
+
+  const handleToggleWishlist = async () => {
+    if (!isHydrated) return
+    
+    let variantId = undefined
+    if (product.category.slug === 'jersey' && selectedVariants['Size'] && selectedVariants['Fabric']) {
+      const selectedFabricVariant = product.variants.find(v => v.fabricType === selectedVariants['Fabric'])
+      variantId = selectedFabricVariant?.id
+    } else {
+      const variant = product.variants.find(v => 
+        v.name && v.value && 
+        selectedVariants[v.name] === v.value
+      )
+      variantId = variant?.id
+    }
+
+    const isCurrentlyInWishlist = isInWishlist(product.id, variantId)
+    
+    if (isCurrentlyInWishlist) {
+      await removeFromWishlist(product.id, product.id, variantId)
+      toast.success('Removed from wishlist!')
+    } else {
+      await addToWishlist(product.id, variantId)
+      toast.success('Added to wishlist!')
+    }
+  }
+
+  const handleVariantChange = (variantName: string, variantValue: string) => {
     setSelectedVariants(prev => ({
       ...prev,
-      [variantName]: value
+      [variantName]: variantValue
     }))
   }
 
+  const handleBadgeToggle = (badgeId: string) => {
+    setSelectedBadges(prev => 
+      prev.includes(badgeId) 
+        ? prev.filter(id => id !== badgeId)
+        : [...prev, badgeId]
+    )
+  }
+
   const handleAddToCart = () => {
-    let totalPrice = product.price
+    // Check if variants are required but not selected
+    if (product.variants.length > 0 && product.category.slug === 'jersey') {
+      if (!selectedVariants['Fabric'] || !selectedVariants['Size']) {
+        toast.error('Please select fabric type and size')
+        return
+      }
+    }
     
-    // For jerseys with separate Size and Fabric selections
-    if (product.category.slug === 'jerseys' && selectedVariants['Size'] && selectedVariants['Fabric']) {
-      // Find the combined variant that matches both size and fabric
-      const combinedVariantValue = `${selectedVariants['Size']} - ${selectedVariants['Fabric']}`
-      const matchingVariant = product.variants.find(v => v.value === combinedVariantValue)
-      
-      if (matchingVariant && matchingVariant.price) {
-        totalPrice = matchingVariant.price
+    let totalPrice = product.price
+    let variantId = undefined
+    
+    // For new Jersey variant structure with fabricType and sizes
+    if (product.category.slug === 'jersey' && selectedVariants['Size'] && selectedVariants['Fabric']) {
+      const selectedFabricVariant = product.variants.find(v => v.fabricType === selectedVariants['Fabric'])
+      if (selectedFabricVariant?.sizes) {
+        try {
+          const sizes = JSON.parse(selectedFabricVariant.sizes)
+          const selectedSize = sizes.find((s: any) => s.size === selectedVariants['Size'])
+          if (selectedSize) {
+            totalPrice = selectedSize.price
+            variantId = selectedFabricVariant.id
+          }
+        } catch (error) {
+          console.error('Error parsing sizes:', error)
+        }
       }
     } else {
       // For other products, add any variant price adjustments
@@ -87,6 +221,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
         const variant = product.variants.find(v => v.name === variantName && v.value === variantValue)
         if (variant && variant.price && variant.price !== product.price) {
           totalPrice += (variant.price - product.price)
+          variantId = variant.id
         }
       })
     }
@@ -105,13 +240,21 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
       name: customName,
       number: customNumber,
       badges: selectedBadges,
-      badgeTotal
+      badgeTotal,
+      size: selectedVariants['Size'] || undefined,
+      fabric: selectedVariants['Fabric'] || undefined
     }
 
     // Create variant name string from selected variants
-    const variantName = Object.entries(selectedVariants)
-      .map(([name, value]) => `${name}: ${value}`)
-      .join(', ')
+    let variantName = ''
+    if (product.category.slug === 'jersey' && selectedVariants['Fabric'] && selectedVariants['Size']) {
+      variantName = `Fabric: ${selectedVariants['Fabric']}, Size: ${selectedVariants['Size']}`
+    } else if (Object.keys(selectedVariants).length > 0) {
+      variantName = Object.entries(selectedVariants)
+        .filter(([name, value]) => value && value !== 'null')
+        .map(([name, value]) => `${name}: ${value}`)
+        .join(', ')
+    }
 
     addItem({
       productId: product.id,
@@ -119,20 +262,97 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
       price: totalPrice,
       image: product.images[selectedImage] || '/api/placeholder/300',
       quantity,
-      variantId: undefined, // No single variant ID for separate variants
+      variantId: variantId,
       variantName: variantName || undefined,
-      customOptions: (customName || customNumber || selectedBadges.length > 0) ? customOptions : undefined
+      customOptions: (customName || customNumber || selectedBadges.length > 0 || selectedVariants['Size'] || selectedVariants['Fabric']) ? customOptions : undefined
     })
     
     toast.success('Added to cart!')
   }
 
-  const handleBadgeToggle = (badgeId: string) => {
-    setSelectedBadges(prev => 
-      prev.includes(badgeId) 
-        ? prev.filter(id => id !== badgeId)
-        : [...prev, badgeId]
-    )
+  const handleBuyNow = () => {
+    // Check if variants are required but not selected
+    if (product.variants.length > 0 && product.category.slug === 'jersey') {
+      if (!selectedVariants['Fabric'] || !selectedVariants['Size']) {
+        toast.error('Please select fabric type and size')
+        return
+      }
+    }
+    
+    // Redirect directly to checkout with product data
+    const selectedVariant = product.category.slug === 'jersey' 
+      ? product.variants.find(v => v.fabricType === selectedVariants['Fabric'])
+      : product.variants.find(v => 
+          v.name && v.value && 
+          selectedVariants[v.name] === v.value
+        )
+
+    if (!selectedVariant) {
+      toast.error('Please select all required options')
+      return
+    }
+
+    // For jersey products, get the specific size price
+    let finalPrice = product.price
+    if (product.category.slug === 'jersey' && selectedVariant.sizes) {
+      try {
+        const sizes = JSON.parse(selectedVariant.sizes)
+        const selectedSize = sizes.find((s: any) => s.size === selectedVariants['Size'])
+        if (selectedSize && selectedSize.price) {
+          finalPrice = selectedSize.price
+        }
+      } catch (error) {
+        console.error('Error parsing sizes:', error)
+      }
+    } else if (selectedVariant.price) {
+      finalPrice = selectedVariant.price
+    }
+
+    // Calculate custom options total
+    let customOptionsTotal = 0
+    const customOptions: any = {}
+
+    if (customName && customNumber) {
+      customOptionsTotal += product.nameNumberPrice || 0
+      customOptions.name = customName
+      customOptions.number = customNumber
+    }
+
+    if (selectedBadges.length > 0) {
+      customOptionsTotal += selectedBadges.length * 50 // 50 BDT per badge
+      customOptions.badges = selectedBadges
+    }
+
+    // Add size and fabric info for jersey products
+    if (product.category.slug === 'jersey') {
+      customOptions.size = selectedVariants['Size']
+      customOptions.fabric = selectedVariants['Fabric']
+    }
+
+    // Create cart item data
+    const cartItem = {
+      id: product.id,
+      name: product.name,
+      price: finalPrice,
+      image: product.images[0],
+      quantity,
+      variantId: selectedVariant.id,
+      variantName: product.category.slug === 'jersey' 
+        ? `${selectedVariants['Fabric']} - ${selectedVariants['Size']}`
+        : `${selectedVariant.name}: ${selectedVariant.value}`,
+      customOptions: {
+        ...customOptions,
+        badgeTotal: customOptionsTotal
+      }
+    }
+
+    // Store cart item in sessionStorage for checkout
+    sessionStorage.setItem('buyNowItem', JSON.stringify(cartItem))
+    // Mark that this is a Buy Now action to clear existing cart
+    sessionStorage.setItem('buyNowAction', 'true')
+    
+    // Redirect to checkout
+    window.location.href = '/checkout'
   }
 
   return (
@@ -149,34 +369,35 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
                 width={600}
                 height={600}
                 className="w-full h-full object-cover"
-                priority
-                unoptimized={false}
+                unoptimized={product.images[selectedImage].includes('/api/placeholder')}
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-                <span className="text-8xl opacity-20">⚽</span>
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                No image available
               </div>
             )}
           </div>
 
           {/* Thumbnail Images */}
-          {product.images.length > 1 && (
-            <div className="grid grid-cols-4 gap-2">
+          {product.images && product.images.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto">
               {product.images.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
-                  className={`aspect-square bg-muted rounded-lg overflow-hidden border-2 transition-colors ${
-                    selectedImage === index ? 'border-primary' : 'border-transparent'
+                  className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
+                    selectedImage === index
+                      ? 'border-primary'
+                      : 'border-border hover:border-primary/50'
                   }`}
                 >
                   <Image
                     src={image}
                     alt={`${product.name} ${index + 1}`}
-                    width={150}
-                    height={150}
+                    width={80}
+                    height={80}
                     className="w-full h-full object-cover"
-                    unoptimized={false}
+                    unoptimized={image.includes('/api/placeholder')}
                   />
                 </button>
               ))}
@@ -186,14 +407,11 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
 
         {/* Product Info */}
         <div className="space-y-6">
-          {/* Header */}
+          {/* Title and Rating */}
           <div>
             <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
-            <p className="text-muted-foreground">{product.category.name}</p>
-            
-            {/* Rating */}
-            <div className="flex items-center gap-2 mt-2">
-              <div className="flex items-center">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-1">
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
@@ -206,133 +424,198 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
                 ))}
               </div>
               <span className="text-sm text-muted-foreground">
-                {product.averageRating.toFixed(1)} ({product.reviewCount} reviews)
+                ({product.reviewCount} reviews)
               </span>
             </div>
           </div>
 
           {/* Price */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-4">
-              <span className="text-3xl font-bold">
-                {formatCurrency(product.price)}
+          <div className="flex items-center gap-3">
+            <span className="text-3xl font-bold text-primary">
+              {formatCurrency(product.price)}
+            </span>
+            {product.comparePrice && product.comparePrice > product.price && (
+              <span className="text-lg text-muted-foreground line-through">
+                {formatCurrency(product.comparePrice)}
               </span>
-              {product.comparePrice && (
-                <span className="text-xl text-muted-foreground line-through">
-                  {formatCurrency(product.comparePrice)}
-                </span>
-              )}
-            </div>
-            
-            {/* Dynamic Price with Customizations */}
-            {(customName || customNumber || selectedBadges.length > 0) && (
-              <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Total with customizations:</span>
-                  <span className="text-lg font-bold text-primary">
-                    {formatCurrency(
-                      product.price + 
-                      (product.allowNameNumber && (customName || customNumber) ? (product.nameNumberPrice || 250) : 0) +
-                      (product.badges?.filter(badge => selectedBadges.includes(badge.id)).reduce((sum, badge) => sum + badge.price, 0) || 0)
-                    )}
-                  </span>
-                </div>
-                {(customName || customNumber) && (
-                  <div className="text-xs text-muted-foreground mt-1">
-                    +{formatCurrency(product.nameNumberPrice || 250)} for name/number printing
-                  </div>
-                )}
-                {selectedBadges.length > 0 && (
-                  <div className="text-xs text-muted-foreground mt-1">
-                    +{formatCurrency(product.badges?.filter(badge => selectedBadges.includes(badge.id)).reduce((sum, badge) => sum + badge.price, 0) || 0)} for premium badges
-                  </div>
-                )}
+            )}
+            {selectedBadges.length > 0 && (
+              <div className="text-xs text-muted-foreground mt-1">
+                +{formatCurrency(product.badges?.filter(badge => selectedBadges.includes(badge.id)).reduce((sum, badge) => sum + badge.price, 0) || 0)} for premium badges
               </div>
             )}
           </div>
 
-          {/* Description */}
-          <div>
-            <h3 className="font-semibold mb-2">Description</h3>
-            <p className="text-muted-foreground leading-relaxed">
-              {product.description}
-            </p>
-          </div>
 
           {/* Variants */}
           {product.variants.length > 0 && (
             <div className="space-y-4">
-              {Object.entries(
-                product.variants.reduce((acc, variant) => {
-                  if (!acc[variant.name]) acc[variant.name] = []
-                  acc[variant.name].push(variant)
-                  return acc
-                }, {} as Record<string, typeof product.variants>)
-              ).map(([variantName, variants]) => {
-                // For jerseys with combined "Size & Fabric" variants, show separate selectors
-                if (variantName.toLowerCase().includes('size') && variantName.toLowerCase().includes('fabric') && product.category.slug === 'jerseys') {
-                  // Extract unique sizes and fabrics from combined variants
-                  const sizes = [...new Set(variants.map(v => v.value.split(' - ')[0]))].sort((a, b) => {
-                    const sizeOrder = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL']
-                    return sizeOrder.indexOf(a) - sizeOrder.indexOf(b)
-                  })
+              {/* Check if this is a Jersey with new variant structure */}
+              {product.category.slug === 'jersey' && product.variants.some(v => v.fabricType) ? (
+                // New Jersey variant structure with fabricType and sizes
+                <div className="space-y-4">
+                  {/* Fabric Type Selector */}
+                  <div>
+                    <h4 className="font-medium mb-2">Fabric Type</h4>
+                    <div className="flex gap-2 flex-wrap">
+                      {product.variants
+                        .filter((variant) => variant.fabricType) // Show all fabric types
+                        .map((variant) => {
+                          // Check if this fabric type has any available sizes
+                          let hasAvailableSizes = false
+                          if (variant.sizes) {
+                            try {
+                              const sizes = JSON.parse(variant.sizes)
+                              hasAvailableSizes = sizes.some((sizeItem: any) => sizeItem.stock > 0)
+                            } catch (error) {
+                              hasAvailableSizes = false
+                            }
+                          }
+                          
+                          const isDisabled = !hasAvailableSizes
+                          const isSelected = selectedVariants['Fabric'] === variant.fabricType
+                          
+                          return (
+                            <div key={variant.id} className="relative group">
+                              <button
+                                onClick={() => {
+                                  if (!isDisabled) {
+                                    handleVariantChange('Fabric', variant.fabricType || '')
+                                  } else {
+                                    handleTooltipShow(`fabric-${variant.id}`)
+                                  }
+                                }}
+                                onTouchStart={() => isDisabled && handleTooltipShow(`fabric-${variant.id}`)}
+                                disabled={isDisabled}
+                                className={`px-4 py-2 border rounded-lg transition-colors relative ${
+                                  isDisabled
+                                    ? 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
+                                    : isSelected
+                                    ? 'border-primary bg-primary/10 text-primary'
+                                    : 'border-border hover:border-primary/50'
+                                }`}
+                              >
+                                {variant.fabricType}
+                                {/* Visual "cut" line for disabled fabric types */}
+                                {isDisabled && (
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="w-full h-0.5 bg-red-400 transform rotate-12"></div>
+                                  </div>
+                                )}
+                              </button>
+                              
+                              {/* Stock info tooltip that appears on hover and mobile touch */}
+                              {isDisabled && (
+                                <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 ${
+                                  activeTooltip === `fabric-${variant.id}` ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                }`}>
+                                  No Stock Available
+                                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                    </div>
+                  </div>
                   
-                  const fabrics = [...new Set(variants.map(v => v.value.split(' - ')[1]))]
-                  
-                  return (
-                    <div key={variantName} className="space-y-4">
-                      {/* Size Selector */}
-                      <div>
-                        <h4 className="font-medium mb-2">Size</h4>
-                        <div className="flex gap-2 flex-wrap">
-                          {sizes.map((size) => (
-                            <button
-                              key={size}
-                              onClick={() => handleVariantChange('Size', size)}
-                              className={`px-4 py-2 border rounded-lg transition-colors ${
-                                selectedVariants['Size'] === size
-                                  ? 'border-primary bg-primary/10 text-primary'
-                                  : 'border-border hover:border-primary/50'
-                              }`}
-                            >
-                              {size}
-                            </button>
-                          ))}
-                        </div>
+                  {/* Size Selector - Show sizes for selected fabric */}
+                  {selectedVariants['Fabric'] && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium">Size</h4>
+                        <button
+                          onClick={() => setShowSizeChart(true)}
+                          className="flex items-center gap-2 px-3 py-1 text-sm text-primary hover:text-primary/80 transition-colors"
+                        >
+                          <Ruler className="h-4 w-4" />
+                          Size Chart
+                        </button>
                       </div>
-                      
-                      {/* Fabric Selector */}
-                      <div>
-                        <h4 className="font-medium mb-2">Fabric Type</h4>
-                        <div className="flex gap-2 flex-wrap">
-                          {fabrics.map((fabric) => (
-                            <button
-                              key={fabric}
-                              onClick={() => handleVariantChange('Fabric', fabric)}
-                              className={`px-4 py-2 border rounded-lg transition-colors ${
-                                selectedVariants['Fabric'] === fabric
-                                  ? 'border-primary bg-primary/10 text-primary'
-                                  : 'border-border hover:border-primary/50'
-                              }`}
-                            >
-                              {fabric}
-                            </button>
-                          ))}
-                        </div>
+                      <div className="flex gap-2 flex-wrap">
+                        {(() => {
+                          const selectedFabricVariant = product.variants.find(v => v.fabricType === selectedVariants['Fabric'])
+                          if (!selectedFabricVariant?.sizes) return null
+                          
+                          try {
+                            const sizes = JSON.parse(selectedFabricVariant.sizes)
+                            
+                            return sizes.map((sizeItem: any) => {
+                              const isOutOfStock = sizeItem.stock <= 0
+                              const isLowStock = sizeItem.stock <= 5 && sizeItem.stock > 0
+                              const isSelected = selectedVariants['Size'] === sizeItem.size
+                              
+                              return (
+                                <div key={sizeItem.size} className="relative group">
+                                  <button
+                                    onClick={() => {
+                                      if (!isOutOfStock) {
+                                        handleVariantChange('Size', sizeItem.size)
+                                      } else {
+                                        handleTooltipShow(`size-${sizeItem.size}`)
+                                      }
+                                    }}
+                                    onTouchStart={() => (isOutOfStock || isLowStock) && handleTooltipShow(`size-${sizeItem.size}`)}
+                                    disabled={isOutOfStock}
+                                    className={`px-4 py-2 border rounded-lg transition-colors relative ${
+                                      isOutOfStock
+                                        ? 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
+                                        : isSelected
+                                        ? 'border-primary bg-primary/10 text-primary'
+                                        : 'border-border hover:border-primary/50'
+                                    }`}
+                                  >
+                                    {sizeItem.size}
+                                    {sizeItem.price && sizeItem.price !== product.price && (
+                                      <span className="ml-1 text-xs">
+                                        ({formatCurrency(sizeItem.price)})
+                                      </span>
+                                    )}
+                                    {/* Visual "cut" line for out of stock items */}
+                                    {isOutOfStock && (
+                                      <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="w-full h-0.5 bg-red-400 transform rotate-12"></div>
+                                      </div>
+                                    )}
+                                  </button>
+                                  
+                                  {/* Stock info tooltip that appears on hover and mobile touch */}
+                                  {(isOutOfStock || isLowStock) && (
+                                    <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 ${
+                                      activeTooltip === `size-${sizeItem.size}` ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                    }`}>
+                                      {isOutOfStock ? 'Out of Stock' : `Only ${sizeItem.stock} left`}
+                                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })
+                          } catch (error) {
+                            console.error('Error parsing sizes:', error)
+                            return null
+                          }
+                        })()}
                       </div>
                     </div>
-                  )
-                }
-                
-                // For other variants, show as before
-                return (
+                  )}
+                </div>
+              ) : (
+                // Original variant structure
+                Object.entries(
+                  product.variants.reduce((acc, variant) => {
+                    if (!acc[variant.name || '']) acc[variant.name || ''] = []
+                    acc[variant.name || ''].push(variant)
+                    return acc
+                  }, {} as Record<string, typeof product.variants>)
+                ).map(([variantName, variants]) => (
                   <div key={variantName}>
                     <h4 className="font-medium mb-2">{variantName}</h4>
                     <div className="flex gap-2 flex-wrap">
                       {variants.map((variant) => (
                         <button
                           key={variant.id}
-                          onClick={() => handleVariantChange(variantName, variant.value)}
+                          onClick={() => handleVariantChange(variantName, variant.value || '')}
                           className={`px-4 py-2 border rounded-lg transition-colors ${
                             selectedVariants[variantName] === variant.value
                               ? 'border-primary bg-primary/10 text-primary'
@@ -349,224 +632,320 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
                       ))}
                     </div>
                   </div>
-                )
-              })}
+                ))
+              )}
             </div>
           )}
 
           {/* Customization Options */}
           {(product.allowNameNumber || (product.badges && product.badges.length > 0)) && (
-              <div className="space-y-4">
-                <h4 className="font-medium">Customization Options</h4>
-                
-                {/* Name & Number Customization */}
-                {product.allowNameNumber && (
-                  <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
-                    <div className="flex items-center gap-2">
-                      <h5 className="font-medium">Name & Number Printing</h5>
-                      <span className="text-sm text-primary font-medium">
-                        +{formatCurrency(product.nameNumberPrice || 250)}
-                      </span>
+            <div className="space-y-4">
+              <h4 className="font-medium">Customization Options</h4>
+              
+              {/* Name & Number Customization */}
+              {product.allowNameNumber && (
+                <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    <h5 className="font-medium">Name & Number Printing</h5>
+                    <span className="text-sm text-primary font-medium">
+                      +{formatCurrency(product.nameNumberPrice || 250)}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Add custom name and number to your jersey
+                  </p>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Player Name</label>
+                      <input
+                        type="text"
+                        value={customName}
+                        onChange={(e) => setCustomName(e.target.value)}
+                        placeholder="Enter name"
+                        className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Add custom name and number to your jersey
-                    </p>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Player Name</label>
-                        <input
-                          type="text"
-                          value={customName}
-                          onChange={(e) => setCustomName(e.target.value)}
-                          placeholder="Enter name"
-                          className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Jersey Number</label>
-                        <input
-                          type="number"
-                          value={customNumber}
-                          onChange={(e) => setCustomNumber(e.target.value)}
-                          placeholder="Enter number"
-                          className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                        />
-                      </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Jersey Number</label>
+                      <input
+                        type="number"
+                        value={customNumber}
+                        onChange={(e) => setCustomNumber(e.target.value)}
+                        placeholder="Enter number"
+                        className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
                     </div>
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* Premium Badges */}
-                {product.badges && product.badges.length > 0 && (
-                  <div className="space-y-3">
-                    <h5 className="font-medium">Premium Badges (Optional)</h5>
-                    <div className="grid grid-cols-1 gap-2">
-                      {product.badges.map((badge) => (
-                        <div
-                          key={badge.id}
-                          className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                            selectedBadges.includes(badge.id)
-                              ? 'border-primary bg-primary/10'
-                              : 'border-border hover:border-primary/50'
-                          }`}
-                          onClick={() => handleBadgeToggle(badge.id)}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              {badge.image && (
-                                <Image
-                                  src={badge.image}
-                                  alt={badge.name}
-                                  width={32}
-                                  height={32}
-                                  className="rounded"
-                                  unoptimized={badge.image.includes('/api/placeholder')}
-                                />
+              {/* Premium Badges */}
+              {product.badges && product.badges.length > 0 && (
+                <div className="space-y-3">
+                  <h5 className="font-medium">Premium Badges (Optional)</h5>
+                  <div className="grid grid-cols-1 gap-2">
+                    {product.badges.map((badge) => (
+                      <div
+                        key={badge.id}
+                        className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                          selectedBadges.includes(badge.id)
+                            ? 'border-primary bg-primary/10'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                        onClick={() => handleBadgeToggle(badge.id)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            {badge.image && (
+                              <Image
+                                src={badge.image}
+                                alt={badge.name}
+                                width={32}
+                                height={32}
+                                className="rounded"
+                                unoptimized={badge.image.includes('/api/placeholder')}
+                              />
+                            )}
+                            <div>
+                              <p className="font-medium">{badge.name}</p>
+                              {badge.description && (
+                                <p className="text-sm text-muted-foreground">{badge.description}</p>
                               )}
-                              <div>
-                                <p className="font-medium text-sm">{badge.name}</p>
-                                {badge.description && (
-                                  <p className="text-xs text-muted-foreground">{badge.description}</p>
-                                )}
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-medium text-sm text-primary">
-                                +{formatCurrency(badge.price)}
-                              </p>
-                              <div className={`w-4 h-4 border-2 rounded ${
-                                selectedBadges.includes(badge.id)
-                                  ? 'border-primary bg-primary'
-                                  : 'border-border'
-                              }`}>
-                                {selectedBadges.includes(badge.id) && (
-                                  <div className="w-full h-full bg-white rounded-sm scale-50"></div>
-                                )}
-                              </div>
                             </div>
                           </div>
+                          <span className="text-sm font-medium text-primary">
+                            +{formatCurrency(badge.price)}
+                          </span>
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
-                )}
-              </div>
-            )}
-
-          {/* Quantity */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Quantity</label>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="w-10 h-10 border rounded-lg flex items-center justify-center hover:bg-accent transition-colors"
-              >
-                <Minus className="h-4 w-4" />
-              </button>
-              <span className="w-12 text-center font-medium">{quantity}</span>
-              <button
-                onClick={() => setQuantity(quantity + 1)}
-                className="w-10 h-10 border rounded-lg flex items-center justify-center hover:bg-accent transition-colors"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
+                </div>
+              )}
             </div>
-          </div>
+          )}
 
-          {/* Actions */}
+          {/* Quantity and Actions */}
           <div className="space-y-4">
-            {/* Validation message for jerseys */}
-            {product.category.slug === 'jerseys' && (!selectedVariants['Size'] || !selectedVariants['Fabric']) && (
-              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm text-yellow-800">
-                  Please select both Size and Fabric Type to add to cart
-                </p>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="p-2 border rounded-lg hover:bg-muted transition-colors"
+                >
+                  <Minus className="h-4 w-4" />
+                </button>
+                <span className="w-12 text-center font-medium">{quantity}</span>
+                <button
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="p-2 border rounded-lg hover:bg-muted transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
               </div>
-            )}
-            
-            <div className="flex gap-4">
+            </div>
+
+            {/* Actions */}
+            <div className="space-y-4">
+          {/* Validation message for jerseys */}
+          {product.category.slug === 'jersey' && (!selectedVariants['Size'] || !selectedVariants['Fabric']) && (
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                {!selectedVariants['Fabric'] 
+                  ? 'Please select a Fabric Type to see available sizes'
+                  : 'Please select a Size to add to cart'
+                }
+              </p>
+            </div>
+          )}
+
+              {/* Add to Cart and Wishlist Buttons Side by Side */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleAddToCart}
+                  className="flex-1 bg-primary text-primary-foreground py-3 md:py-4 px-4 md:px-6 rounded-lg font-semibold text-sm md:text-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Plus className="h-4 w-4 md:h-5 md:w-5" />
+                  <span className="hidden sm:inline">Add to Cart</span>
+                  <span className="sm:hidden">Add</span>
+                </button>
+                <button
+                  onClick={handleToggleWishlist}
+                  className={`px-4 md:px-6 py-3 md:py-4 border rounded-lg transition-colors flex items-center justify-center gap-2 ${
+                    isHydrated && isInWishlist(product.id, 
+                      product.category.slug === 'jersey' && selectedVariants['Size'] && selectedVariants['Fabric'] 
+                        ? product.variants.find(v => v.fabricType === selectedVariants['Fabric'])?.id
+                        : product.variants.find(v => 
+                            v.name && v.value && 
+                            selectedVariants[v.name] === v.value
+                          )?.id
+                    )
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <Heart className="h-4 w-4 md:h-5 md:w-5" />
+                  <span className="hidden sm:inline text-sm md:text-base">
+                    {isHydrated && isInWishlist(product.id, 
+                      product.category.slug === 'jersey' && selectedVariants['Size'] && selectedVariants['Fabric'] 
+                        ? product.variants.find(v => v.fabricType === selectedVariants['Fabric'])?.id
+                        : product.variants.find(v => 
+                            v.name && v.value && 
+                            selectedVariants[v.name] === v.value
+                          )?.id
+                    ) ? 'Remove from Wishlist' : 'Add to Wishlist'}
+                  </span>
+                </button>
+              </div>
+
+              {/* Buy Now Button - Full Width Below */}
               <button
-                onClick={handleAddToCart}
-                disabled={product.category.slug === 'jerseys' && (!selectedVariants['Size'] || !selectedVariants['Fabric'])}
-                className="flex-1 bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleBuyNow}
+                className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-3 md:py-4 px-6 rounded-lg font-semibold text-base md:text-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
               >
-                <ShoppingCart className="h-5 w-5" />
-                Add to Cart
+                <ShoppingCart className="h-4 w-4 md:h-5 md:w-5" />
+                Buy Now
               </button>
-              <button className="p-3 border rounded-lg hover:bg-accent transition-colors">
-                <Heart className="h-5 w-5" />
-              </button>
-              <button className="p-3 border rounded-lg hover:bg-accent transition-colors">
-                <Share2 className="h-5 w-5" />
-              </button>
+
+              {/* Guaranteed Checkout Section - Just Below Buy Now */}
+              <div className="pt-4">
+                <div className="text-center space-y-3">
+                  <h3 className="text-lg font-semibold text-gray-800">Secured Checkout with SSLCommerz</h3>
+                  <p className="text-sm text-gray-600">Your payment information is safe and secure</p>
+                  <div className="flex justify-center">
+                    <Image 
+                      src="/payment-banner.png" 
+                      alt="Payment Methods - VISA, Mastercard, bKash, Nagad, SSLCommerz and more" 
+                      width={600}
+                      height={100}
+                      className="max-w-full h-auto"
+                      priority={false}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Features */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t">
-            <div className="flex items-center gap-3">
+          {/* Features - Side by Side */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t">
+            <div className="flex flex-col items-center text-center gap-2 pb-2">
               <Truck className="h-5 w-5 text-primary" />
-              <div>
-                <p className="font-medium text-sm">Free Delivery</p>
-                <p className="text-xs text-muted-foreground">Over ৳2,000</p>
-              </div>
+              <span className="text-sm">Free shipping on orders over ৳2000</span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col items-center text-center gap-2 pb-2">
               <Shield className="h-5 w-5 text-primary" />
-              <div>
-                <p className="font-medium text-sm">Money Back</p>
-                <p className="text-xs text-muted-foreground">7-15 days</p>
-              </div>
+              <span className="text-sm">1 year warranty</span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col items-center text-center gap-2 pb-2">
               <RotateCcw className="h-5 w-5 text-primary" />
-              <div>
-                <p className="font-medium text-sm">Easy Returns</p>
-                <p className="text-xs text-muted-foreground">No questions asked</p>
-              </div>
+              <span className="text-sm">30-day return policy</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Reviews Section */}
-      {product.reviews.length > 0 && (
-        <div className="mt-16">
-          <h2 className="text-2xl font-bold mb-6">Customer Reviews</h2>
-          <div className="space-y-4">
-            {product.reviews.map((review) => (
-              <div key={review.id} className="border rounded-lg p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-medium">
-                      {review.user.name?.charAt(0) || 'U'}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="font-medium">{review.user.name || 'Anonymous'}</p>
-                    <div className="flex items-center gap-1">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-3 w-3 ${
-                            i < review.rating
-                              ? 'text-yellow-400 fill-current'
-                              : 'text-muted-foreground'
-                          }`}
-                        />
-                      ))}
-                    </div>
+      {/* Product Details Tabs - Full Width */}
+      <div className="w-full bg-white border-t">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="pt-6">
+            <div className="border-b border-gray-200">
+              <nav className="-mb-px flex space-x-8">
+                <button
+                  onClick={() => setActiveTab('description')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'description'
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  DESCRIPTION
+                </button>
+                <button
+                  onClick={() => setActiveTab('wash-care')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'wash-care'
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  WASH CARE
+                </button>
+                <button
+                  onClick={() => setActiveTab('reviews')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'reviews'
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  REVIEWS
+                </button>
+              </nav>
+            </div>
+
+            <div className="py-6">
+              {activeTab === 'description' && (
+                <div className="space-y-4">
+                  <div className="prose prose-sm max-w-none">
+                    <div dangerouslySetInnerHTML={{ __html: product.description }} />
                   </div>
                 </div>
-                {review.comment && (
-                  <p className="text-muted-foreground">{review.comment}</p>
-                )}
-              </div>
-            ))}
+              )}
+
+              {activeTab === 'wash-care' && (
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-gray-900">Wash Care</h4>
+                  <div className="space-y-3 text-sm text-gray-600">
+                    <p>• Shampoo wash</p>
+                    <p>• Do not bleach</p>
+                    <p>• Do not use Hot Water</p>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'reviews' && (
+                <div className="space-y-6">
+                  {/* Reviews Summary */}
+                  <ReviewsSummary productId={product.id} />
+                  
+                  {/* Review Form */}
+                  <ReviewForm 
+                    productId={product.id}
+                    productName={product.name}
+                    onReviewSubmitted={handleReviewUpdate}
+                  />
+                  
+                  {/* Reviews List */}
+                  <div key={reviewsKey}>
+                    <ReviewsList 
+                      productId={product.id}
+                      productName={product.name}
+                      onReviewUpdate={handleReviewUpdate}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      )}
+      </div>
+
+
+      {/* Size Chart Modal */}
+      <SizeChart
+        fabricType={selectedVariants['Fabric'] || ''}
+        isVisible={showSizeChart}
+        onClose={() => setShowSizeChart(false)}
+      />
+
+      {/* Related Products Section */}
+      <RelatedProducts
+        currentProductId={product.id}
+        categorySlug={product.category.slug}
+        limit={4}
+      />
     </div>
   )
 }

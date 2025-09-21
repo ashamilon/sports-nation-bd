@@ -98,6 +98,7 @@ export async function POST(request: NextRequest) {
 
     const page = await prisma.page.create({
       data: {
+        id: `page_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         title,
         slug,
         content,
@@ -109,13 +110,16 @@ export async function POST(request: NextRequest) {
         isPublished,
         publishedAt: isPublished ? new Date() : null,
         authorId: session.user.id,
+        updatedAt: new Date(),
         sections: sections ? {
           create: sections.map((section: any, index: number) => ({
+            id: `section_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
             title: section.title,
             content: section.content,
             type: section.type || 'text',
             order: section.order || index,
-            metadata: section.metadata ? JSON.stringify(section.metadata) : null
+            metadata: section.metadata ? JSON.stringify(section.metadata) : null,
+            updatedAt: new Date()
           }))
         } : undefined
       },

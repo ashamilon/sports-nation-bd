@@ -12,6 +12,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import MobileProductSlideshow from './mobile-product-slideshow'
+import { SkeletonCard, SkeletonSection } from './skeleton-loading'
 
 interface Product {
   id: string
@@ -22,7 +23,18 @@ interface Product {
   images: string[]
   averageRating: number
   reviewCount: number
-  variants: any[]
+  variants: Array<{
+    id: string
+    name?: string
+    value?: string
+    price?: number
+    fabricType?: string
+    sizes?: string
+  }>
+  category?: {
+    name: string
+    slug: string
+  }
   isNew?: boolean
 }
 
@@ -33,12 +45,77 @@ export default function FeaturedProducts() {
   const { addItem } = useCartStore()
   const { addToWishlist, isInWishlist } = useWishlistStore()
 
+  // Function to get variant information for display
+  const getVariantInfo = (product: Product) => {
+    if (!product.variants || product.variants.length === 0) return null
+    
+    // Check if this is a Jersey with new variant structure
+    if (product.category?.slug === 'jersey' && product.variants.some(v => v.fabricType)) {
+      const fabricTypes = product.variants
+        .filter(v => v.fabricType)
+        .map(v => v.fabricType)
+        .filter(Boolean)
+      
+      if (fabricTypes.length > 0) {
+        return {
+          type: 'jersey',
+          fabrics: fabricTypes,
+          priceRange: getJerseyPriceRange(product.variants)
+        }
+      }
+    }
+    
+    // For other variants, show the first few
+    const otherVariants = product.variants
+      .filter(v => v.name && v.value)
+      .slice(0, 2)
+    
+    if (otherVariants.length > 0) {
+      return {
+        type: 'other',
+        variants: otherVariants
+      }
+    }
+    
+    return null
+  }
+
+  // Function to get price range for Jersey variants
+  const getJerseyPriceRange = (variants: Product['variants']) => {
+    if (!variants) return null
+    
+    const prices: number[] = []
+    
+    variants.forEach(variant => {
+      if (variant.sizes) {
+        try {
+          const sizes = JSON.parse(variant.sizes)
+          sizes.forEach((size: any) => {
+            if (size.price) prices.push(size.price)
+          })
+        } catch (error) {
+          console.error('Error parsing sizes:', error)
+        }
+      }
+    })
+    
+    if (prices.length === 0) return null
+    
+    const minPrice = Math.min(...prices)
+    const maxPrice = Math.max(...prices)
+    
+    return minPrice === maxPrice ? minPrice : { min: minPrice, max: maxPrice }
+  }
+
   useEffect(() => {
     setIsHydrated(true)
     
     const fetchFeaturedProducts = async () => {
       try {
-        const response = await fetch('/api/products?featured=true&limit=6')
+        // Add cache-busting for featured products
+        const response = await fetch(`/api/products?featured=true&limit=6&_t=${Date.now()}`, {
+          cache: 'no-store'
+        })
         const data = await response.json()
         if (data.success) {
           setProducts(data.data)
@@ -79,11 +156,24 @@ export default function FeaturedProducts() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="bg-muted animate-pulse rounded-lg h-96" />
-        ))}
-      </div>
+      <SkeletonSection title="Featured Products" className="py-16 lg:py-24">
+        <div className="container mx-auto px-4">
+          <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+          <div className="md:hidden">
+            <div className="flex space-x-4 overflow-x-auto pb-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="flex-shrink-0 w-64">
+                  <SkeletonCard />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </SkeletonSection>
     )
   }
 
@@ -135,7 +225,12 @@ export default function FeaturedProducts() {
                   )}
                   
                   {/* Badges */}
-                  <div className="absolute top-3 left-3 flex gap-2">
+                  <div className="absolute top-3 left-3 flex flex-col gap-2">
+                    {product.comparePrice && product.comparePrice > product.price && (
+                      <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                        -{Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)}%
+                      </span>
+                    )}
                     {product.isNew && (
                       <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
                         New
@@ -170,6 +265,7 @@ export default function FeaturedProducts() {
                     </h3>
                   </Link>
 
+
                   {/* Rating */}
                   <div className="flex items-center gap-2 mb-3">
                     <div className="flex items-center">
@@ -193,8 +289,56 @@ export default function FeaturedProducts() {
                   <PriceDisplay 
                     price={product.price}
                     comparePrice={product.comparePrice}
-                    className="mb-4"
+                    className="mb-2"
                   />
+
+                  {/* Variant Information */}
+                  {(() => {
+                    const variantInfo = getVariantInfo(product)
+                    if (!variantInfo) return null
+                    
+                    if (variantInfo.type === 'jersey' && variantInfo.fabrics) {
+                      return (
+                        <div className="space-y-1 mb-4">
+                          <div className="flex flex-wrap gap-1">
+                            {variantInfo.fabrics.map((fabric, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20"
+                              >
+                                {fabric}
+                              </span>
+                            ))}
+                          </div>
+                          {variantInfo.priceRange && (
+                            <div className="text-xs text-muted-foreground">
+                              {typeof variantInfo.priceRange === 'number' 
+                                ? `From ${formatCurrency(variantInfo.priceRange)}`
+                                : `${formatCurrency(variantInfo.priceRange.min)} - ${formatCurrency(variantInfo.priceRange.max)}`
+                              }
+                            </div>
+                          )}
+                        </div>
+                      )
+                    }
+                    
+                    if (variantInfo.type === 'other' && variantInfo.variants) {
+                      return (
+                        <div className="flex flex-wrap gap-1 mb-4">
+                          {variantInfo.variants.map((variant, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground"
+                            >
+                              {variant.name}: {variant.value}
+                            </span>
+                          ))}
+                        </div>
+                      )
+                    }
+                    
+                    return null
+                  })()}
 
                   {/* Add to Cart Button */}
                   <button

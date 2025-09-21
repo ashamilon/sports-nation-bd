@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
@@ -37,16 +37,50 @@ const navigation = [
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [userProfile, setUserProfile] = useState<any>(null)
   const pathname = usePathname()
   const { data: session } = useSession()
 
-  // Get real user data from session
-  const user = session?.user ? {
+  // Fetch user profile data
+  const fetchUserProfile = async () => {
+    if (session?.user?.id) {
+      try {
+        const response = await fetch('/api/user/profile')
+        const data = await response.json()
+        if (data.success) {
+          setUserProfile(data.user)
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error)
+      }
+    }
+  }
+
+  useEffect(() => {
+    fetchUserProfile()
+  }, [session?.user?.id])
+
+  // Listen for profile updates
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'profile-updated') {
+        fetchUserProfile()
+        // Clear the storage event
+        localStorage.removeItem('profile-updated')
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
+
+  // Get user data from profile or session
+  const user = userProfile || (session?.user ? {
     name: session.user.name || 'User',
     email: session.user.email || '',
-    avatar: session.user.image || '/api/placeholder/40/40',
-    memberSince: 'Recently' // Default value since createdAt is not available in session
-  } : null
+    image: session.user.image || null,
+    memberSince: 'Recently'
+  } : null)
 
   return (
     <div className="min-h-screen bg-background">
@@ -77,10 +111,19 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* User Info */}
           <div className="p-6 border-b border-white/10">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center">
-                <span className="text-white font-semibold text-lg">
-                  {user?.name?.split(' ').map(n => n[0]).join('') || 'U'}
-                </span>
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center overflow-hidden ring-2 ring-white/20 shadow-sm">
+                {user?.image ? (
+                  <img
+                    src={user.image}
+                    alt="Profile"
+                    className="w-full h-full object-cover rounded-full"
+                    style={{ objectFit: 'cover' }}
+                  />
+                ) : (
+                  <span className="text-white font-semibold text-lg">
+                    {user?.name?.split(' ').map(n => n[0]).join('') || 'U'}
+                  </span>
+                )}
               </div>
               <div>
                 <h3 className="font-semibold text-foreground">{user?.name || 'User'}</h3>
@@ -158,7 +201,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
 
         {/* Page content */}
-        <main className="p-0">
+        <main className="p-4 lg:p-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

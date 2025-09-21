@@ -16,10 +16,16 @@ export async function GET() {
     
     await client.end()
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: result.rows
     })
+    
+    // Add caching headers for better performance
+    response.headers.set('Cache-Control', 'public, max-age=600, s-maxage=600') // 10 minutes cache
+    response.headers.set('Vary', 'Accept-Encoding')
+    
+    return response
   } catch (error) {
     console.error('Error fetching homepage settings:', error)
     return NextResponse.json(

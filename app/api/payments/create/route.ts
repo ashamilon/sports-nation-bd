@@ -12,8 +12,8 @@ export async function POST(request: NextRequest) {
     // For testing purposes, use the admin user if no session
     let userId = session?.user?.id
     if (!userId) {
-      // Use the admin user ID for testing
-      userId = 'cmfevp4s60000xfuve22ht1i6'
+      // Use the admin user ID for testing (from current session logs)
+      userId = 'cmfrft1n1000014m2vq8xfvrj'
     }
 
     const body = await request.json()
@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
     // Create order in database
     const order = await prisma.order.create({
       data: {
+        id: `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         orderNumber: orderNumber,
         userId: userId,
         status: 'pending',
@@ -100,6 +101,7 @@ export async function POST(request: NextRequest) {
         }),
         OrderItem: {
           create: validItems.map((item: any) => ({
+            id: `orderitem_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             productId: item.productId,
             quantity: item.quantity,
             price: item.price,
@@ -142,6 +144,7 @@ export async function POST(request: NextRequest) {
       // Create payment record
       await prisma.payment.create({
         data: {
+          id: `payment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           orderId: order.id, // Use the actual order ID, not orderNumber
           amount: paymentAmount,
           currency,
@@ -157,7 +160,8 @@ export async function POST(request: NextRequest) {
             tipAmount: tipAmount || 0,
             remainingAmount: remainingAmount || 0,
             totalOrderAmount: finalTotal
-          })
+          }),
+          updatedAt: new Date()
         }
       })
 

@@ -61,11 +61,13 @@ export async function POST(request: NextRequest) {
 
     const faq = await prisma.fAQ.create({
       data: {
+        id: `faq_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         question,
         answer,
         category: category || 'general',
         order: order || 0,
-        isActive: isActive !== false
+        isActive: isActive !== false,
+        updatedAt: new Date()
       }
     })
 

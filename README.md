@@ -200,7 +200,7 @@ npx prisma generate
 
 For support and questions:
 - **Email**: info@sportsnationbd.com
-- **Phone**: +880 1234 567890
+- **Phone**: +880 1868 556390
 - **Website**: [sportsnationbd.com](https://sportsnationbd.com)
 
 ## 📄 **License**

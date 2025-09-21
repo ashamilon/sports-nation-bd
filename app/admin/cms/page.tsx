@@ -274,7 +274,10 @@ export default function CMSPage() {
       
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
         body: JSON.stringify(formData)
       })
       
@@ -286,6 +289,7 @@ export default function CMSPage() {
       
       toast.success(editingItem ? 'Updated successfully!' : 'Created successfully!')
       closeModal()
+      console.log('Refreshing data after', editingItem ? 'update' : 'creation')
       fetchData() // Refresh data
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to save')
@@ -298,7 +302,10 @@ export default function CMSPage() {
     
     try {
       const response = await fetch(`/api/cms/${type}s/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
       })
       
       if (!response.ok) throw new Error('Failed to delete')
@@ -315,7 +322,10 @@ export default function CMSPage() {
     try {
       const response = await fetch(`/api/cms/${type}s/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
         body: JSON.stringify({ isActive: !currentStatus })
       })
       
@@ -373,6 +383,7 @@ export default function CMSPage() {
 
   const fetchData = async () => {
     try {
+      console.log('Fetching CMS data...')
       const [
         contentRes, 
         bannersRes, 
@@ -384,12 +395,12 @@ export default function CMSPage() {
         homepageSettingsRes
       ] = await Promise.all([
         fetch('/api/cms/content?all=true'),
-        fetch('/api/cms/banners?active=false'), // Get all banners (active and inactive)
-        fetch('/api/cms/countdowns?active=false'), // Get all countdowns (active and inactive)
+        fetch(`/api/cms/banners?active=false&_t=${Date.now()}`), // Get all banners (active and inactive) with cache busting
+        fetch(`/api/cms/countdowns?active=false&_t=${Date.now()}`), // Get all countdowns (active and inactive) with cache busting
         fetch('/api/cms/pages'),
         fetch('/api/cms/blog'),
-        fetch('/api/cms/testimonials?active=false'), // Get all testimonials (active and inactive)
-        fetch('/api/cms/faq?active=false'), // Get all FAQs (active and inactive)
+        fetch(`/api/cms/testimonials?active=false&_t=${Date.now()}`), // Get all testimonials (active and inactive) with cache busting
+        fetch(`/api/cms/faq?active=false&_t=${Date.now()}`), // Get all FAQs (active and inactive) with cache busting
         fetch('/api/cms/homepage-settings')
       ])
 
@@ -416,6 +427,7 @@ export default function CMSPage() {
       if (contentData.success) setSiteContent(contentData.data)
       if (bannersData.success) {
         console.log('Banners data received:', bannersData.data)
+        console.log('Banners count:', bannersData.data.length)
         setBanners(bannersData.data)
       } else {
         console.log('Banners data error:', bannersData)
@@ -464,7 +476,8 @@ export default function CMSPage() {
               { id: 'badges', name: 'Football Badges' },
               { id: 'collections', name: 'Collections' },
               { id: 'homepage', name: 'Homepage Sections' },
-              { id: 'menu-config', name: 'Menu Configuration' }
+              { id: 'menu-config', name: 'Menu Configuration' },
+              { id: 'other', name: 'Other' }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -653,12 +666,21 @@ export default function CMSPage() {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold">Banners ({banners.length})</h2>
-              <button 
-                onClick={() => openModal('banner')}
-                className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90"
-              >
-                Add New Banner
-              </button>
+              <div className="flex space-x-2">
+                <button 
+                  onClick={() => fetchData()}
+                  className="bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 text-sm"
+                  title="Refresh data"
+                >
+                  🔄 Refresh
+                </button>
+                <button 
+                  onClick={() => openModal('banner')}
+                  className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90"
+                >
+                  Add New Banner
+                </button>
+              </div>
             </div>
             <div className="grid gap-4">
               {banners.map((banner) => (
@@ -888,6 +910,47 @@ export default function CMSPage() {
           </div>
         )}
 
+        {/* Size Charts Tab */}
+        {activeTab === 'size-charts' && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Size Charts</h2>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => window.open('/admin/cms/size-charts', '_blank')}
+                  className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90"
+                >
+                  Manage Size Charts
+                </button>
+              </div>
+            </div>
+            <div className="glass-card p-6 text-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Package className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Size Chart Management</h3>
+              <p className="text-muted-foreground mb-4">
+                Create and manage size charts for different fabric types. Add measurement tables and sizing guides for jerseys and other products.
+              </p>
+              <button
+                onClick={() => window.open('/admin/cms/size-charts', '_blank')}
+                className="mt-4 bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90"
+              >
+                Open Size Chart Manager
+              </button>
+            </div>
+            <div className="mt-6 p-4 bg-muted/20 rounded-lg">
+              <h4 className="font-medium text-foreground mb-2">💡 How it works:</h4>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• Create size charts for different fabric types (Fan Version, Player Version)</li>
+                <li>• Add measurement tables with chest, length, and other dimensions</li>
+                <li>• Size charts appear automatically on jersey product pages</li>
+                <li>• Customers can view size guides when selecting fabric types</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
         {/* Collections Tab */}
         {activeTab === 'collections' && (
           <div className="space-y-4">
@@ -1003,38 +1066,162 @@ export default function CMSPage() {
             </div>
           </div>
         )}
+
+        {/* Other Tab */}
+        {activeTab === 'other' && (
+          <div className="space-y-6">
+            <div className="grid gap-6">
+              {/* Circular Collections Carousel Management */}
+              <div className="border border-border bg-card rounded-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-foreground">Circular Collections Carousel</h3>
+                  <span className="text-sm text-muted-foreground">Manage home page carousel</span>
+                </div>
+                <div className="glass-card p-6 text-center">
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Package className="h-8 w-8 text-primary" />
+                  </div>
+                  <h4 className="text-lg font-semibold mb-2">Circular Collections Carousel Management</h4>
+                  <p className="text-muted-foreground mb-4">
+                    Control which collections appear in the circular carousel on your home page. Select and reorder collections for the best visual impact.
+                  </p>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>• Select which collections appear in the carousel</p>
+                    <p>• Reorder collections for optimal display</p>
+                    <p>• Preview carousel appearance</p>
+                    <p>• Enable/disable carousel visibility</p>
+                  </div>
+                  <button 
+                    onClick={() => window.open('/admin/cms/circular-collections', '_blank')}
+                    className="mt-4 bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90"
+                  >
+                    Manage Carousel
+                  </button>
+                </div>
+              </div>
+
+              {/* Reviews Management */}
+              <div className="border border-border bg-card rounded-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-foreground">Reviews Management</h3>
+                  <span className="text-sm text-muted-foreground">Moderate customer reviews</span>
+                </div>
+                <div className="glass-card p-6 text-center">
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Package className="h-8 w-8 text-primary" />
+                  </div>
+                  <h4 className="text-lg font-semibold mb-2">Customer Reviews Management</h4>
+                  <p className="text-muted-foreground mb-4">
+                    Moderate and manage customer reviews. Approve, reject, and view all customer feedback.
+                  </p>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>• View all customer reviews</p>
+                    <p>• Approve or reject reviews</p>
+                    <p>• Add moderation reasons</p>
+                    <p>• Filter by rating and status</p>
+                  </div>
+                  <button 
+                    onClick={() => window.open('/admin/reviews', '_blank')}
+                    className="mt-4 bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90"
+                  >
+                    Open Reviews Management
+                  </button>
+                </div>
+              </div>
+
+              {/* Size Charts Management */}
+              <div className="border border-border bg-card rounded-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-foreground">Size Charts Management</h3>
+                  <span className="text-sm text-muted-foreground">Manage product size charts</span>
+                </div>
+                <div className="glass-card p-6 text-center">
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Package className="h-8 w-8 text-primary" />
+                  </div>
+                  <h4 className="text-lg font-semibold mb-2">Size Chart Management</h4>
+                  <p className="text-muted-foreground mb-4">
+                    Create and manage size charts for different fabric types. Add measurement tables and sizing guides.
+                  </p>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>• Create size charts for different fabric types</p>
+                    <p>• Add measurement tables with dimensions</p>
+                    <p>• Size charts appear automatically on product pages</p>
+                    <p>• Support for Fan Version and Player Version</p>
+                  </div>
+                  <button 
+                    onClick={() => window.open('/admin/cms/size-charts', '_blank')}
+                    className="mt-4 bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90"
+                  >
+                    Open Size Chart Manager
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-foreground">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div 
+            className="rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-white/20"
+            style={{
+              background: 'linear-gradient(135deg, #FEFEFE 0%, #E7E9F0 100%)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+            }}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h2 
+                className="text-2xl font-bold"
+                style={{ color: '#051747' }}
+              >
                 {editingItem ? 'Edit' : 'Add New'} {modalType.charAt(0).toUpperCase() + modalType.slice(1)}
               </h2>
               <button 
                 onClick={closeModal}
-                className="text-muted-foreground hover:text-foreground"
+                className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-white/20"
+                style={{ color: '#535F80' }}
               >
-                ✕
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {renderFormFields()}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div 
+                className="rounded-xl p-6 shadow-lg border border-white/30"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.7)',
+                  backdropFilter: 'blur(10px)'
+                }}
+              >
+                {renderFormFields()}
+              </div>
               
-              <div className="flex justify-end space-x-3 pt-4">
+              <div className="flex justify-end space-x-4 pt-4">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="px-4 py-2 border border-input bg-background text-foreground rounded-lg hover:bg-accent"
+                  className="px-6 py-3 rounded-xl font-medium transition-all duration-200 hover:shadow-lg border-2"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.8)',
+                    borderColor: '#E7E9F0',
+                    color: '#535F80'
+                  }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+                  className="px-6 py-3 rounded-xl font-medium text-white transition-all duration-200 hover:shadow-lg"
+                  style={{
+                    background: 'linear-gradient(135deg, #051747 0%, #535F80 100%)',
+                    boxShadow: '0 4px 15px rgba(5, 23, 71, 0.3)'
+                  }}
                 >
                   {editingItem ? 'Update' : 'Create'}
                 </button>
@@ -1052,50 +1239,104 @@ export default function CMSPage() {
         return (
           <>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Key</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Key</label>
               <input
                 type="text"
                 value={formData.key || ''}
                 onChange={(e) => setFormData({...formData, key: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Title</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Title</label>
               <input
                 type="text"
                 value={formData.title || ''}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Content</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Content</label>
               <textarea
                 value={formData.content || ''}
                 onChange={(e) => setFormData({...formData, content: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2 h-32"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 resize-none"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
+                rows={4}
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Category</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Category</label>
               <input
                 type="text"
                 value={formData.category || ''}
                 onChange={(e) => setFormData({...formData, category: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
               />
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center p-4 rounded-xl" style={{ background: 'rgba(255, 255, 255, 0.5)' }}>
               <input
                 type="checkbox"
                 checked={formData.isActive || false}
                 onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
-                className="mr-2"
+                className="w-5 h-5 mr-3 rounded border-2"
+                style={{ accentColor: '#051747' }}
               />
-              <label className="text-sm font-medium text-foreground">Active</label>
+              <label className="text-sm font-semibold" style={{ color: '#051747' }}>Active</label>
             </div>
           </>
         )
@@ -1104,67 +1345,120 @@ export default function CMSPage() {
         return (
           <>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Title *</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Title *</label>
               <input
                 type="text"
                 value={formData.title || ''}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
                 required
                 placeholder="Enter banner title"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Description</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Description</label>
               <textarea
                 value={formData.description || ''}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 resize-none"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
+                rows={3}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Banner Image *</label>
-              <div className="space-y-3">
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Banner Image *</label>
+              <div className="space-y-4">
                 {/* Image Upload */}
-                <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-2">Upload Image</label>
+                <div className="p-4 rounded-xl" style={{ background: 'rgba(255, 255, 255, 0.5)' }}>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: '#535F80' }}>Upload Image</label>
                   <input
                     type="file"
                     accept="image/*"
                     onChange={handleBannerImageUpload}
-                    className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                    className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.9)',
+                      borderColor: '#E7E9F0',
+                      color: '#051747'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#051747'
+                      e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#E7E9F0'
+                      e.target.style.boxShadow = 'none'
+                    }}
                   />
-                  <p className="text-xs text-muted-foreground mt-1">Max 5MB. Supported formats: JPG, PNG, GIF, WebP</p>
+                  <p className="text-xs mt-2" style={{ color: '#535F80' }}>Max 5MB. Supported formats: JPG, PNG, GIF, WebP</p>
                 </div>
                 
                 {/* OR Divider */}
                 <div className="flex items-center">
-                  <div className="flex-1 border-t border-border"></div>
-                  <span className="px-3 text-sm text-muted-foreground">OR</span>
-                  <div className="flex-1 border-t border-border"></div>
+                  <div className="flex-1 border-t-2" style={{ borderColor: '#E7E9F0' }}></div>
+                  <span className="px-4 text-sm font-semibold" style={{ color: '#535F80' }}>OR</span>
+                  <div className="flex-1 border-t-2" style={{ borderColor: '#E7E9F0' }}></div>
                 </div>
                 
                 {/* Image URL */}
-                <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-2">Image URL</label>
+                <div className="p-4 rounded-xl" style={{ background: 'rgba(255, 255, 255, 0.5)' }}>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: '#535F80' }}>Image URL</label>
                   <input
                     type="text"
                     value={formData.image || ''}
                     onChange={(e) => setFormData({...formData, image: e.target.value})}
-                    className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                    className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.9)',
+                      borderColor: '#E7E9F0',
+                      color: '#051747'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#051747'
+                      e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#E7E9F0'
+                      e.target.style.boxShadow = 'none'
+                    }}
                     placeholder="https://example.com/image.jpg or /uploads/banners/filename.png"
                   />
                 </div>
                 
                 {/* Image Preview */}
                 {formData.image && (
-                  <div className="mt-3">
-                    <label className="block text-sm font-medium text-muted-foreground mb-2">Preview</label>
-                    <div className="border border-border rounded-lg p-3 bg-muted/20">
+                  <div className="mt-4 p-4 rounded-xl" style={{ background: 'rgba(255, 255, 255, 0.5)' }}>
+                    <label className="block text-sm font-semibold mb-2" style={{ color: '#535F80' }}>Preview</label>
+                    <div className="rounded-xl p-4" style={{ background: 'rgba(255, 255, 255, 0.8)', border: '2px solid #E7E9F0' }}>
                       <img
                         src={formData.image}
                         alt="Banner preview"
-                        className="max-w-full h-32 object-cover rounded"
+                        className="max-w-full h-32 object-cover rounded-lg"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none'
                         }}
@@ -1175,20 +1469,46 @@ export default function CMSPage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Link URL</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Link URL</label>
               <input
                 type="url"
                 value={formData.link || ''}
                 onChange={(e) => setFormData({...formData, link: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Position *</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Position *</label>
               <select
                 value={formData.position || 'home_top'}
                 onChange={(e) => setFormData({...formData, position: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
                 required
               >
                 <option value="home_top">Home Top</option>
@@ -1197,14 +1517,15 @@ export default function CMSPage() {
                 <option value="footer">Footer</option>
               </select>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center p-4 rounded-xl" style={{ background: 'rgba(255, 255, 255, 0.5)' }}>
               <input
                 type="checkbox"
                 checked={formData.isActive || false}
                 onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
-                className="mr-2"
+                className="w-5 h-5 mr-3 rounded border-2"
+                style={{ accentColor: '#051747' }}
               />
-              <label className="text-sm font-medium text-foreground">Active</label>
+              <label className="text-sm font-semibold" style={{ color: '#051747' }}>Active</label>
             </div>
           </>
         )
@@ -1213,39 +1534,92 @@ export default function CMSPage() {
         return (
           <>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Title</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Title</label>
               <input
                 type="text"
                 value={formData.title || ''}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Description</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Description</label>
               <textarea
                 value={formData.description || ''}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 resize-none"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
+                rows={3}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Target Date</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Target Date</label>
               <input
                 type="datetime-local"
                 value={formData.targetDate || ''}
                 onChange={(e) => setFormData({...formData, targetDate: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Type</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Type</label>
               <select
                 value={formData.type || 'offer'}
                 onChange={(e) => setFormData({...formData, type: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
               >
                 <option value="offer">Offer</option>
                 <option value="product">Product</option>
@@ -1254,11 +1628,24 @@ export default function CMSPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Position</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Position</label>
               <select
                 value={formData.position || 'home'}
                 onChange={(e) => setFormData({...formData, position: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
               >
                 <option value="home">Home</option>
                 <option value="product">Product</option>
@@ -1267,24 +1654,38 @@ export default function CMSPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Priority</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Priority</label>
               <input
                 type="number"
                 value={formData.priority || 0}
                 onChange={(e) => setFormData({...formData, priority: parseInt(e.target.value) || 0})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
                 min="0"
                 max="100"
               />
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center p-4 rounded-xl" style={{ background: 'rgba(255, 255, 255, 0.5)' }}>
               <input
                 type="checkbox"
                 checked={formData.isActive || false}
                 onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
-                className="mr-2"
+                className="w-5 h-5 mr-3 rounded border-2"
+                style={{ accentColor: '#051747' }}
               />
-              <label className="text-sm font-medium text-foreground">Active</label>
+              <label className="text-sm font-semibold" style={{ color: '#051747' }}>Active</label>
             </div>
           </>
         )
@@ -1293,50 +1694,105 @@ export default function CMSPage() {
         return (
           <>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Title</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Title</label>
               <input
                 type="text"
                 value={formData.title || ''}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Slug</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Slug</label>
               <input
                 type="text"
                 value={formData.slug || ''}
                 onChange={(e) => setFormData({...formData, slug: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Content</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Content</label>
               <textarea
                 value={formData.content || ''}
                 onChange={(e) => setFormData({...formData, content: e.target.value})}
-                className="w-full border rounded-lg px-3 py-2 h-40"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 resize-none"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
+                rows={6}
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Excerpt</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Excerpt</label>
               <textarea
                 value={formData.excerpt || ''}
                 onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 resize-none"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
+                rows={3}
               />
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center p-4 rounded-xl" style={{ background: 'rgba(255, 255, 255, 0.5)' }}>
               <input
                 type="checkbox"
                 checked={formData.isPublished || false}
                 onChange={(e) => setFormData({...formData, isPublished: e.target.checked})}
-                className="mr-2"
+                className="w-5 h-5 mr-3 rounded border-2"
+                style={{ accentColor: '#051747' }}
               />
-              <label className="text-sm font-medium">Published</label>
+              <label className="text-sm font-semibold" style={{ color: '#051747' }}>Published</label>
             </div>
           </>
         )
@@ -1345,69 +1801,138 @@ export default function CMSPage() {
         return (
           <>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Title</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Title</label>
               <input
                 type="text"
                 value={formData.title || ''}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Slug</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Slug</label>
               <input
                 type="text"
                 value={formData.slug || ''}
                 onChange={(e) => setFormData({...formData, slug: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Content</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Content</label>
               <textarea
                 value={formData.content || ''}
                 onChange={(e) => setFormData({...formData, content: e.target.value})}
-                className="w-full border rounded-lg px-3 py-2 h-40"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 resize-none"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
+                rows={6}
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Excerpt</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Excerpt</label>
               <textarea
                 value={formData.excerpt || ''}
                 onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 resize-none"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
+                rows={3}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Category</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Category</label>
               <input
                 type="text"
                 value={formData.category || ''}
                 onChange={(e) => setFormData({...formData, category: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
               />
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-6 p-4 rounded-xl" style={{ background: 'rgba(255, 255, 255, 0.5)' }}>
               <div className="flex items-center">
                 <input
                   type="checkbox"
                   checked={formData.isPublished || false}
                   onChange={(e) => setFormData({...formData, isPublished: e.target.checked})}
-                  className="mr-2"
+                  className="w-5 h-5 mr-3 rounded border-2"
+                  style={{ accentColor: '#051747' }}
                 />
-                <label className="text-sm font-medium">Published</label>
+                <label className="text-sm font-semibold" style={{ color: '#051747' }}>Published</label>
               </div>
               <div className="flex items-center">
                 <input
                   type="checkbox"
                   checked={formData.isFeatured || false}
                   onChange={(e) => setFormData({...formData, isFeatured: e.target.checked})}
-                  className="mr-2"
+                  className="w-5 h-5 mr-3 rounded border-2"
+                  style={{ accentColor: '#051747' }}
                 />
-                <label className="text-sm font-medium">Featured</label>
+                <label className="text-sm font-semibold" style={{ color: '#051747' }}>Featured</label>
               </div>
             </div>
           </>
@@ -1417,48 +1942,114 @@ export default function CMSPage() {
         return (
           <>
             <div>
-              <label className="block text-sm font-medium mb-1">Name</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Name</label>
               <input
                 type="text"
                 value={formData.name || ''}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Email</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Email</label>
               <input
                 type="email"
                 value={formData.email || ''}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Company</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Company</label>
               <input
                 type="text"
                 value={formData.company || ''}
                 onChange={(e) => setFormData({...formData, company: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Content</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Content</label>
               <textarea
                 value={formData.content || ''}
                 onChange={(e) => setFormData({...formData, content: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2 h-32"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 resize-none"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
+                rows={4}
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Rating</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Rating</label>
               <select
                 value={formData.rating || 5}
                 onChange={(e) => setFormData({...formData, rating: parseInt(e.target.value)})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
               >
                 <option value={1}>1 Star</option>
                 <option value={2}>2 Stars</option>
@@ -1467,24 +2058,26 @@ export default function CMSPage() {
                 <option value={5}>5 Stars</option>
               </select>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-6 p-4 rounded-xl" style={{ background: 'rgba(255, 255, 255, 0.5)' }}>
               <div className="flex items-center">
                 <input
                   type="checkbox"
                   checked={formData.isActive || false}
                   onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
-                  className="mr-2"
+                  className="w-5 h-5 mr-3 rounded border-2"
+                  style={{ accentColor: '#051747' }}
                 />
-                <label className="text-sm font-medium text-foreground">Active</label>
+                <label className="text-sm font-semibold" style={{ color: '#051747' }}>Active</label>
               </div>
               <div className="flex items-center">
                 <input
                   type="checkbox"
                   checked={formData.isFeatured || false}
                   onChange={(e) => setFormData({...formData, isFeatured: e.target.checked})}
-                  className="mr-2"
+                  className="w-5 h-5 mr-3 rounded border-2"
+                  style={{ accentColor: '#051747' }}
                 />
-                <label className="text-sm font-medium">Featured</label>
+                <label className="text-sm font-semibold" style={{ color: '#051747' }}>Featured</label>
               </div>
             </div>
           </>
@@ -1494,41 +2087,82 @@ export default function CMSPage() {
         return (
           <>
             <div>
-              <label className="block text-sm font-medium mb-1">Question</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Question</label>
               <input
                 type="text"
                 value={formData.question || ''}
                 onChange={(e) => setFormData({...formData, question: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Answer</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Answer</label>
               <textarea
                 value={formData.answer || ''}
                 onChange={(e) => setFormData({...formData, answer: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2 h-32"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 resize-none"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
+                rows={4}
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Category</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#051747' }}>Category</label>
               <input
                 type="text"
                 value={formData.category || ''}
                 onChange={(e) => setFormData({...formData, category: e.target.value})}
-                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2"
+                className="w-full rounded-xl px-4 py-3 border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: '#E7E9F0',
+                  color: '#051747'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#051747'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(5, 23, 71, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#E7E9F0'
+                  e.target.style.boxShadow = 'none'
+                }}
               />
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center p-4 rounded-xl" style={{ background: 'rgba(255, 255, 255, 0.5)' }}>
               <input
                 type="checkbox"
                 checked={formData.isActive || false}
                 onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
-                className="mr-2"
+                className="w-5 h-5 mr-3 rounded border-2"
+                style={{ accentColor: '#051747' }}
               />
-              <label className="text-sm font-medium text-foreground">Active</label>
+              <label className="text-sm font-semibold" style={{ color: '#051747' }}>Active</label>
             </div>
           </>
         )

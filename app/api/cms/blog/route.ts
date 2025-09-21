@@ -102,6 +102,7 @@ export async function POST(request: NextRequest) {
 
     const post = await prisma.blogPost.create({
       data: {
+        id: `blog_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         title,
         slug,
         content,
@@ -115,7 +116,8 @@ export async function POST(request: NextRequest) {
         authorId: session.user.id,
         category,
         tags: tags ? JSON.stringify(tags) : null,
-        isFeatured
+        isFeatured,
+        updatedAt: new Date()
       },
       include: {
         author: {

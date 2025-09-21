@@ -22,13 +22,8 @@ export default function TestPaymentPage() {
       
       // Simulate payment processing
       setTimeout(() => {
-        // For demo purposes, randomly choose success or failure
-        const random = Math.random()
-        if (random > 0.2) { // 80% success rate
-          setPaymentStatus('success')
-        } else {
-          setPaymentStatus('failed')
-        }
+        // For testing purposes, always succeed to provide better user experience
+        setPaymentStatus('success')
         setIsProcessing(false)
       }, 2000)
     }, 2000)
@@ -42,6 +37,16 @@ export default function TestPaymentPage() {
 
   const handleRetry = () => {
     setPaymentStatus('pending')
+    setIsProcessing(false)
+  }
+
+  const handleManualSuccess = () => {
+    setPaymentStatus('success')
+    setIsProcessing(false)
+  }
+
+  const handleManualFailure = () => {
+    setPaymentStatus('failed')
     setIsProcessing(false)
   }
 
@@ -143,6 +148,35 @@ export default function TestPaymentPage() {
                   This is a test payment. No real money will be charged.
                 </p>
               </div>
+
+              {/* Manual Testing Controls */}
+              {paymentStatus === 'pending' && (
+                <div className="bg-blue-50/80 p-4 rounded-lg border border-blue-200/60">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <CreditCard className="h-5 w-5 text-blue-600" />
+                    <span className="text-blue-800 font-medium">Manual Testing Controls</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleManualSuccess}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                      size="sm"
+                    >
+                      Force Success
+                    </Button>
+                    <Button
+                      onClick={handleManualFailure}
+                      className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                      size="sm"
+                    >
+                      Force Failure
+                    </Button>
+                  </div>
+                  <p className="text-blue-700 text-xs mt-2">
+                    Use these buttons to test different payment scenarios manually.
+                  </p>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="flex gap-4">

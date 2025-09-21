@@ -1,3 +1,13 @@
+interface PaymentInfo {
+  id: string
+  amount: number
+  status: string
+  paymentMethod: string
+  transactionId?: string
+  metadata?: string
+  createdAt: string
+}
+
 interface InvoiceData {
   orderNumber: string
   orderDate: string
@@ -22,9 +32,27 @@ interface InvoiceData {
   paymentStatus: string
   paymentMethod?: string
   trackingNumber?: string
+  payments?: PaymentInfo[]
 }
 
-export function generateInvoiceHTML(invoiceData: InvoiceData): string {
+// Function to convert image to base64
+async function getLogoBase64(): Promise<string> {
+  try {
+    const logoPath = path.join(process.cwd(), 'public', 'logo.png')
+    const logoBuffer = await fs.readFile(logoPath)
+    const base64 = logoBuffer.toString('base64')
+    console.log('Logo converted to base64 successfully, length:', base64.length)
+    return `data:image/png;base64,${base64}`
+  } catch (error) {
+    console.error('Error reading logo file:', error)
+    // Fallback to absolute URL
+    const fallbackUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/logo.png`
+    console.log('Using fallback URL:', fallbackUrl)
+    return fallbackUrl
+  }
+}
+
+export async function generateInvoiceHTML(invoiceData: InvoiceData): Promise<string> {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -36,6 +64,45 @@ export function generateInvoiceHTML(invoiceData: InvoiceData): string {
   const formatCurrency = (amount: number) => {
     return `৳${amount.toLocaleString()}`
   }
+
+  // Helper function to calculate payment breakdown
+  const getPaymentBreakdown = () => {
+    const totalAmount = invoiceData.total || 0
+    const paidAmount = invoiceData.payments?.reduce((sum, payment) => {
+      if (payment.status === 'completed' || payment.status === 'paid') {
+        return sum + payment.amount
+      }
+      return sum
+    }, 0) || 0
+
+    const isPartialPayment = invoiceData.paymentStatus === 'partial' || invoiceData.paymentMethod === 'partial_payment'
+    const dueAmount = totalAmount - paidAmount
+
+    // Try to get remaining amount from payment metadata
+    let remainingAmount = dueAmount
+    if (invoiceData.payments && invoiceData.payments.length > 0) {
+      try {
+        const metadata = JSON.parse(invoiceData.payments[0].metadata || '{}')
+        if (metadata.remainingAmount) {
+          remainingAmount = metadata.remainingAmount
+        }
+      } catch (e) {
+        // Use calculated due amount if metadata parsing fails
+      }
+    }
+
+    return {
+      totalAmount,
+      paidAmount,
+      dueAmount: Math.max(0, dueAmount),
+      remainingAmount: Math.max(0, remainingAmount),
+      isPartialPayment,
+      paymentType: isPartialPayment ? 'Partial Payment' : 'Full Payment'
+    }
+  }
+
+  // Get logo as base64
+  const logoBase64 = await getLogoBase64()
 
   return `
     <!DOCTYPE html>
@@ -73,6 +140,31 @@ export function generateInvoiceHTML(invoiceData: InvoiceData): string {
                 color: white;
                 padding: 40px;
                 text-align: center;
+                position: relative;
+            }
+            
+            .header .logo {
+                width: 80px;
+                height: 80px;
+                margin: 0 auto 20px;
+                background: white;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            }
+            
+            .header .logo img {
+                width: 60px;
+                height: 60px;
+                object-fit: contain;
+                display: block;
+                margin: 0 auto;
+            }
+            
+            .header .logo img:not([src]) {
+                display: none;
             }
             
             .header h1 {
@@ -145,6 +237,39 @@ export function generateInvoiceHTML(invoiceData: InvoiceData): string {
                 font-size: 0.9rem;
                 color: #666;
                 font-style: italic;
+                margin-top: 5px;
+            }
+            
+            .badge-details {
+                background: #f8f9fa;
+                border: 1px solid #e9ecef;
+                border-radius: 6px;
+                padding: 10px;
+                margin-top: 8px;
+                font-size: 0.85rem;
+            }
+            
+            .badge-details h4 {
+                color: #667eea;
+                margin-bottom: 5px;
+                font-size: 0.9rem;
+                font-weight: 600;
+            }
+            
+            .badge-list {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 5px;
+                margin-top: 5px;
+            }
+            
+            .badge-item {
+                background: #667eea;
+                color: white;
+                padding: 3px 8px;
+                border-radius: 12px;
+                font-size: 0.75rem;
+                font-weight: 500;
             }
             
             .totals {
@@ -168,6 +293,73 @@ export function generateInvoiceHTML(invoiceData: InvoiceData): string {
                 font-weight: bold;
                 font-size: 1.1rem;
                 color: #667eea;
+            }
+            
+            .payment-breakdown {
+                background: #f8f9fa;
+                border: 1px solid #e9ecef;
+                border-radius: 8px;
+                padding: 20px;
+                margin-top: 20px;
+            }
+            
+            .payment-breakdown h3 {
+                color: #667eea;
+                margin-bottom: 15px;
+                font-size: 1.1rem;
+                font-weight: 600;
+                border-bottom: 1px solid #e9ecef;
+                padding-bottom: 8px;
+            }
+            
+            .breakdown-row {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 8px;
+                padding: 5px 0;
+            }
+            
+            .payment-type {
+                padding: 4px 12px;
+                border-radius: 12px;
+                font-size: 0.85rem;
+                font-weight: 600;
+            }
+            
+            .payment-type.partial {
+                background: #fff3cd;
+                color: #856404;
+            }
+            
+            .payment-type.full {
+                background: #d4edda;
+                color: #155724;
+            }
+            
+            .paid-amount {
+                color: #28a745;
+                font-weight: 600;
+            }
+            
+            .remaining-amount {
+                color: #fd7e14;
+                font-weight: 600;
+            }
+            
+            .breakdown-row.due-amount {
+                border-top: 1px solid #e9ecef;
+                margin-top: 10px;
+                padding-top: 10px;
+                font-weight: bold;
+                color: #dc3545;
+            }
+            
+            .breakdown-row.fully-paid {
+                border-top: 1px solid #e9ecef;
+                margin-top: 10px;
+                padding-top: 10px;
+                font-weight: bold;
+                color: #28a745;
             }
             
             .status-badges {
@@ -237,6 +429,9 @@ export function generateInvoiceHTML(invoiceData: InvoiceData): string {
     <body>
         <div class="invoice-container">
             <div class="header">
+                <div class="logo">
+                    <img src="${logoBase64}" alt="Sports Nation BD Logo" />
+                </div>
                 <h1>INVOICE</h1>
                 <p>Sports Nation BD - Premium Sports Gear</p>
             </div>
@@ -280,7 +475,22 @@ export function generateInvoiceHTML(invoiceData: InvoiceData): string {
                             <tr>
                                 <td>
                                     <strong>${item.name}</strong>
-                                    ${item.customOptions ? `<div class="custom-options">Custom: ${item.customOptions.name || 'N/A'} - #${item.customOptions.number || 'N/A'}</div>` : ''}
+                                    ${item.customOptions ? `
+                                        <div class="custom-options">
+                                            <div>Custom: ${item.customOptions.name || 'N/A'} - #${item.customOptions.number || 'N/A'}</div>
+                                            ${item.customOptions.badgeDetails && item.customOptions.badgeDetails.length > 0 ? `
+                                                <div class="badge-details">
+                                                    <h4>Football Badges Added:</h4>
+                                                    <div class="badge-list">
+                                                        ${item.customOptions.badgeDetails.map((badge: any) => `
+                                                            <span class="badge-item">${badge.name || `Badge ${badge.id}`}</span>
+                                                        `).join('')}
+                                                    </div>
+                                                    ${item.customOptions.badgeTotal ? `<div style="margin-top: 5px; font-weight: 600; color: #667eea;">Badge Total: ${formatCurrency(item.customOptions.badgeTotal)}</div>` : ''}
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    ` : ''}
                                 </td>
                                 <td>${item.quantity}</td>
                                 <td>${formatCurrency(item.unitPrice)}</td>
@@ -310,6 +520,45 @@ export function generateInvoiceHTML(invoiceData: InvoiceData): string {
                         <span>${formatCurrency(invoiceData.total)}</span>
                     </div>
                 </div>
+                
+                ${(() => {
+                  const breakdown = getPaymentBreakdown()
+                  return `
+                <div class="payment-breakdown">
+                    <h3>Payment Breakdown</h3>
+                    <div class="breakdown-row">
+                        <span>Payment Type:</span>
+                        <span class="payment-type ${breakdown.isPartialPayment ? 'partial' : 'full'}">${breakdown.paymentType}</span>
+                    </div>
+                    <div class="breakdown-row">
+                        <span>Total Order Amount:</span>
+                        <span>${formatCurrency(breakdown.totalAmount)}</span>
+                    </div>
+                    <div class="breakdown-row">
+                        <span>Amount Paid:</span>
+                        <span class="paid-amount">${formatCurrency(breakdown.paidAmount)}</span>
+                    </div>
+                    ${breakdown.isPartialPayment && breakdown.remainingAmount > 0 ? `
+                    <div class="breakdown-row">
+                        <span>Remaining Amount:</span>
+                        <span class="remaining-amount">${formatCurrency(breakdown.remainingAmount)}</span>
+                    </div>
+                    ` : ''}
+                    ${breakdown.dueAmount > 0 ? `
+                    <div class="breakdown-row due-amount">
+                        <span>Amount Due:</span>
+                        <span>${formatCurrency(breakdown.dueAmount)}</span>
+                    </div>
+                    ` : ''}
+                    ${breakdown.paidAmount >= breakdown.totalAmount ? `
+                    <div class="breakdown-row fully-paid">
+                        <span>Payment Status:</span>
+                        <span>Fully Paid</span>
+                    </div>
+                    ` : ''}
+                </div>
+                  `
+                })()}
             </div>
             
             <div class="footer">
@@ -323,8 +572,8 @@ export function generateInvoiceHTML(invoiceData: InvoiceData): string {
   `
 }
 
-export function downloadInvoice(invoiceData: InvoiceData, filename: string = '') {
-  const html = generateInvoiceHTML(invoiceData)
+export async function downloadInvoice(invoiceData: InvoiceData, filename: string = '') {
+  const html = await generateInvoiceHTML(invoiceData)
   const blob = new Blob([html], { type: 'text/html' })
   const url = URL.createObjectURL(blob)
   

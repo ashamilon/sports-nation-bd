@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     // Build where clause
-    const where: any = { role: 'user' }
+    const where: any = { role: 'customer' }
     if (status && status !== 'all') {
       where.status = status
     }
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       prisma.user.findMany({
         where,
         include: {
-          orders: {
+          Order: {
             select: {
               id: true,
               total: true,
@@ -47,12 +47,12 @@ export async function GET(request: NextRequest) {
 
     // Format customers for display
     const formattedCustomers = customers.map(customer => {
-      const totalOrders = customer.orders.length
-      const totalSpent = customer.orders
+      const totalOrders = customer.Order.length
+      const totalSpent = customer.Order
         .filter(order => order.status === 'completed')
         .reduce((sum, order) => sum + order.total, 0)
-      const lastOrder = customer.orders.length > 0 
-        ? customer.orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+      const lastOrder = customer.Order.length > 0 
+        ? customer.Order.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
         : null
 
       return {

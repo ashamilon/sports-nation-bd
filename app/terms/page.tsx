@@ -221,7 +221,7 @@ export default function TermsPage() {
                 For questions about these terms and conditions or our loyalty program, please contact us:
               </p>
               <div className="space-y-2 text-muted-foreground">
-                <p>📞 Phone: +880 1234 567890</p>
+                <p>📞 Phone: +880 1868 556390</p>
                 <p>📧 Email: info@sportsnationbd.com</p>
                 <p>🌐 Website: www.sportsnationbd.com</p>
               </div>

@@ -190,7 +190,7 @@ export default function CourierManagement() {
             </h2>
             <button
               onClick={fetchOrders}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-dark dark:text-brand-light bg-brand-light-gray dark:bg-brand-medium rounded-lg hover:bg-brand-medium dark:hover:bg-brand-accent transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground bg-secondary hover:bg-secondary/80 rounded-lg transition-colors"
             >
               <RefreshCw className="h-4 w-4" />
               Refresh
@@ -294,7 +294,7 @@ export default function CourierManagement() {
                       {!order.courierService && order.status !== 'cancelled' ? (
                         <button
                           onClick={() => createCourierOrder(order.id)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-brand-dark rounded-lg hover:bg-brand-accent transition-colors"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors"
                         >
                           <Plus className="h-4 w-4" />
                           Create Courier Order

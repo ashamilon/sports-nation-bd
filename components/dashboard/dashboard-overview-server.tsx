@@ -108,7 +108,7 @@ export default function DashboardOverviewServer() {
   }
 
   return (
-    <div className="space-y-1 p-1 pt-4">
+    <div className="space-y-4 px-2 py-4">
       {/* Header */}
       <div>
         <h1 className="text-base font-bold text-foreground">Welcome back!</h1>

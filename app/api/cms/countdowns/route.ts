@@ -30,7 +30,13 @@ export async function GET(request: NextRequest) {
       ]
     })
 
-    return NextResponse.json({ success: true, data: countdowns })
+    const response = NextResponse.json({ success: true, data: countdowns })
+    
+    // Add caching headers for better performance
+    response.headers.set('Cache-Control', 'public, max-age=300, s-maxage=300') // 5 minutes cache
+    response.headers.set('Vary', 'Accept-Encoding')
+    
+    return response
   } catch (error) {
     console.error('Error fetching countdowns:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -54,6 +60,7 @@ export async function POST(request: NextRequest) {
 
     const countdown = await prisma.countdownTimer.create({
       data: {
+        id: `countdown_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         title,
         description,
         type: type || 'offer',
@@ -61,7 +68,8 @@ export async function POST(request: NextRequest) {
         isActive: isActive !== undefined ? isActive : true,
         position: position || 'home',
         priority: priority || 0,
-        metadata: metadata ? JSON.stringify(metadata) : null
+        metadata: metadata ? JSON.stringify(metadata) : null,
+        updatedAt: new Date()
       }
     })
 

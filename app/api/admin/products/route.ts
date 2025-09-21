@@ -44,6 +44,15 @@ export async function GET(request: NextRequest) {
             select: {
               name: true
             }
+          },
+          ProductVariant: true,
+          Review: {
+            where: {
+              isApproved: true
+            },
+            select: {
+              rating: true
+            }
           }
         },
         orderBy,
@@ -54,12 +63,54 @@ export async function GET(request: NextRequest) {
     ])
 
     // Format products for display
-    const formattedProducts = products.map(product => ({
-      name: product.name,
-      sales: 0, // Default sales count since Product model doesn't have salesCount field
-      revenue: `৳0`, // Default revenue since we don't have sales data
-      image: product.images && product.images.length > 0 ? product.images[0] : '/api/placeholder/60/60'
-    }))
+    const formattedProducts = products.map(product => {
+      // Calculate total stock from all variants
+      let totalStock = 0
+      
+      if (product.ProductVariant && product.ProductVariant.length > 0) {
+        product.ProductVariant.forEach(variant => {
+          if (variant.fabricType && variant.sizes) {
+            // Jersey variant with sizes array
+            try {
+              const sizes = typeof variant.sizes === 'string' ? JSON.parse(variant.sizes) : variant.sizes
+              if (Array.isArray(sizes)) {
+                sizes.forEach(sizeItem => {
+                  totalStock += sizeItem.stock || 0
+                })
+              }
+            } catch (error) {
+              console.error('Error parsing sizes for variant:', error)
+            }
+          } else if (variant.stock !== null && variant.stock !== undefined) {
+            // Simple variant with direct stock
+            totalStock += variant.stock
+          }
+        })
+      }
+
+      // Calculate average rating from reviews
+      const reviews = product.Review || []
+      const averageRating = reviews.length > 0 
+        ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+        : 0
+      
+      return {
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        price: product.price,
+        images: product.images || [],
+        category: product.Category,
+        status: product.isActive ? 'active' : 'inactive',
+        stock: totalStock,
+        sales: 0, // Default sales count since Product model doesn't have salesCount field
+        revenue: `৳0`, // Default revenue since we don't have sales data
+        rating: Math.round(averageRating * 10) / 10, // Round to 1 decimal place
+        reviewCount: reviews.length,
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt
+      }
+    })
 
     return NextResponse.json({
       products: formattedProducts,
@@ -91,7 +142,9 @@ export async function POST(request: NextRequest) {
       variants, 
       selectedBadges,
       allowNameNumber,
-      nameNumberPrice
+      nameNumberPrice,
+      isFeatured,
+      isActive
     } = body
 
     // Validate required fields
@@ -109,6 +162,31 @@ export async function POST(request: NextRequest) {
     const slug = `${baseSlug}-${timestamp}-${randomSuffix}`
     const sku = `SKU-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`
 
+    // Transform variants for database storage
+    const transformedVariants = variants?.map((variant: any) => {
+      if (variant.fabricType) {
+        // Jersey variant with fabric type and sizes
+        return {
+          fabricType: variant.fabricType,
+          sizes: JSON.stringify(variant.sizes),
+          name: null,
+          value: null,
+          price: null,
+          stock: 0
+        }
+      } else {
+        // Simple variant
+        return {
+          fabricType: null,
+          sizes: null,
+          name: variant.name || '',
+          value: variant.value || '',
+          price: variant.price || 0,
+          stock: variant.stock || 0
+        }
+      }
+    }) || []
+
     const product = await prisma.product.create({
       data: {
         name,
@@ -118,11 +196,13 @@ export async function POST(request: NextRequest) {
         price: parseFloat(price),
         categoryId,
         images: images || [],
+        isActive: isActive !== undefined ? isActive : true,
+        isFeatured: isFeatured !== undefined ? isFeatured : false,
         allowNameNumber: allowNameNumber || false,
         nameNumberPrice: nameNumberPrice ? parseFloat(nameNumberPrice) : 250,
         selectedBadges: selectedBadges ? JSON.stringify(selectedBadges) : null,
         ProductVariant: {
-          create: variants || []
+          create: transformedVariants
         }
       },
       include: {

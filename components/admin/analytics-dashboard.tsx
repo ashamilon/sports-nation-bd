@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   TrendingUp,
@@ -15,135 +15,157 @@ import {
   Filter,
   BarChart3,
   PieChart,
-  Activity
+  Activity,
+  RefreshCw
 } from 'lucide-react'
+
+interface AnalyticsData {
+  overview: {
+    totalRevenue: number
+    totalOrders: number
+    totalCustomers: number
+    totalProducts: number
+    averageOrderValue: number
+    revenueChange: number
+    ordersChange: number
+    customersChange: number
+    aovChange: number
+  }
+  dailySales: Array<{
+    date: string
+    revenue: number
+    orders: number
+    customers: number
+  }>
+  topProducts: Array<{
+    id: string
+    name: string
+    sales: number
+    revenue: number
+    growth: string
+    category: string
+    price: number
+  }>
+  categories: Array<{
+    name: string
+    value: number
+    revenue: number
+    color: string
+  }>
+  customerSegments: Array<{
+    segment: string
+    count: number
+    percentage: number
+    color: string
+    revenue?: number
+  }>
+  timeRange: string
+  lastUpdated: string
+}
 
 export default function AnalyticsDashboard() {
   const [timeRange, setTimeRange] = useState('30d')
   const [selectedMetric, setSelectedMetric] = useState('revenue')
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
 
-  // Mock data - replace with actual data from API
-  const overviewStats = [
+  // Fetch analytics data with timeout
+  const fetchAnalyticsData = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      // Create a timeout promise
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout - taking too long to load')), 15000) // 15 second timeout
+      })
+      
+      // Race between fetch and timeout
+      const response = await Promise.race([
+        fetch(`/api/admin/analytics?range=${timeRange}&metric=${selectedMetric}`),
+        timeoutPromise
+      ]) as Response
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch analytics data')
+      }
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        setAnalyticsData(result.data)
+        setLastRefresh(new Date())
+        if (result.error) {
+          console.warn('Analytics API warning:', result.error)
+        }
+      } else {
+        throw new Error(result.error || 'Failed to fetch analytics data')
+      }
+    } catch (err) {
+      console.error('Error fetching analytics data:', err)
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchAnalyticsData()
+  }, [timeRange, selectedMetric])
+
+  // Auto-refresh every 2 minutes (reduced frequency to prevent overload)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchAnalyticsData()
+    }, 120000) // 2 minutes
+
+    return () => clearInterval(interval)
+  }, [timeRange, selectedMetric])
+
+  // Generate overview stats from real data
+  const overviewStats = analyticsData ? [
     {
       title: 'Total Revenue',
-      value: '৳2,450,000',
-      change: '+12.5%',
-      changeType: 'positive' as const,
+      value: `৳${analyticsData.overview.totalRevenue.toLocaleString()}`,
+      change: `${analyticsData.overview.revenueChange >= 0 ? '+' : ''}${analyticsData.overview.revenueChange.toFixed(1)}%`,
+      changeType: analyticsData.overview.revenueChange >= 0 ? 'positive' as const : 'negative' as const,
       icon: DollarSign,
       color: 'text-green-500'
     },
     {
       title: 'Total Orders',
-      value: '1,234',
-      change: '+8.2%',
-      changeType: 'positive' as const,
+      value: analyticsData.overview.totalOrders.toLocaleString(),
+      change: `${analyticsData.overview.ordersChange >= 0 ? '+' : ''}${analyticsData.overview.ordersChange.toFixed(1)}%`,
+      changeType: analyticsData.overview.ordersChange >= 0 ? 'positive' as const : 'negative' as const,
       icon: ShoppingBag,
       color: 'text-blue-500'
     },
     {
       title: 'Total Customers',
-      value: '892',
-      change: '+15.3%',
-      changeType: 'positive' as const,
+      value: analyticsData.overview.totalCustomers.toLocaleString(),
+      change: `${analyticsData.overview.customersChange >= 0 ? '+' : ''}${analyticsData.overview.customersChange.toFixed(1)}%`,
+      changeType: analyticsData.overview.customersChange >= 0 ? 'positive' as const : 'negative' as const,
       icon: Users,
       color: 'text-purple-500'
     },
     {
       title: 'Average Order Value',
-      value: '৳1,985',
-      change: '+5.7%',
-      changeType: 'positive' as const,
+      value: `৳${analyticsData.overview.averageOrderValue.toLocaleString()}`,
+      change: `${analyticsData.overview.aovChange >= 0 ? '+' : ''}${analyticsData.overview.aovChange.toFixed(1)}%`,
+      changeType: analyticsData.overview.aovChange >= 0 ? 'positive' as const : 'negative' as const,
       icon: TrendingUp,
       color: 'text-orange-500'
     }
-  ]
+  ] : []
 
-  const salesData = [
-    { date: '2024-01-01', revenue: 45000, orders: 23, customers: 18 },
-    { date: '2024-01-02', revenue: 52000, orders: 28, customers: 22 },
-    { date: '2024-01-03', revenue: 38000, orders: 19, customers: 15 },
-    { date: '2024-01-04', revenue: 61000, orders: 32, customers: 25 },
-    { date: '2024-01-05', revenue: 48000, orders: 24, customers: 20 },
-    { date: '2024-01-06', revenue: 55000, orders: 29, customers: 23 },
-    { date: '2024-01-07', revenue: 42000, orders: 21, customers: 17 }
-  ]
+  const salesData = analyticsData?.dailySales || []
 
-  const topProducts = [
-    {
-      name: 'Barcelona Home Jersey 2024',
-      sales: 45,
-      revenue: 112500,
-      growth: '+15.2%',
-      category: 'Jerseys'
-    },
-    {
-      name: 'Nike Air Max 270',
-      sales: 32,
-      revenue: 272000,
-      growth: '+8.7%',
-      category: 'Sneakers'
-    },
-    {
-      name: 'Real Madrid Away Jersey',
-      sales: 28,
-      revenue: 78400,
-      growth: '+12.1%',
-      category: 'Jerseys'
-    },
-    {
-      name: 'Naviforce Watch NF9026',
-      sales: 22,
-      revenue: 92400,
-      growth: '+5.3%',
-      category: 'Watches'
-    },
-    {
-      name: 'Manchester United Home Jersey',
-      sales: 20,
-      revenue: 52000,
-      growth: '+18.9%',
-      category: 'Jerseys'
-    }
-  ]
-
-  const categoryData = [
-    { name: 'Jerseys', value: 45, revenue: 350000, color: 'bg-blue-500' },
-    { name: 'Sneakers', value: 30, revenue: 280000, color: 'bg-green-500' },
-    { name: 'Watches', value: 15, revenue: 120000, color: 'bg-purple-500' },
-    { name: 'Shorts', value: 7, revenue: 45000, color: 'bg-orange-500' },
-    { name: 'Accessories', value: 3, revenue: 25000, color: 'bg-pink-500' }
-  ]
-
-  const customerSegments = [
-    {
-      segment: 'New Customers',
-      count: 156,
-      percentage: 17.5,
-      revenue: 234000,
-      color: 'text-blue-500'
-    },
-    {
-      segment: 'Returning Customers',
-      count: 456,
-      percentage: 51.1,
-      revenue: 1234000,
-      color: 'text-green-500'
-    },
-    {
-      segment: 'VIP Customers',
-      count: 89,
-      percentage: 10.0,
-      revenue: 567000,
-      color: 'text-purple-500'
-    },
-    {
-      segment: 'Inactive Customers',
-      count: 191,
-      percentage: 21.4,
-      revenue: 89000,
-      color: 'text-gray-500'
-    }
-  ]
+  const topProducts = analyticsData?.topProducts || []
+  const categoryData = analyticsData?.categories || []
+  const customerSegments = analyticsData?.customerSegments || []
 
   const timeRanges = [
     { value: '7d', label: 'Last 7 days' },
@@ -158,6 +180,43 @@ export default function AnalyticsDashboard() {
     { value: 'customers', label: 'Customers' }
   ]
 
+  // Loading state
+  if (isLoading && !analyticsData) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 relative">
+            <div className="w-full h-full border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+          </div>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Loading Analytics</h3>
+          <p className="text-muted-foreground">Fetching your analytics data...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+            <Activity className="h-8 w-8 text-red-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Error Loading Analytics</h3>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <button
+            onClick={fetchAnalyticsData}
+            className="glass-button px-4 py-2 rounded-lg flex items-center space-x-2 mx-auto"
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span>Try Again</span>
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -165,8 +224,23 @@ export default function AnalyticsDashboard() {
         <div>
           <h1 className="text-3xl font-bold text-foreground">Analytics Dashboard</h1>
           <p className="text-muted-foreground mt-1">Track your business performance and insights</p>
+          {analyticsData && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Last updated: {lastRefresh.toLocaleTimeString()} • Auto-refresh every 2 minutes
+            </p>
+          )}
         </div>
         <div className="flex items-center space-x-3">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={fetchAnalyticsData}
+            disabled={isLoading}
+            className="glass-button px-4 py-2 rounded-lg flex items-center space-x-2 disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </motion.button>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -409,7 +483,7 @@ export default function AnalyticsDashboard() {
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">{segment.percentage}% of total</span>
-                  <span className="text-muted-foreground">৳{segment.revenue.toLocaleString()}</span>
+                  <span className="text-muted-foreground">৳{(segment.revenue || 0).toLocaleString()}</span>
                 </div>
                 <div className="mt-2 bg-muted/20 rounded-full h-2 overflow-hidden">
                   <motion.div

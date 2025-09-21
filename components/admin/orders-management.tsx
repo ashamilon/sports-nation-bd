@@ -144,6 +144,20 @@ export default function OrdersManagement() {
   const processingOrders = orders.filter(order => order.status === 'processing').length
   const completedOrders = orders.filter(order => order.status === 'completed').length
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 relative">
+            <div className="w-full h-full border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+          </div>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Loading Orders</h3>
+          <p className="text-muted-foreground">Fetching your orders...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -363,7 +377,7 @@ export default function OrdersManagement() {
                   <td className="p-4">
                     {order.courierService ? (
                       <div>
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
                           <Truck className="w-3 h-3 mr-1" />
                           {order.courierService}
                         </span>
@@ -466,6 +480,9 @@ export default function OrdersManagement() {
               
               <CourierSelector
                 orderId={selectedOrderForCourier}
+                orderData={orders.find(order => order.id === selectedOrderForCourier)}
+                currentCourier={orders.find(order => order.id === selectedOrderForCourier)?.courierService}
+                currentTrackingId={orders.find(order => order.id === selectedOrderForCourier)?.courierTrackingId}
                 onCourierUpdate={handleCourierUpdate}
               />
             </div>

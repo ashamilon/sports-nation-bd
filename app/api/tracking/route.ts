@@ -189,27 +189,25 @@ async function getSundarbanTracking(trackingId: string) {
 // Pathao tracking
 async function getPathaoTracking(trackingId: string) {
   try {
-    // Pathao API endpoint (you'll need to get the actual API details from Pathao)
-    const response = await fetch(`https://api.pathao.com/track/${trackingId}`, {
-      headers: {
-        'Authorization': `Bearer ${process.env.PATHAO_API_KEY}`,
-        'Content-Type': 'application/json'
-      }
-    })
-
-    if (!response.ok) {
-      throw new Error('Pathao API error')
+    // Import Pathao courier service
+    const { pathaoCourier } = await import('@/lib/courier/pathao')
+    
+    // Get order status from Pathao
+    const statusResponse = await pathaoCourier.getOrderStatus(trackingId)
+    
+    if (!statusResponse || statusResponse.error) {
+      throw new Error(statusResponse?.error || 'Failed to get tracking information')
     }
 
-    const data = await response.json()
+    // Transform Pathao response to our format
     return {
       service: 'pathao',
       trackingId,
-      status: data.status,
-      location: data.currentLocation,
-      updates: data.trackingHistory || [],
-      estimatedDelivery: data.estimatedDelivery,
-      lastUpdated: data.lastUpdated
+      status: statusResponse.status || 'unknown',
+      location: statusResponse.currentLocation || 'Unknown',
+      updates: statusResponse.trackingHistory || [],
+      estimatedDelivery: statusResponse.estimatedDelivery,
+      lastUpdated: statusResponse.lastUpdated || new Date().toISOString()
     }
   } catch (error) {
     console.error('Pathao tracking error:', error)

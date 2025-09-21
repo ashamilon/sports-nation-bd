@@ -112,6 +112,8 @@ model Collection {
   isActive          Boolean             @default(true)
   isFeatured        Boolean             @default(false)
   sortOrder         Int                 @default(0)
+  isInCarousel      Boolean             @default(false)
+  carouselOrder     Int?
   metadata          String?
   createdAt         DateTime            @default(now())
   updatedAt         DateTime
@@ -323,7 +325,7 @@ model Order {
   courierTrackingId String?
   notes             String?
   createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt @default(now())
+  updatedAt         DateTime         @default(now()) @updatedAt
   User              User             @relation(fields: [userId], references: [id])
   OrderItem         OrderItem[]
   Payment           Payment[]
@@ -339,7 +341,7 @@ model OrderItem {
   price            Float
   customOptions    String?
   createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt @default(now())
+  updatedAt        DateTime        @default(now()) @updatedAt
   Order            Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
   Product          Product         @relation(fields: [productId], references: [id])
   ProductVariant   ProductVariant? @relation(fields: [productVariantId], references: [id])
@@ -389,7 +391,7 @@ model Payment {
   paymentIntentId String?
   metadata        String?
   createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
   Order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
 
@@ -425,13 +427,15 @@ model Product {
 
 model ProductVariant {
   id           String         @id @default(cuid())
-  name         String
-  value        String
+  name         String?
+  value        String?
   price        Float?
   stock        Int            @default(0)
   productId    String
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
+  fabricType   String?
+  sizes        String?
   CartItem     CartItem[]
   OrderItem    OrderItem[]
   Product      Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -439,16 +443,22 @@ model ProductVariant {
 }
 
 model Review {
-  id         String   @id
-  userId     String
-  productId  String
-  rating     Int
-  comment    String?
-  isVerified Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime
-  Product    Product  @relation(fields: [productId], references: [id])
-  User       User     @relation(fields: [userId], references: [id])
+  id               String    @id
+  userId           String
+  productId        String
+  rating           Int
+  comment          String?
+  isVerified       Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime
+  isApproved       Boolean   @default(true)
+  isModerated      Boolean   @default(false)
+  moderatedAt      DateTime?
+  moderatedBy      String?
+  moderationReason String?
+  Moderator        User?     @relation("ReviewModerator", fields: [moderatedBy], references: [id])
+  Product          Product   @relation(fields: [productId], references: [id])
+  User             User      @relation(fields: [userId], references: [id])
 
   @@unique([userId, productId])
 }
@@ -525,40 +535,44 @@ model TrackingUpdate {
 }
 
 model User {
-  id                     String           @id @default(cuid())
-  name                   String?
-  email                  String           @unique
-  emailVerified          DateTime?
-  image                  String?
-  role                   String           @default("customer")
-  phone                  String?
-  password               String?
-  address                String?
-  city                   String?
-  country                String?
-  postalCode             String?
-  createdAt              DateTime         @default(now())
-  updatedAt              DateTime @updatedAt
-  loyaltyLevel           String           @default("bronze")
-  loyaltyPoints          Int              @default(0)
-  totalOrders            Int              @default(0)
-  totalSpent             Float            @default(0)
-  currentPeriodOrders    Int              @default(0)
-  currentPeriodStart     DateTime?
-  lastOrderDate          DateTime?
-  firstOrderDiscountUsed Boolean          @default(false)
-  platinumDiscountUsed   DateTime?
-  isEligibleForLoyalty   Boolean          @default(true)
-  Account                Account[]
-  BlogPost               BlogPost[]
-  ContactForm            ContactForm[]
-  LoyaltyHistory         LoyaltyHistory[]
-  Media                  Media[]
-  Order                  Order[]
-  Page                   Page[]
-  Review                 Review[]
-  Session                Session[]
-  Wishlist               Wishlist?
+  id                      String             @id @default(cuid())
+  name                    String?
+  email                   String             @unique
+  emailVerified           DateTime?
+  image                   String?
+  role                    String             @default("customer")
+  phone                   String?
+  password                String?
+  address                 String?
+  city                    String?
+  country                 String?
+  postalCode              String?
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
+  loyaltyLevel            String             @default("bronze")
+  loyaltyPoints           Int                @default(0)
+  totalOrders             Int                @default(0)
+  totalSpent              Float              @default(0)
+  currentPeriodOrders     Int                @default(0)
+  currentPeriodStart      DateTime?
+  lastOrderDate           DateTime?
+  firstOrderDiscountUsed  Boolean            @default(false)
+  platinumDiscountUsed    DateTime?
+  isEligibleForLoyalty    Boolean            @default(true)
+  notificationPreferences Json?              @default("{\"sms\": true, \"push\": true, \"email\": true}")
+  privacySettings         Json?              @default("{\"showEmail\": false, \"showPhone\": false, \"profileVisibility\": \"private\"}")
+  Account                 Account[]
+  BlogPost                BlogPost[]
+  ContactForm             ContactForm[]
+  behaviors               CustomerBehavior[]
+  LoyaltyHistory          LoyaltyHistory[]
+  Media                   Media[]
+  Order                   Order[]
+  Page                    Page[]
+  ModeratedReviews        Review[]           @relation("ReviewModerator")
+  Review                  Review[]
+  Session                 Session[]
+  Wishlist                Wishlist?
 }
 
 model VerificationToken {
@@ -613,4 +627,57 @@ model product_badges {
   Product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([productId, badgeId])
+}
+
+model Visitor {
+  id        String             @id @default(cuid())
+  sessionId String             @unique
+  ipAddress String
+  userAgent String
+  country   String?
+  city      String?
+  region    String?
+  timezone  String?
+  isp       String?
+  latitude  Float?
+  longitude Float?
+  page      String
+  referrer  String?
+  isActive  Boolean            @default(true)
+  lastSeen  DateTime           @default(now())
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  behaviors CustomerBehavior[]
+  pageViews PageView[]
+}
+
+model PageView {
+  id        String   @id @default(cuid())
+  visitorId String
+  page      String
+  title     String?
+  referrer  String?
+  duration  Int?
+  createdAt DateTime @default(now())
+  Visitor   Visitor  @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+}
+
+model CustomerBehavior {
+  id          String   @id @default(cuid())
+  sessionId   String
+  visitorId   String?
+  userId      String?
+  behavior    String
+  productId   String?
+  productName String?
+  value       Float?
+  metadata    String?
+  isActive    Boolean  @default(true)
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  User        User?    @relation(fields: [userId], references: [id])
+  Visitor     Visitor? @relation(fields: [visitorId], references: [id])
+
+  @@unique([sessionId, behavior])
 }

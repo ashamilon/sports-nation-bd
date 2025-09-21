@@ -1,12 +1,25 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CheckCircle, ArrowLeft, ShoppingBag, Package } from 'lucide-react'
+import { behaviorTracker } from '@/lib/behavior-tracker'
 
 export default function PaymentSuccessPage() {
   const router = useRouter()
+
+  useEffect(() => {
+    // Track payment success behavior
+    // We'll get the order value from URL params or localStorage
+    const urlParams = new URLSearchParams(window.location.search)
+    const orderValue = parseFloat(urlParams.get('amount') || '0')
+    
+    if (orderValue > 0) {
+      behaviorTracker.trackPaymentSuccess(orderValue)
+    }
+  }, [])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">

@@ -21,8 +21,8 @@ export async function GET(
     const product = await prisma.product.findUnique({
       where: { id },
       include: {
-        category: true,
-        variants: true
+        Category: true,
+        ProductVariant: true
       }
     })
 
@@ -65,6 +65,7 @@ export async function PUT(
     }
 
     const { id } = await params
+    const body = await request.json()
     const {
       name,
       description,
@@ -79,41 +80,48 @@ export async function PUT(
       isFeatured,
       weight,
       dimensions
-    } = await request.json()
+    } = body
 
-    // Validate required fields
-    if (!name || !description || !categoryId || !price || !sku) {
-      return NextResponse.json(
-        { message: 'Missing required fields' },
-        { status: 400 }
-      )
+    // Check if this is a partial update (e.g., just toggling active status)
+    const isPartialUpdate = Object.keys(body).length === 1 && 'isActive' in body
+
+    if (!isPartialUpdate) {
+      // Validate required fields for full updates
+      if (!name || !description || !categoryId || !price || !sku) {
+        return NextResponse.json(
+          { message: 'Missing required fields' },
+          { status: 400 }
+        )
+      }
     }
 
-    // Generate slug
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+    // Prepare update data
+    const updateData: any = {}
+    
+    if (name) {
+      updateData.name = name
+      updateData.slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+    }
+    if (description !== undefined) updateData.description = description
+    if (categoryId) updateData.categoryId = categoryId
+    if (price !== undefined) updateData.price = price
+    if (comparePrice !== undefined) updateData.comparePrice = comparePrice || null
+    if (sku) updateData.sku = sku
+    if (stock !== undefined) updateData.stock = stock
+    if (images !== undefined) updateData.images = images || []
+    if (isActive !== undefined) updateData.isActive = isActive
+    if (isFeatured !== undefined) updateData.isFeatured = isFeatured
+    if (weight !== undefined) updateData.weight = weight || null
+    if (dimensions !== undefined) updateData.dimensions = dimensions || null
 
     // Update product
     const product = await prisma.product.update({
       where: { id },
-      data: {
-        name,
-        slug,
-        description,
-        categoryId,
-        price,
-        comparePrice: comparePrice || null,
-        sku,
-        stock,
-        images: images || [],
-        isActive: isActive ?? true,
-        isFeatured: isFeatured ?? false,
-        weight: weight || null,
-        dimensions: dimensions || null
-      }
+      data: updateData
     })
 
-    // Update variants
-    if (variants && Array.isArray(variants)) {
+    // Update variants (only if variants are provided)
+    if (variants && Array.isArray(variants) && !isPartialUpdate) {
       // Delete existing variants
       await prisma.productVariant.deleteMany({
         where: { productId: id }
@@ -121,14 +129,35 @@ export async function PUT(
 
       // Create new variants
       if (variants.length > 0) {
+        // Transform variants for database storage
+        const transformedVariants = variants.map((variant: any) => {
+          if (variant.fabricType) {
+            // Jersey variant with fabric type and sizes
+            return {
+              fabricType: variant.fabricType,
+              sizes: typeof variant.sizes === 'string' ? variant.sizes : JSON.stringify(variant.sizes),
+              name: null,
+              value: null,
+              price: null,
+              stock: 0,
+              productId: id
+            }
+          } else {
+            // Simple variant
+            return {
+              fabricType: null,
+              sizes: null,
+              name: variant.name,
+              value: variant.value,
+              price: variant.price || null,
+              stock: variant.stock || 0,
+              productId: id
+            }
+          }
+        })
+
         await prisma.productVariant.createMany({
-          data: variants.map((variant: any) => ({
-            name: variant.name,
-            value: variant.value,
-            price: variant.price || null,
-            stock: variant.stock || 0,
-            productId: id
-          }))
+          data: transformedVariants
         })
       }
     }
@@ -137,8 +166,8 @@ export async function PUT(
     const updatedProduct = await prisma.product.findUnique({
       where: { id },
       include: {
-        category: true,
-        variants: true
+        Category: true,
+        ProductVariant: true
       }
     })
 

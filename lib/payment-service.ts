@@ -35,10 +35,13 @@ export interface PaymentResponse {
 
 export class PaymentService {
   async createPayment(paymentData: PaymentRequest): Promise<PaymentResponse> {
-    // Check if we're in test mode
-    const isTestMode = process.env.PAYMENT_TEST_MODE === 'true'
+    // Check if we're in test mode or if SSL Commerz credentials are missing
+    const isTestMode = process.env.PAYMENT_TEST_MODE === 'true' || 
+                      !process.env.SSLCOMMERZ_STORE_ID || 
+                      !process.env.SSLCOMMERZ_STORE_PASSWORD
     
     if (isTestMode) {
+      console.log('🧪 Using test payment mode (SSL Commerz credentials missing or test mode enabled)')
       return await this.createTestPayment(paymentData)
     }
     

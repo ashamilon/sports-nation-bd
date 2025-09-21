@@ -144,7 +144,7 @@ Position: "home"
 ### Example 3: Update Contact Info
 ```
 Key: "contact_phone"
-Content: "+880 1234 567890"
+Content: "+880 1868 556390"
 Category: "contact"
 ```
 

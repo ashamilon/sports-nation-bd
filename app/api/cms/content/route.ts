@@ -64,13 +64,15 @@ export async function POST(request: NextRequest) {
     // Create new content
     const siteContent = await prisma.siteContent.create({
       data: {
+        id: `content_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         key,
         title,
         content,
         type: type || 'text',
         category: category || 'general',
         isActive: isActive !== undefined ? isActive : true,
-        metadata: metadata ? JSON.stringify(metadata) : null
+        metadata: metadata ? JSON.stringify(metadata) : null,
+        updatedAt: new Date()
       }
     })
 

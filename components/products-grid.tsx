@@ -20,9 +20,11 @@ interface Product {
   reviewCount: number
   variants?: Array<{
     id: string
-    name: string
-    value: string
+    name?: string
+    value?: string
     price?: number
+    fabricType?: string
+    sizes?: string
   }>
   category?: {
     name: string
@@ -37,6 +39,68 @@ export default function ProductsGrid() {
   const [filterCategory, setFilterCategory] = useState('all')
   const { addItem } = useCartStore()
 
+  // Function to get variant information for display
+  const getVariantInfo = (product: Product) => {
+    if (!product.variants || product.variants.length === 0) return null
+    
+    // Check if this is a Jersey with new variant structure
+    if (product.category?.slug === 'jersey' && product.variants.some(v => v.fabricType)) {
+      const fabricTypes = product.variants
+        .filter(v => v.fabricType)
+        .map(v => v.fabricType)
+        .filter(Boolean)
+      
+      if (fabricTypes.length > 0) {
+        return {
+          type: 'jersey',
+          fabrics: fabricTypes,
+          priceRange: getJerseyPriceRange(product.variants)
+        }
+      }
+    }
+    
+    // For other variants, show the first few
+    const otherVariants = product.variants
+      .filter(v => v.name && v.value)
+      .slice(0, 2)
+    
+    if (otherVariants.length > 0) {
+      return {
+        type: 'other',
+        variants: otherVariants
+      }
+    }
+    
+    return null
+  }
+
+  // Function to get price range for Jersey variants
+  const getJerseyPriceRange = (variants: Product['variants']) => {
+    if (!variants) return null
+    
+    const prices: number[] = []
+    
+    variants.forEach(variant => {
+      if (variant.sizes) {
+        try {
+          const sizes = JSON.parse(variant.sizes)
+          sizes.forEach((size: any) => {
+            if (size.price) prices.push(size.price)
+          })
+        } catch (error) {
+          console.error('Error parsing sizes:', error)
+        }
+      }
+    })
+    
+    if (prices.length === 0) return null
+    
+    const minPrice = Math.min(...prices)
+    const maxPrice = Math.max(...prices)
+    
+    return minPrice === maxPrice ? minPrice : { min: minPrice, max: maxPrice }
+  }
+
   useEffect(() => {
     fetchProducts()
   }, [sortBy, filterCategory])
@@ -48,8 +112,12 @@ export default function ProductsGrid() {
       if (filterCategory !== 'all') {
         params.append('category', filterCategory)
       }
+      // Add cache-busting parameter to ensure fresh data
+      params.append('_t', Date.now().toString())
       
-      const response = await fetch(`/api/products?${params}`)
+      const response = await fetch(`/api/products?${params}`, {
+        cache: 'no-store'
+      })
       const data = await response.json()
       
       if (data.success) {
@@ -102,14 +170,33 @@ export default function ProductsGrid() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {[...Array(8)].map((_, i) => (
-          <div key={i} className="animate-pulse">
-            <div className="bg-muted aspect-square rounded-lg mb-4"></div>
-            <div className="h-4 bg-muted rounded mb-2"></div>
-            <div className="h-4 bg-muted rounded w-3/4"></div>
-          </div>
-        ))}
+      <div className="space-y-6">
+        {/* Desktop Loading Skeleton */}
+        <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="bg-muted aspect-square rounded-lg mb-4"></div>
+              <div className="h-4 bg-muted rounded mb-2"></div>
+              <div className="h-4 bg-muted rounded w-3/4"></div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Mobile Loading Skeleton */}
+        <div className="md:hidden grid grid-cols-2 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="bg-muted aspect-square rounded-lg mb-3"></div>
+              <div className="space-y-2">
+                <div className="h-3 bg-muted rounded w-3/4"></div>
+                <div className="h-2 bg-muted rounded w-1/2"></div>
+                <div className="h-2 bg-muted rounded w-1/4"></div>
+                <div className="h-3 bg-muted rounded w-1/3"></div>
+                <div className="h-8 bg-muted rounded w-full"></div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -176,6 +263,13 @@ export default function ProductsGrid() {
                     <span className="text-6xl opacity-20">⚽</span>
                   </div>
                 )}
+
+                {/* Discount Badge */}
+                {product.comparePrice && product.comparePrice > product.price && (
+                  <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                    -{Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)}%
+                  </div>
+                )}
                 
                 {/* Actions */}
                 <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -213,6 +307,7 @@ export default function ProductsGrid() {
                   
                   <p className="text-sm text-muted-foreground">{product.category?.name || 'Unknown Category'}</p>
                   
+                  
                   {/* Rating */}
                   <div className="flex items-center gap-2 mt-1">
                     <div className="flex items-center">
@@ -239,47 +334,76 @@ export default function ProductsGrid() {
                     {formatCurrency(product.price)}
                   </span>
                   {product.comparePrice && (
-                    <span className="text-sm text-muted-foreground line-through">
+                    <span className="text-sm text-red-500 line-through">
                       {formatCurrency(product.comparePrice)}
                     </span>
                   )}
                 </div>
 
-                {/* Variants */}
-                {product.variants && product.variants.length > 1 && (
-                  <div className="flex gap-2 flex-wrap">
-                    {product.variants.slice(0, 3).map((variant) => (
-                      <button
-                        key={variant.id}
-                        onClick={() => handleAddToCart(product, variant.id)}
-                        className="text-xs px-2 py-1 border rounded hover:bg-accent transition-colors"
-                      >
-                        {variant.value}
-                      </button>
-                    ))}
-                    {product.variants.length > 3 && (
-                      <span className="text-xs text-muted-foreground">
-                        +{product.variants.length - 3} more
-                      </span>
-                    )}
-                  </div>
-                )}
+                {/* Variant Information */}
+                {(() => {
+                  const variantInfo = getVariantInfo(product)
+                  if (!variantInfo) return null
+                  
+                  if (variantInfo.type === 'jersey' && variantInfo.fabrics) {
+                    return (
+                      <div className="space-y-1 mt-2">
+                        <div className="flex flex-wrap gap-1">
+                          {variantInfo.fabrics.map((fabric, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20"
+                            >
+                              {fabric}
+                            </span>
+                          ))}
+                        </div>
+                        {variantInfo.priceRange && (
+                          <div className="text-xs text-muted-foreground">
+                            {typeof variantInfo.priceRange === 'number' 
+                              ? `From ${formatCurrency(variantInfo.priceRange)}`
+                              : `${formatCurrency(variantInfo.priceRange.min)} - ${formatCurrency(variantInfo.priceRange.max)}`
+                            }
+                          </div>
+                        )}
+                      </div>
+                    )
+                  }
+                  
+                  if (variantInfo.type === 'other' && variantInfo.variants) {
+                    return (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {variantInfo.variants.map((variant, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground"
+                          >
+                            {variant.name}: {variant.value}
+                          </span>
+                        ))}
+                      </div>
+                    )
+                  }
+                  
+                  return null
+                })()}
+
               </div>
             </div>
           </motion.div>
         ))}
       </div>
 
-      {/* Mobile Horizontal Scroll */}
+      {/* Mobile Grid - 2 cards per row */}
       <div className="md:hidden">
-        <div className="mobile-scroll gap-4 pb-4">
+        <div className="grid grid-cols-2 gap-4">
           {products && products.map((product, index) => (
             <motion.div
               key={product.id}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="group mobile-scroll-item w-64 flex-shrink-0"
+              className="group"
             >
               <div className="product-card glass-card rounded-2xl overflow-hidden">
                 {/* Product Image */}
@@ -288,55 +412,45 @@ export default function ProductsGrid() {
                     <Image
                       src={product.images[0]}
                       alt={product.name}
-                      width={300}
-                      height={300}
+                      width={200}
+                      height={200}
                       className="w-full h-full object-cover"
                       unoptimized={false}
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-                      <span className="text-6xl opacity-20">⚽</span>
+                      <span className="text-4xl opacity-20">⚽</span>
+                    </div>
+                  )}
+
+                  {/* Discount Badge */}
+                  {product.comparePrice && product.comparePrice > product.price && (
+                    <div className="absolute top-1 left-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full shadow-lg">
+                      -{Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)}%
                     </div>
                   )}
                   
-                  {/* Actions */}
-                  <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <button className="w-8 h-8 bg-background/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-background transition-colors">
-                      <Heart className="h-4 w-4" />
-                    </button>
-                    <Link
-                      href={`/product/${product.slug}`}
-                      className="w-8 h-8 bg-background/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-background transition-colors"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Link>
-                  </div>
-
-                  {/* Quick Add to Cart */}
-                  <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <button
-                      onClick={() => handleAddToCart(product)}
-                      className="glass-button w-full py-2 rounded-lg flex items-center justify-center gap-2"
-                    >
-                      <ShoppingCart className="h-4 w-4" />
-                      Add to Cart
+                  {/* Quick Actions */}
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <button className="w-6 h-6 bg-background/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-background transition-colors">
+                      <Heart className="h-3 w-3" />
                     </button>
                   </div>
                 </div>
 
                 {/* Product Info */}
-                <div className="p-4 space-y-3">
+                <div className="p-3 space-y-2">
                   <div>
                     <Link href={`/product/${product.slug}`}>
-                      <h3 className="font-semibold hover:text-primary transition-colors line-clamp-2">
+                      <h3 className="font-semibold hover:text-primary transition-colors line-clamp-2 text-sm">
                         {product.name}
                       </h3>
                     </Link>
                     
-                    <p className="text-sm text-muted-foreground">{product.category?.name || 'Unknown Category'}</p>
+                    <p className="text-xs text-muted-foreground">{product.category?.name || 'Unknown Category'}</p>
                     
                     {/* Rating */}
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-1 mt-1">
                       <div className="flex items-center">
                         {[...Array(5)].map((_, i) => (
                           <Star
@@ -355,37 +469,71 @@ export default function ProductsGrid() {
                     </div>
                   </div>
 
+                  {/* Variant Information */}
+                  {(() => {
+                    const variantInfo = getVariantInfo(product)
+                    if (!variantInfo) return null
+                    
+                    if (variantInfo.type === 'jersey' && variantInfo.fabrics) {
+                      return (
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap gap-1">
+                            {variantInfo.fabrics.slice(0, 1).map((fabric, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20"
+                              >
+                                {fabric}
+                              </span>
+                            ))}
+                            {variantInfo.fabrics.length > 1 && (
+                              <span className="text-xs text-muted-foreground">
+                                +{variantInfo.fabrics.length - 1}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    }
+                    
+                    if (variantInfo.type === 'other' && variantInfo.variants) {
+                      return (
+                        <div className="flex flex-wrap gap-1">
+                          {variantInfo.variants.slice(0, 1).map((variant, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground"
+                            >
+                              {variant.name}: {variant.value}
+                            </span>
+                          ))}
+                        </div>
+                      )
+                    }
+                    
+                    return null
+                  })()}
+
                   {/* Price */}
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold">
+                    <span className="text-sm font-bold">
                       {formatCurrency(product.price)}
                     </span>
                     {product.comparePrice && (
-                      <span className="text-sm text-muted-foreground line-through">
+                      <span className="text-xs text-red-500 line-through">
                         {formatCurrency(product.comparePrice)}
                       </span>
                     )}
                   </div>
 
-                  {/* Variants */}
-                  {product.variants && product.variants.length > 1 && (
-                    <div className="flex gap-2 flex-wrap">
-                      {product.variants.slice(0, 2).map((variant) => (
-                        <button
-                          key={variant.id}
-                          onClick={() => handleAddToCart(product, variant.id)}
-                          className="glass-button text-xs px-2 py-1 rounded"
-                        >
-                          {variant.value}
-                        </button>
-                      ))}
-                      {product.variants.length > 2 && (
-                        <span className="text-xs text-muted-foreground">
-                          +{product.variants.length - 2} more
-                        </span>
-                      )}
-                    </div>
-                  )}
+                  {/* Add to Cart Button */}
+                  <button
+                    onClick={() => handleAddToCart(product)}
+                    className="w-full bg-primary text-primary-foreground py-2 rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-1"
+                  >
+                    <ShoppingCart className="h-3 w-3" />
+                    Add to Cart
+                  </button>
                 </div>
               </div>
             </motion.div>

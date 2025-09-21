@@ -1,12 +1,27 @@
 "use client"
 
 import { useState } from 'react'
-import { Package, Truck, MapPin, CheckCircle } from 'lucide-react'
+import { Package, Truck, MapPin, CheckCircle, Zap } from 'lucide-react'
+import PathaoCourierManager from './pathao-courier-manager'
 
 interface CourierSelectorProps {
   orderId: string
   currentCourier?: string
   currentTrackingId?: string
+  orderData?: {
+    orderNumber: string
+    total: number
+    shippingAddress: string
+    customerName: string
+    customerPhone: string
+    customerEmail: string
+    items: Array<{
+      name: string
+      quantity: number
+      price: number
+      weight?: number
+    }>
+  }
   onCourierUpdate: (courierService: string, trackingId: string) => void
 }
 
@@ -33,6 +48,7 @@ export default function CourierSelector({
   orderId, 
   currentCourier, 
   currentTrackingId,
+  orderData,
   onCourierUpdate 
 }: CourierSelectorProps) {
   const [selectedCourier, setSelectedCourier] = useState(currentCourier || '')
@@ -40,6 +56,7 @@ export default function CourierSelector({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [showPathaoManager, setShowPathaoManager] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -82,6 +99,15 @@ export default function CourierSelector({
       setError(err instanceof Error ? err.message : 'Failed to update courier information')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleCourierSelection = (courierId: string) => {
+    setSelectedCourier(courierId)
+    if (courierId === 'pathao' && orderData) {
+      setShowPathaoManager(true)
+    } else {
+      setShowPathaoManager(false)
     }
   }
 
@@ -133,7 +159,7 @@ export default function CourierSelector({
                       ? 'border-blue-500 bg-blue-50' 
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
-                  onClick={() => setSelectedCourier(service.id)}
+                  onClick={() => handleCourierSelection(service.id)}
                 >
                   <div className="flex items-start">
                     <div className={`p-2 rounded-lg ${service.color} mr-3`}>
@@ -167,45 +193,59 @@ export default function CourierSelector({
           </div>
         </div>
 
-        {/* Tracking ID Input */}
-        <div>
-          <label htmlFor="trackingId" className="block text-sm font-medium text-gray-700 mb-2">
-            Tracking ID
-          </label>
-          <input
-            type="text"
-            id="trackingId"
-            value={trackingId}
-            onChange={(e) => setTrackingId(e.target.value)}
-            placeholder="Enter courier tracking ID"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Enter the tracking ID provided by the courier service
-          </p>
-        </div>
+        {/* Show Pathao Manager or Manual Tracking ID Input */}
+        {showPathaoManager && orderData ? (
+          <div className="mt-6">
+            <PathaoCourierManager
+              orderId={orderId}
+              orderData={orderData}
+              currentCourier={currentCourier}
+              currentTrackingId={currentTrackingId}
+              onCourierUpdate={onCourierUpdate}
+            />
+          </div>
+        ) : (
+          <div>
+            <label htmlFor="trackingId" className="block text-sm font-medium text-gray-700 mb-2">
+              Tracking ID
+            </label>
+            <input
+              type="text"
+              id="trackingId"
+              value={trackingId}
+              onChange={(e) => setTrackingId(e.target.value)}
+              placeholder="Enter courier tracking ID"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Enter the tracking ID provided by the courier service
+            </p>
+          </div>
+        )}
 
-        {/* Submit Button */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={loading || !selectedCourier || !trackingId}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
-          >
-            {loading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Assigning...
-              </>
-            ) : (
-              <>
-                <Truck className="w-4 h-4 mr-2" />
-                Assign Courier
-              </>
-            )}
-          </button>
-        </div>
+        {/* Submit Button - Only show for non-Pathao couriers */}
+        {!showPathaoManager && (
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={loading || !selectedCourier || !trackingId}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Assigning...
+                </>
+              ) : (
+                <>
+                  <Truck className="w-4 h-4 mr-2" />
+                  Assign Courier
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </form>
 
       {/* Current Status */}

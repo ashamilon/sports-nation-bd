@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
+import { behaviorTracker } from '@/lib/behavior-tracker'
 
 export interface CartItem {
   id: string
@@ -15,6 +16,8 @@ export interface CartItem {
     name?: string
     number?: string
     size?: string
+    fabric?: string
+    badgeTotal?: number
   }
 }
 
@@ -57,6 +60,9 @@ export const useCartStore = create<CartStore>()(
             items: [...items, { ...item, id: Date.now().toString() }]
           })
         }
+
+        // Track cart add behavior
+        behaviorTracker.trackCartAdd(item.productId, item.name, item.price)
       },
       
       removeItem: (id) => {

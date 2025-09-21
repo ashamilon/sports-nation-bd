@@ -19,7 +19,7 @@ export default function ContactPage() {
               </div>
               <div>
                 <h3 className="font-semibold mb-2">📞 Phone</h3>
-                <p className="text-muted-foreground">+880 1234 567890</p>
+                <p className="text-muted-foreground">+880 1868 556390</p>
               </div>
               <div>
                 <h3 className="font-semibold mb-2">📍 Address</h3>

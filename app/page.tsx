@@ -5,10 +5,12 @@ import FeaturedProducts from '@/components/featured-products'
 import CategoriesSection from '@/components/categories-section'
 import Footer from '@/components/footer'
 import DynamicHome from '@/components/dynamic-home'
+import { PerformanceOptimizer } from '@/components/performance-optimizer'
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-background">
+      <PerformanceOptimizer />
       <Header />
       <main>
         <DynamicHome />

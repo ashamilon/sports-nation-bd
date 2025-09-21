@@ -5,6 +5,8 @@ import { formatCurrency } from '@/lib/currency'
 import { X, Plus, Minus, Trash2, ShoppingBag } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { resolveBadgeNames } from '@/lib/badge-helper'
 
 export default function CartSidebar() {
   const { 
@@ -130,6 +132,23 @@ interface CartItemCardProps {
 }
 
 function CartItemCard({ item, onQuantityChange, onRemove }: CartItemCardProps) {
+  const [badgeNames, setBadgeNames] = useState<string[]>([])
+
+  useEffect(() => {
+    const loadBadgeNames = async () => {
+      if (item.customOptions?.badges && item.customOptions.badges.length > 0) {
+        try {
+          const names = await resolveBadgeNames(item.customOptions.badges)
+          setBadgeNames(names)
+        } catch (error) {
+          console.error('Error resolving badge names:', error)
+          setBadgeNames(item.customOptions.badges) // Fallback to IDs
+        }
+      }
+    }
+    loadBadgeNames()
+  }, [item.customOptions?.badges])
+
   return (
     <div className="flex gap-3 p-3 glass-card rounded-lg">
       {/* Product Image */}
@@ -150,8 +169,8 @@ function CartItemCard({ item, onQuantityChange, onRemove }: CartItemCardProps) {
         )}
         {item.customOptions && (
           <div className="text-xs text-muted-foreground mt-1">
-            {item.customOptions.badges && (
-              <p>Badges: {item.customOptions.badges.join(', ')}</p>
+            {badgeNames.length > 0 && (
+              <p>Badges: {badgeNames.join(', ')}</p>
             )}
             {item.customOptions.name && (
               <p>Name: {item.customOptions.name}</p>

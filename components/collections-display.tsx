@@ -97,7 +97,9 @@ export default function CollectionsDisplay({
       params.append('isActive', 'true')
       params.append('includeChildren', 'true')
 
-      const response = await fetch(`/api/collections?${params}`)
+      const response = await fetch(`/api/collections?${params}&_t=${Date.now()}`, {
+        cache: 'no-store'
+      })
       const data = await response.json()
       
       if (data.success) {
@@ -129,7 +131,9 @@ export default function CollectionsDisplay({
 
   const fetchCollectionProducts = async (collectionId: string) => {
     try {
-      const response = await fetch(`/api/collections/${collectionId}/products?limit=4`)
+      const response = await fetch(`/api/collections/${collectionId}/products?limit=4&_t=${Date.now()}`, {
+        cache: 'no-store'
+      })
       const data = await response.json()
       
       if (data.success) {
@@ -337,7 +341,12 @@ export default function CollectionsDisplay({
                             )}
 
                             {/* Badges */}
-                            <div className="absolute top-2 left-2">
+                            <div className="absolute top-2 left-2 flex flex-col gap-1">
+                              {product.comparePrice && product.comparePrice > product.price && (
+                                <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                                  -{Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)}%
+                                </span>
+                              )}
                               {product.isFeatured && (
                                 <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
                                   Featured

@@ -57,6 +57,11 @@ export default function WishlistItems() {
   }
 
   const handleAddToCart = (item: any) => {
+    if (!item.product) {
+      console.error('Product data is missing for wishlist item:', item)
+      return
+    }
+    
     const productData = {
       productId: item.product.id,
       name: item.product.name,
@@ -79,8 +84,14 @@ export default function WishlistItems() {
   }
 
   const getImageUrl = (images: string) => {
+    // If images is already a URL (from API transformation), return it directly
+    if (images && (images.startsWith('http') || images.startsWith('/'))) {
+      return images
+    }
+    
+    // Otherwise, try to parse as JSON array
     try {
-      const imageArray = JSON.parse(images)
+      const imageArray = JSON.parse(images || '[]')
       return imageArray[0] || '/api/placeholder/300/300'
     } catch {
       return '/api/placeholder/300/300'
@@ -88,19 +99,19 @@ export default function WishlistItems() {
   }
 
   const filteredItems = wishlistItems.filter(item =>
-    item.product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.product.category.name.toLowerCase().includes(searchTerm.toLowerCase())
+    item.product?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.product?.category?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const sortedItems = [...filteredItems].sort((a, b) => {
     switch (sortBy) {
       case 'price-low':
-        const aPrice = a.variant?.price || a.product.price
-        const bPrice = b.variant?.price || b.product.price
+        const aPrice = a.variant?.price || a.product?.price || 0
+        const bPrice = b.variant?.price || b.product?.price || 0
         return aPrice - bPrice
       case 'price-high':
-        const aPriceHigh = a.variant?.price || a.product.price
-        const bPriceHigh = b.variant?.price || b.product.price
+        const aPriceHigh = a.variant?.price || a.product?.price || 0
+        const bPriceHigh = b.variant?.price || b.product?.price || 0
         return bPriceHigh - aPriceHigh
       case 'date':
       default:
@@ -132,13 +143,13 @@ export default function WishlistItems() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-2">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">My Wishlist</h1>
           <p className="text-muted-foreground">
-            {wishlistItems.length} {wishlistItems.length === 1 ? 'item' : 'items'} saved
+            {wishlistItems.filter(item => item.product).length} {wishlistItems.filter(item => item.product).length === 1 ? 'item' : 'items'} saved
           </p>
         </div>
       </div>
@@ -171,24 +182,24 @@ export default function WishlistItems() {
       </div>
 
       {/* Wishlist Items */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {sortedItems.map((item, index) => (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {sortedItems.filter(item => item.product).map((item, index) => (
           <motion.div
             key={item.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: index * 0.1 }}
-            className="glass-card p-6 rounded-2xl group hover:shadow-lg transition-all duration-300"
+            className="glass-card p-3 rounded-xl group hover:shadow-lg transition-all duration-300"
           >
             {/* Product Image */}
-            <div className="relative mb-4">
+            <div className="relative mb-2">
               <Link href={`/product/${item.product.slug}`}>
                 <div className="aspect-square rounded-lg overflow-hidden bg-muted">
                   <Image
                     src={getImageUrl(item.product.images)}
                     alt={item.product.name}
-                    width={300}
-                    height={300}
+                    width={200}
+                    height={200}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 </div>
@@ -197,19 +208,19 @@ export default function WishlistItems() {
               {/* Remove from Wishlist */}
               <button
                 onClick={() => handleRemoveFromWishlist(item.id)}
-                className="absolute top-2 right-2 glass-button p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                className="absolute top-1 right-1 glass-button p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
               >
-                <Trash2 className="h-4 w-4 text-destructive" />
+                <Trash2 className="h-3 w-3 text-destructive" />
               </button>
             </div>
 
             {/* Product Info */}
-            <div className="space-y-2">
+            <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
-                  {item.product.category.name}
+                <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                  {item.product.category?.name || 'Category'}
                 </span>
-                <span className={`text-xs px-2 py-1 rounded-full ${
+                <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                   (item.variant?.stock || item.product.stock) > 0
                     ? 'text-green-600 bg-green-100 dark:bg-green-900/20 dark:text-green-400'
                     : 'text-red-600 bg-red-100 dark:bg-red-900/20 dark:text-red-400'
@@ -218,23 +229,23 @@ export default function WishlistItems() {
                 </span>
               </div>
               
-              <h3 className="font-semibold text-foreground line-clamp-2">
+              <h3 className="font-medium text-xs text-foreground line-clamp-2">
                 {item.product.name}
               </h3>
               
               {item.variant && (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {item.variant.name}: {item.variant.value}
                 </p>
               )}
               
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <span className="text-lg font-bold text-foreground">
+                <div className="flex items-center space-x-1">
+                  <span className="text-sm font-bold text-foreground">
                     {formatPrice(item.variant?.price || item.product.price)}
                   </span>
                   {item.product.comparePrice && (
-                    <span className="text-sm text-muted-foreground line-through">
+                    <span className="text-xs text-red-500 line-through">
                       {formatPrice(item.product.comparePrice)}
                     </span>
                   )}
@@ -243,29 +254,29 @@ export default function WishlistItems() {
             </div>
             
             {/* Actions */}
-            <div className="flex space-x-2 pt-4">
+            <div className="flex space-x-1 pt-2">
               <Link
                 href={`/product/${item.product.slug}`}
-                className="flex-1 glass-button py-2 rounded-lg text-center flex items-center justify-center space-x-2"
+                className="flex-1 glass-button py-1.5 rounded-lg text-center flex items-center justify-center space-x-1"
               >
-                <Eye className="h-4 w-4" />
-                <span>View</span>
+                <Eye className="h-3 w-3" />
+                <span className="text-xs">View</span>
               </Link>
               
               <button
                 onClick={() => handleAddToCart(item)}
                 disabled={(item.variant?.stock || item.product.stock) <= 0}
-                className="flex-1 glass-button py-2 rounded-lg text-center flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 glass-button py-1.5 rounded-lg text-center flex items-center justify-center space-x-1 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <ShoppingCart className="h-4 w-4" />
-                <span>Add to Cart</span>
+                <ShoppingCart className="h-3 w-3" />
+                <span className="text-xs">Add</span>
               </button>
             </div>
           </motion.div>
         ))}
       </div>
 
-      {sortedItems.length === 0 && (
+      {sortedItems.filter(item => item.product).length === 0 && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -286,7 +297,7 @@ export default function WishlistItems() {
       )}
 
       {/* Wishlist Summary */}
-      {sortedItems.length > 0 && (
+      {sortedItems.filter(item => item.product).length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -296,15 +307,15 @@ export default function WishlistItems() {
             <div>
               <h3 className="text-lg font-semibold text-foreground">Wishlist Summary</h3>
               <p className="text-muted-foreground">
-                {sortedItems.length} {sortedItems.length === 1 ? 'item' : 'items'} saved
+                {sortedItems.filter(item => item.product).length} {sortedItems.filter(item => item.product).length === 1 ? 'item' : 'items'} saved
               </p>
             </div>
             <div className="text-right">
               <p className="text-sm text-muted-foreground">Total Value</p>
               <p className="text-xl font-bold text-foreground">
                 {formatPrice(
-                  sortedItems.reduce((total, item) => 
-                    total + (item.variant?.price || item.product.price), 0
+                  sortedItems.filter(item => item.product).reduce((total, item) => 
+                    total + (item.variant?.price || item.product?.price || 0), 0
                   )
                 )}
               </p>

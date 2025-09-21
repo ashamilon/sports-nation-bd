@@ -14,7 +14,19 @@ export async function GET(request: NextRequest) {
     }
 
     if (category) {
-      where.categoryId = category
+      // Check if category is a slug or ID
+      if (category.startsWith('cat_')) {
+        // It's a category ID
+        where.categoryId = category
+      } else {
+        // It's a category slug, so we need to find the category first
+        const categoryRecord = await prisma.category.findUnique({
+          where: { slug: category }
+        })
+        if (categoryRecord) {
+          where.categoryId = categoryRecord.id
+        }
+      }
     }
 
     if (featured === 'true') {
@@ -24,7 +36,16 @@ export async function GET(request: NextRequest) {
     const products = await prisma.product.findMany({
       where,
       include: {
-        Category: true
+        Category: true,
+        ProductVariant: true,
+        Review: {
+          where: {
+            isApproved: true
+          },
+          select: {
+            rating: true
+          }
+        }
       },
       take: limit,
       skip: offset,
@@ -34,21 +55,33 @@ export async function GET(request: NextRequest) {
     })
 
     // Transform products to include proper images and ratings
-    const productsWithRating = products.map(product => ({
-      ...product,
-      images: product.images || [],
-      averageRating: 4.5, // Default rating
-      reviewCount: 0,
-      category: product.Category ? {
-        name: product.Category.name,
-        slug: product.Category.slug
-      } : {
-        name: 'Unknown Category',
-        slug: 'unknown'
-      }
-    }))
+    const productsWithRating = products.map(product => {
+      const reviews = product.Review || []
+      const averageRating = reviews.length > 0 
+        ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+        : 0
+      const reviewCount = reviews.length
 
-    return NextResponse.json({
+      return {
+        ...product,
+        images: product.images || [],
+        variants: (product.ProductVariant || []).map(variant => ({
+          ...variant,
+          price: variant.price || undefined
+        })),
+        averageRating: Math.round(averageRating * 10) / 10, // Round to 1 decimal place
+        reviewCount,
+        category: product.Category ? {
+          name: product.Category.name,
+          slug: product.Category.slug
+        } : {
+          name: 'Unknown Category',
+          slug: 'unknown'
+        }
+      }
+    })
+
+    const response = NextResponse.json({
       success: true,
       data: productsWithRating,
       pagination: {
@@ -57,6 +90,12 @@ export async function GET(request: NextRequest) {
         total: products.length
       }
     })
+
+    // Add caching headers for better performance
+    response.headers.set('Cache-Control', 'public, max-age=300, s-maxage=300') // 5 minutes cache
+    response.headers.set('Vary', 'Accept-Encoding')
+    
+    return response
   } catch (error) {
     console.error('Error fetching products:', error)
     return NextResponse.json(

@@ -73,7 +73,7 @@ We'll prepare your order and notify you once it's shipped.
 
 Thank you for choosing Sports Nation BD!
 
-For support: +880 1234 567890
+For support: +880 1868 556390
 ```
 
 ## Phone Number Format

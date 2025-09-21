@@ -24,6 +24,17 @@ export async function GET(request: NextRequest) {
                 }
               }
             }
+          },
+          Payment: {
+            select: {
+              id: true,
+              amount: true,
+              status: true,
+              paymentMethod: true,
+              transactionId: true,
+              metadata: true,
+              createdAt: true
+            }
           }
         },
       orderBy: { createdAt: 'desc' }
@@ -37,10 +48,16 @@ export async function GET(request: NextRequest) {
         status: order.status,
         paymentStatus: order.paymentStatus,
         total: order.total,
+        subtotal: order.subtotal,
+        shippingCost: order.shippingCost,
+        tipAmount: order.tipAmount,
+        currency: order.currency,
+        paymentMethod: order.paymentMethod,
         createdAt: order.createdAt,
         shippingAddress: order.shippingAddress,
         trackingNumber: order.trackingNumber,
-        OrderItem: order.OrderItem
+        OrderItem: order.OrderItem,
+        Payment: order.Payment || []
       }))
     })
   } catch (error) {

@@ -36,7 +36,7 @@ export function RegionalTopBar() {
             <span>🔄 {getMoneyBackText()}</span>
           </div>
           <div className="flex items-center space-x-4">
-            <span>📞 +880 1234 567890</span>
+            <span>📞 +880 1868 556390</span>
             <span>📧 info@sportsnationbd.com</span>
           </div>
         </div>
@@ -47,7 +47,7 @@ export function RegionalTopBar() {
             <span className="mr-8">🚚 {getDeliveryText()}</span>
             <span className="mr-8">💳 20% down payment available</span>
             <span className="mr-8">🔄 {getMoneyBackText()}</span>
-            <span className="mr-8">📞 +880 1234 567890</span>
+            <span className="mr-8">📞 +880 1868 556390</span>
             <span className="mr-8">📧 info@sportsnationbd.com</span>
             <span className="mr-8">⏰ {t('deliveryDays', { days: deliveryInfo.days })}</span>
           </div>

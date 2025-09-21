@@ -27,7 +27,7 @@ export function PriceDisplay({
           {formatPrice(regionalPrice)}
         </span>
         {regionalComparePrice && regionalComparePrice > regionalPrice && (
-          <span className="text-sm text-muted-foreground line-through">
+          <span className="text-sm text-red-500 line-through">
             {formatPrice(regionalComparePrice)}
           </span>
         )}

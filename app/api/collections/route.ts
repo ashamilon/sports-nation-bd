@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
     const parentId = searchParams.get('parentId')
     const isActive = searchParams.get('isActive')
     const isFeatured = searchParams.get('isFeatured')
+    const isInCarousel = searchParams.get('isInCarousel')
     const includeProducts = searchParams.get('includeProducts') === 'true'
     const includeChildren = searchParams.get('includeChildren') === 'true'
 
@@ -25,6 +26,10 @@ export async function GET(request: NextRequest) {
     
     if (isFeatured !== null) {
       where.isFeatured = isFeatured === 'true'
+    }
+    
+    if (isInCarousel !== null) {
+      where.isInCarousel = isInCarousel === 'true'
     }
 
     const collections = await prisma.collection.findMany({
@@ -45,10 +50,23 @@ export async function GET(request: NextRequest) {
       ]
     })
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: collections
     })
+    
+    // Add caching headers for better performance (only for public requests)
+    if (isActive !== false) {
+      response.headers.set('Cache-Control', 'public, max-age=600, s-maxage=600') // 10 minutes cache
+      response.headers.set('Vary', 'Accept-Encoding')
+    } else {
+      // Disable caching for admin requests (when isActive=false)
+      response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+      response.headers.set('Pragma', 'no-cache')
+      response.headers.set('Expires', '0')
+    }
+    
+    return response
   } catch (error) {
     console.error('Error fetching collections:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -86,8 +104,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Collection with this name already exists' }, { status: 400 })
     }
 
+    // Generate unique ID for the collection
+    const id = `col_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
     const collection = await prisma.collection.create({
       data: {
+        id,
         name,
         slug,
         description,
@@ -96,15 +118,16 @@ export async function POST(request: NextRequest) {
         isActive: isActive !== undefined ? isActive : true,
         isFeatured: isFeatured !== undefined ? isFeatured : false,
         sortOrder: sortOrder || 0,
-        metadata: metadata ? JSON.stringify(metadata) : null
+        metadata: metadata ? JSON.stringify(metadata) : null,
+        updatedAt: new Date()
       },
       include: {
-        parent: true,
-        children: true,
+        Collection: true, // parent relationship
+        other_Collection: true, // children relationship
         _count: {
           select: {
-            children: true,
-            products: true
+            other_Collection: true,
+            CollectionProduct: true
           }
         }
       }

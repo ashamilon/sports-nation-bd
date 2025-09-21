@@ -49,7 +49,7 @@ export default function PaymentFailedPage() {
                 </p>
                 <div className="flex items-center gap-2 mt-2">
                   <Phone className="h-4 w-4 text-brand-dark" />
-                  <span className="text-sm text-muted-foreground">+880 1234 567890</span>
+                  <span className="text-sm text-muted-foreground">+880 1868 556390</span>
                 </div>
               </div>
 

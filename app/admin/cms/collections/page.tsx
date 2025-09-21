@@ -52,8 +52,8 @@ interface Collection {
   createdAt: string
   updatedAt: string
   _count: {
-    children: number
-    products: number
+    other_Collection: number
+    CollectionProduct: number
   }
 }
 
@@ -94,7 +94,9 @@ export default function CollectionsPage() {
   const fetchCollections = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/collections?includeChildren=true')
+      const response = await fetch(`/api/collections?includeChildren=true&_t=${Date.now()}`, {
+        cache: 'no-store'
+      })
       const data = await response.json()
       
       if (data.success) {
@@ -116,6 +118,7 @@ export default function CollectionsPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
         },
         body: JSON.stringify(formData),
       })
@@ -126,7 +129,10 @@ export default function CollectionsPage() {
         toast.success('Collection created successfully')
         setIsCreateDialogOpen(false)
         resetForm()
-        fetchCollections()
+        // Add a small delay to ensure the database is updated
+        setTimeout(() => {
+          fetchCollections()
+        }, 100)
       } else {
         toast.error(data.error || 'Failed to create collection')
       }
@@ -144,6 +150,7 @@ export default function CollectionsPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
         },
         body: JSON.stringify(formData),
       })
@@ -155,7 +162,10 @@ export default function CollectionsPage() {
         setIsEditDialogOpen(false)
         setEditingCollection(null)
         resetForm()
-        fetchCollections()
+        // Add a small delay to ensure the database is updated
+        setTimeout(() => {
+          fetchCollections()
+        }, 100)
       } else {
         toast.error(data.error || 'Failed to update collection')
       }
@@ -173,13 +183,19 @@ export default function CollectionsPage() {
     try {
       const response = await fetch(`/api/collections/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
       })
 
       const data = await response.json()
 
       if (data.success) {
         toast.success('Collection deleted successfully')
-        fetchCollections()
+        // Add a small delay to ensure the database is updated
+        setTimeout(() => {
+          fetchCollections()
+        }, 100)
       } else {
         toast.error(data.error || 'Failed to delete collection')
       }
@@ -275,7 +291,7 @@ export default function CollectionsPage() {
   })
 
   const renderCollectionRow = (collection: Collection, level: number = 0) => {
-    const hasChildren = collection._count.children > 0
+    const hasChildren = collection._count.other_Collection > 0
     const isExpanded = expandedCollections.has(collection.id)
     const children = getChildCollections(collection.id)
 
@@ -344,11 +360,11 @@ export default function CollectionsPage() {
                       <Badge variant="outline">Featured</Badge>
                     )}
                     <span className="text-xs text-muted-foreground">
-                      {collection._count.products} products
+                      {collection._count.CollectionProduct} products
                     </span>
-                    {collection._count.children > 0 && (
+                    {collection._count.other_Collection > 0 && (
                       <span className="text-xs text-muted-foreground">
-                        {collection._count.children} sub-collections
+                        {collection._count.other_Collection} sub-collections
                       </span>
                     )}
                   </div>
