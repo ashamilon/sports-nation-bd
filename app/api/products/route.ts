@@ -123,13 +123,13 @@ export async function POST(request: NextRequest) {
         price,
         categoryId,
         images: images || [],
-        variants: {
+        ProductVariant: {
           create: variants || []
         }
       },
       include: {
-        category: true,
-        variants: true
+        Category: true,
+        ProductVariant: true
       }
     })
 

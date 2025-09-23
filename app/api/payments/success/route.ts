@@ -27,9 +27,9 @@ export async function POST(request: NextRequest) {
     const order = await prisma.order.findUnique({
       where: { orderNumber: orderId },
       include: {
-        items: {
+        OrderItem: {
           include: {
-            product: true
+            Product: true
           }
         }
       }
@@ -52,9 +52,9 @@ export async function POST(request: NextRequest) {
         paymentIntentId: transactionId
       },
       include: {
-        items: {
+        OrderItem: {
           include: {
-            product: true
+            Product: true
           }
         }
       }
@@ -90,8 +90,8 @@ export async function POST(request: NextRequest) {
           customerName: customerData.name || 'Customer',
           totalAmount: order.total,
           deliveryAddress: customerData.address || 'Address not provided',
-          items: order.items.map(item => ({
-            name: item.product.name,
+          items: order.OrderItem.map(item => ({
+            name: item.Product.name,
             quantity: item.quantity
           }))
         })

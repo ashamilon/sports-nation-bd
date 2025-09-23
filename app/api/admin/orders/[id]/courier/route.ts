@@ -42,10 +42,10 @@ export async function PUT(
         status: 'shipped' // Update status to shipped when courier is assigned
       },
       include: {
-        user: {
+        User: {
           select: { name: true, email: true, phone: true }
         },
-        trackingUpdates: {
+        TrackingUpdate: {
           orderBy: { timestamp: 'desc' }
         }
       }
@@ -54,6 +54,7 @@ export async function PUT(
     // Create initial tracking update
     await prisma.trackingUpdate.create({
       data: {
+        id: crypto.randomUUID(),
         orderId,
         status: 'picked_up',
         location: 'Warehouse',
@@ -62,7 +63,8 @@ export async function PUT(
           service: courierService,
           trackingId: courierTrackingId,
           assignedAt: new Date().toISOString()
-        })
+        }),
+        updatedAt: new Date()
       }
     })
 
@@ -99,7 +101,7 @@ export async function GET(
         trackingNumber: true,
         status: true,
         shippingAddress: true,
-        trackingUpdates: {
+        TrackingUpdate: {
           orderBy: { timestamp: 'desc' }
         }
       }

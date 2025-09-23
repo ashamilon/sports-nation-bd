@@ -22,10 +22,10 @@ export async function GET(
           include: {
             CollectionProduct: includeProducts ? {
               include: {
-                product: {
+                Product: {
                   include: {
-                    variants: true,
-                    reviews: {
+                    ProductVariant: true,
+                    Review: {
                       select: {
                         rating: true
                       }
@@ -38,10 +38,10 @@ export async function GET(
         } : false,
         CollectionProduct: includeProducts ? {
           include: {
-            product: {
+            Product: {
               include: {
-                variants: true,
-                reviews: {
+                ProductVariant: true,
+                Review: {
                   select: {
                     rating: true
                   }

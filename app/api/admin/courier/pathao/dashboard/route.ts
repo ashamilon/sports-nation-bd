@@ -155,7 +155,6 @@ export async function GET(request: NextRequest) {
         deliveryAddress: shippingAddress,
         total: order.total,
         createdAt: order.createdAt.toISOString(),
-        estimatedDelivery: order.estimatedDelivery?.toISOString(),
         lastUpdate: order.updatedAt.toISOString(),
         deliveryCost: 60 // Default Pathao delivery cost
       }

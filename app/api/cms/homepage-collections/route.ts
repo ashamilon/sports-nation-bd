@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     console.log('Found collections:', collections.length)
 
     // Try to fetch existing homepage collection settings
-    let settings = []
+    let settings: any[] = []
     try {
       settings = await prisma.homepageCollectionSettings.findMany({
         include: {

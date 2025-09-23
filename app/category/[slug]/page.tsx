@@ -59,8 +59,12 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       dimensions: product.dimensions || undefined,
       nameNumberPrice: product.nameNumberPrice || undefined,
       variants: product.ProductVariant.map(variant => ({
-        ...variant,
-        price: variant.price || undefined
+        id: variant.id,
+        name: variant.name || undefined,
+        value: variant.value || undefined,
+        price: variant.price || undefined,
+        fabricType: variant.fabricType || undefined,
+        sizes: variant.sizes || undefined
       }))
     }
   })

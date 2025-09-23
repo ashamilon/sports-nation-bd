@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const media = await prisma.media.findMany({
       where,
       include: {
-        uploader: {
+        User: {
           select: {
             id: true,
             name: true,
@@ -90,6 +90,7 @@ export async function POST(request: NextRequest) {
     // For now, we'll store the file info in the database
     const media = await prisma.media.create({
       data: {
+        id: crypto.randomUUID(),
         filename,
         originalName: file.name,
         mimeType: file.type,
@@ -99,10 +100,11 @@ export async function POST(request: NextRequest) {
         caption,
         category,
         tags: tags ? JSON.stringify(tags.split(',').map(tag => tag.trim())) : null,
-        uploadedBy: session.user.id
+        uploadedBy: session.user.id,
+        updatedAt: new Date()
       },
       include: {
-        uploader: {
+        User: {
           select: {
             id: true,
             name: true,

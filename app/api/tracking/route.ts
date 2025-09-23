@@ -27,10 +27,10 @@ export async function GET(request: NextRequest) {
           userId: session.user.id
         },
         include: {
-          trackingUpdates: {
+          TrackingUpdate: {
             orderBy: { timestamp: 'desc' }
           },
-          user: {
+          User: {
             select: { name: true, email: true, phone: true }
           }
         }
@@ -42,10 +42,10 @@ export async function GET(request: NextRequest) {
           userId: session.user.id
         },
         include: {
-          trackingUpdates: {
+          TrackingUpdate: {
             orderBy: { timestamp: 'desc' }
           },
-          user: {
+          User: {
             select: { name: true, email: true, phone: true }
           }
         }
@@ -74,9 +74,9 @@ export async function GET(request: NextRequest) {
         createdAt: order.createdAt,
         updatedAt: order.updatedAt
       },
-      trackingUpdates: order.trackingUpdates,
+      TrackingUpdate: order.TrackingUpdate,
       courierTracking,
-      user: order.user
+      User: order.User
     })
   } catch (error) {
     console.error('Tracking API error:', error)
@@ -102,11 +102,13 @@ export async function POST(request: NextRequest) {
     // Create tracking update
     const trackingUpdate = await prisma.trackingUpdate.create({
       data: {
+        id: crypto.randomUUID(),
         orderId,
         status,
         location,
         description,
-        courierData: courierData ? JSON.stringify(courierData) : null
+        courierData: courierData ? JSON.stringify(courierData) : null,
+        updatedAt: new Date()
       }
     })
 

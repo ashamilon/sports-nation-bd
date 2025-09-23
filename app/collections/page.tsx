@@ -15,10 +15,7 @@ export default function CollectionsPage() {
           </p>
         </div>
 
-        <CollectionsDisplay
-          parentId="null"
-          showProducts={true}
-        />
+        <CollectionsDisplay />
       </main>
       <Footer />
       <CartSidebar />

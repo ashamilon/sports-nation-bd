@@ -13,14 +13,14 @@ export async function GET(
     const page = await prisma.page.findUnique({
       where: { id },
       include: {
-        author: {
+        User: {
           select: {
             id: true,
             name: true,
             email: true
           }
         },
-        sections: {
+        PageSection: {
           orderBy: { order: 'asc' }
         }
       }
@@ -122,14 +122,14 @@ export async function PUT(
       where: { id },
       data: updateData,
       include: {
-        author: {
+        User: {
           select: {
             id: true,
             name: true,
             email: true
           }
         },
-        sections: {
+        PageSection: {
           orderBy: { order: 'asc' }
         }
       }
@@ -158,14 +158,14 @@ export async function PUT(
       const updatedPage = await prisma.page.findUnique({
         where: { id },
         include: {
-          author: {
+          User: {
             select: {
               id: true,
               name: true,
               email: true
             }
           },
-          sections: {
+          PageSection: {
             orderBy: { order: 'asc' }
           }
         }

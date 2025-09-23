@@ -45,10 +45,10 @@ export async function PUT(
         ...(isFeatured !== undefined && { isFeatured })
       },
       include: {
-        product: {
+        Product: {
           include: {
-            variants: true,
-            reviews: {
+            ProductVariant: true,
+            Review: {
               select: {
                 rating: true
               }
@@ -63,7 +63,7 @@ export async function PUT(
       data: collectionProduct
     })
   } catch (error) {
-    console.error('Error updating collection product:', error)
+    console.error('Error updating collection Product:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

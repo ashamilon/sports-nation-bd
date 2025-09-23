@@ -10,12 +10,16 @@ import FootballBadgeSelector from '@/components/admin/football-badge-selector'
 
 interface ProductVariant {
   id?: string
-  fabricType: 'Fan Version' | 'Player Version'
-  sizes: {
+  name?: string
+  value?: string
+  price?: number
+  stock?: number
+  fabricType?: 'Fan Version' | 'Player Version'
+  sizes?: {
     size: string
     price: number
     stock: number
-  }[]
+  }[] | string
 }
 
 export default function NewProductPage() {
@@ -145,14 +149,14 @@ export default function NewProductPage() {
         const priceMultiplier = variant.fabricType === 'Player Version' ? 1.3 : 1.0
         return {
           ...variant,
-          sizes: variant.sizes.map(sizeItem => {
+          sizes: variant.sizes ? (Array.isArray(variant.sizes) ? variant.sizes.map(sizeItem => {
             const isLargeSize = ['3XL', '4XL', '5XL'].includes(sizeItem.size)
             const largeSizePremium = isLargeSize ? 250 : 0
             return {
               ...sizeItem,
               price: (basePrice * priceMultiplier) + largeSizePremium
             }
-          })
+          }) : variant.sizes) : []
         }
       } else {
         // Other category variants
@@ -254,9 +258,9 @@ export default function NewProductPage() {
       if (variant.fabricType === fabricType) {
         return {
           ...variant,
-          sizes: variant.sizes.map(sizeItem => 
+          sizes: variant.sizes && Array.isArray(variant.sizes) ? variant.sizes.map(sizeItem => 
             sizeItem.size === size ? { ...sizeItem, stock } : sizeItem
-          )
+          ) : variant.sizes
         }
       }
       return variant
@@ -275,9 +279,9 @@ export default function NewProductPage() {
       if (variant.fabricType === fabricType) {
         return {
           ...variant,
-          sizes: variant.sizes.map(sizeItem => 
+          sizes: variant.sizes && Array.isArray(variant.sizes) ? variant.sizes.map(sizeItem => 
             sizeItem.size === size ? { ...sizeItem, price } : sizeItem
-          )
+          ) : variant.sizes
         }
       }
       return variant
@@ -289,7 +293,9 @@ export default function NewProductPage() {
       name: '',
       value: '',
       price: 0,
-      stock: 0
+      stock: 0,
+      fabricType: 'Fan Version' as const,
+      sizes: []
     }])
   }
 
@@ -603,11 +609,11 @@ export default function NewProductPage() {
                         </h3>
                         <div className="flex items-center space-x-2">
                           <span className="text-sm text-muted-foreground">
-                            Base: {fabricPrices[variant.fabricType] || formData.price} BDT
+                            Base: {variant.fabricType ? fabricPrices[variant.fabricType] || formData.price : formData.price} BDT
                           </span>
                           <button
                             type="button"
-                            onClick={() => handleFabricSelection(variant.fabricType, false)}
+                            onClick={() => variant.fabricType && handleFabricSelection(variant.fabricType, false)}
                             className="text-destructive hover:text-destructive/80"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -616,7 +622,7 @@ export default function NewProductPage() {
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {variant.sizes.map((sizeItem, sizeIndex) => (
+                        {variant.sizes && Array.isArray(variant.sizes) && variant.sizes.map((sizeItem, sizeIndex) => (
                           <div key={sizeIndex} className="glass-card p-3 rounded-lg">
                             <div className="flex items-center justify-between mb-2">
                               <span className="font-medium text-foreground">{sizeItem.size}</span>
@@ -640,7 +646,7 @@ export default function NewProductPage() {
                                 <input
                                   type="number"
                                   value={sizeItem.stock}
-                                  onChange={(e) => updateJerseyVariantStock(variant.fabricType, sizeItem.size, parseInt(e.target.value) || 0)}
+                                  onChange={(e) => variant.fabricType && updateJerseyVariantStock(variant.fabricType, sizeItem.size, parseInt(e.target.value) || 0)}
                                   className="glass-input w-full px-2 py-1 rounded text-sm"
                                   min="0"
                                 />
@@ -662,7 +668,7 @@ export default function NewProductPage() {
                   {variants.map((variant, index) => (
                     <div key={index} className="glass-card p-4 rounded-lg">
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-medium text-foreground">{variant.name}</h3>
+                        <h3 className="font-medium text-foreground">{variant.name || 'Variant'}</h3>
                         <button
                           type="button"
                           onClick={() => removeVariant(index)}

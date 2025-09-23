@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    const badges = await prisma.badge.findMany({
+    const badges = await prisma.badges.findMany({
       where,
       orderBy: { createdAt: 'desc' }
     })
@@ -77,14 +77,16 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    const badge = await prisma.badge.create({
+    const badge = await prisma.badges.create({
       data: {
+        id: crypto.randomUUID(),
         name,
         description: description || null,
         image,
         category,
         price: price || 150,
-        isActive: isActive !== undefined ? isActive : true
+        isActive: isActive !== undefined ? isActive : true,
+        updatedAt: new Date()
       }
     })
 

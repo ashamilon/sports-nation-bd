@@ -21,9 +21,9 @@ export async function GET(
     const product = await prisma.product.findUnique({
       where: { id: productId },
       include: {
-        collections: {
+        CollectionProduct: {
           include: {
-            collection: {
+            Collection: {
               select: {
                 id: true,
                 name: true,
@@ -42,7 +42,7 @@ export async function GET(
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
 
-    const collections = product.collections.map(cp => cp.collection)
+    const collections = product.CollectionProduct.map(cp => cp.Collection)
 
     return NextResponse.json({
       success: true,

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import crypto from 'crypto'
 
 export type LoyaltyLevel = 'bronze' | 'silver' | 'gold' | 'platinum'
 
@@ -163,7 +164,7 @@ export class LoyaltySystem {
   static async updateUserLoyalty(userId: string, orderAmount: number): Promise<void> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { orders: true }
+      include: { Order: true }
     })
 
     if (!user || !this.isEligibleForLoyalty(user.country || '')) {
@@ -197,7 +198,7 @@ export class LoyaltySystem {
   private static async checkPromotion(userId: string, currentLevel: LoyaltyLevel, now: Date): Promise<void> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { orders: true }
+      include: { Order: true }
     })
 
     if (!user) return
@@ -212,7 +213,7 @@ export class LoyaltySystem {
     const periodEnd = new Date(periodStart.getTime() + (nextConfig.promotionRequirements.periodMonths * 30 * 24 * 60 * 60 * 1000))
 
     // Count orders in current period
-    const ordersInPeriod = user.orders.filter(order => {
+    const ordersInPeriod = user.Order.filter(order => {
       const orderDate = new Date(order.createdAt)
       return orderDate >= periodStart && orderDate <= periodEnd && order.status === 'completed'
     })
@@ -236,7 +237,7 @@ export class LoyaltySystem {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { orders: true }
+      include: { Order: true }
     })
 
     if (!user || !user.lastOrderDate) return
@@ -248,7 +249,7 @@ export class LoyaltySystem {
     if (now > gracePeriodEnd) {
       // Count orders in the last month
       const oneMonthAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000))
-      const recentOrders = user.orders.filter(order => {
+      const recentOrders = user.Order.filter(order => {
         const orderDate = new Date(order.createdAt)
         return orderDate >= oneMonthAgo && order.status === 'completed'
       })
@@ -288,6 +289,7 @@ export class LoyaltySystem {
       // Record in loyalty history
       await tx.loyaltyHistory.create({
         data: {
+          id: crypto.randomUUID(),
           userId,
           fromLevel,
           toLevel,
@@ -327,6 +329,7 @@ export class LoyaltySystem {
       // Record in loyalty history
       await tx.loyaltyHistory.create({
         data: {
+          id: crypto.randomUUID(),
           userId,
           fromLevel,
           toLevel,
@@ -365,7 +368,7 @@ export class LoyaltySystem {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
-        loyaltyHistory: {
+        LoyaltyHistory: {
           orderBy: { createdAt: 'desc' },
           take: 10
         }
@@ -386,7 +389,7 @@ export class LoyaltySystem {
       totalOrders: user.totalOrders,
       totalSpent: user.totalSpent,
       isEligible: this.isEligibleForLoyalty(user.country || ''),
-      history: user.loyaltyHistory,
+      history: user.LoyaltyHistory,
       canUsePlatinumDiscount: user.loyaltyLevel === 'platinum' ? await this.canUsePlatinumDiscount(userId) : true
     }
   }

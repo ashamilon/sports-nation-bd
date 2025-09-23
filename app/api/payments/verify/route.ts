@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     // Get order and payment from database
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include: { payments: true, items: { include: { product: true } } }
+      include: { Payment: true, OrderItem: { include: { Product: true } } }
     })
 
     if (!order) {
@@ -43,12 +43,12 @@ export async function POST(request: NextRequest) {
 
     if (isValid) {
       // Update payment status
-      if (order.payments && order.payments.length > 0) {
+      if (order.Payment && order.Payment.length > 0) {
         await prisma.payment.update({
-          where: { id: order.payments[0].id },
+          where: { id: order.Payment[0].id },
           data: {
             status: paymentStatus.COMPLETED,
-            transactionId: transactionId || order.payments[0].transactionId
+            transactionId: transactionId || order.Payment[0].transactionId
           }
         })
       }
@@ -60,8 +60,8 @@ export async function POST(request: NextRequest) {
       })
 
       // Update product stock
-      for (const item of order.items) {
-        if (item.product.stock >= item.quantity) {
+      for (const item of order.OrderItem) {
+        if (item.Product.stock >= item.quantity) {
           await prisma.product.update({
             where: { id: item.productId },
             data: { stock: { decrement: item.quantity } }
@@ -81,9 +81,9 @@ export async function POST(request: NextRequest) {
       })
     } else {
       // Update payment status to failed
-      if (order.payments && order.payments.length > 0) {
+      if (order.Payment && order.Payment.length > 0) {
         await prisma.payment.update({
-          where: { id: order.payments[0].id },
+          where: { id: order.Payment[0].id },
           data: { status: paymentStatus.FAILED }
         })
       }

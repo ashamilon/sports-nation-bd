@@ -267,7 +267,7 @@ export default function EditProductPage() {
             )
             return {
               ...variant,
-              sizes: JSON.stringify(updatedSizes)
+              sizes: updatedSizes
             }
           }
         } catch (error) {

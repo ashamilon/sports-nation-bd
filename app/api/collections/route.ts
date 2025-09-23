@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     })
     
     // Add caching headers for better performance (only for public requests)
-    if (isActive !== false) {
+    if (isActive !== 'false') {
       response.headers.set('Cache-Control', 'public, max-age=600, s-maxage=600') // 10 minutes cache
       response.headers.set('Vary', 'Accept-Encoding')
     } else {

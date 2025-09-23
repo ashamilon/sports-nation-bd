@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const posts = await prisma.blogPost.findMany({
       where,
       include: {
-        author: {
+        User: {
           select: {
             id: true,
             name: true,
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
         updatedAt: new Date()
       },
       include: {
-        author: {
+        User: {
           select: {
             id: true,
             name: true,

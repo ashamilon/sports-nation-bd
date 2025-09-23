@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     console.error('Error creating size chart:', error)
     
     // Handle specific Prisma errors
-    if (error.code === 'P2002') {
+    if ((error as any)?.code === 'P2002') {
       return NextResponse.json({ 
         error: 'A size chart for this fabric type already exists. Please use a different fabric type or update the existing one.' 
       }, { status: 409 })

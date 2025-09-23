@@ -64,7 +64,7 @@ export const sendPasswordResetEmail = async (email: string, resetUrl: string) =>
     return { success: true, messageId: result.messageId }
   } catch (error) {
     console.error('Error sending password reset email:', error)
-    return { success: false, error: error.message }
+    return { success: false, error: error instanceof Error ? error.message : String(error) }
   }
 }
 
@@ -112,6 +112,6 @@ export const sendWelcomeEmail = async (email: string, name: string) => {
     return { success: true, messageId: result.messageId }
   } catch (error) {
     console.error('Error sending welcome email:', error)
-    return { success: false, error: error.message }
+    return { success: false, error: error instanceof Error ? error.message : String(error) }
   }
 }

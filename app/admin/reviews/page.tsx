@@ -11,6 +11,8 @@ interface Review {
   rating: number
   comment: string | null
   isVerified: boolean
+  isModerated: boolean
+  isApproved: boolean
   createdAt: string
   User: {
     id: string

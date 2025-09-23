@@ -40,7 +40,7 @@ export class OTPService {
   private async storeOTP(identifier: string, otp: string, type: 'phone' | 'email'): Promise<void> {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
 
-    await prisma.otp.upsert({
+    await prisma.oTP.upsert({
       where: { identifier },
       update: {
         code: otp,
@@ -86,7 +86,7 @@ export class OTPService {
   /**
    * Send Email OTP
    */
-  private async sendEmailOTP(email: string, otp: string): Promise<boolean> {
+  private async sendEmailOTPInternal(email: string, otp: string): Promise<boolean> {
     try {
       switch (this.config.emailProvider) {
         case 'brevo':
@@ -342,7 +342,7 @@ export class OTPService {
       }
 
       // Check rate limiting
-      const recentOTP = await prisma.otp.findFirst({
+      const recentOTP = await prisma.oTP.findFirst({
         where: {
           identifier: phoneNumber,
           createdAt: {
@@ -382,7 +382,7 @@ export class OTPService {
       }
 
       // Check rate limiting
-      const recentOTP = await prisma.otp.findFirst({
+      const recentOTP = await prisma.oTP.findFirst({
         where: {
           identifier: email,
           createdAt: {
@@ -398,7 +398,7 @@ export class OTPService {
       const otp = this.generateOTP()
       await this.storeOTP(email, otp, 'email')
 
-      const emailSent = await this.sendEmailOTP(email, otp)
+      const emailSent = await this.sendEmailOTPInternal(email, otp)
       
       if (emailSent) {
         return { success: true, message: 'OTP sent successfully to your email' }
@@ -416,7 +416,7 @@ export class OTPService {
    */
   async verifyOTP(identifier: string, otp: string): Promise<{ success: boolean; message: string }> {
     try {
-      const otpRecord = await prisma.otp.findUnique({
+      const otpRecord = await prisma.oTP.findUnique({
         where: { identifier }
       })
 
@@ -438,7 +438,7 @@ export class OTPService {
 
       if (otpRecord.code !== otp) {
         // Increment attempts
-        await prisma.otp.update({
+        await prisma.oTP.update({
           where: { identifier },
           data: { attempts: otpRecord.attempts + 1 }
         })
@@ -447,7 +447,7 @@ export class OTPService {
       }
 
       // Mark as verified
-      await prisma.otp.update({
+      await prisma.oTP.update({
         where: { identifier },
         data: { isVerified: true }
       })
@@ -484,7 +484,7 @@ export class OTPService {
    * Clean up expired OTPs
    */
   async cleanupExpiredOTPs(): Promise<void> {
-    await prisma.otp.deleteMany({
+    await prisma.oTP.deleteMany({
       where: {
         expiresAt: {
           lt: new Date()

@@ -121,7 +121,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   />
                 ) : (
                   <span className="text-white font-semibold text-lg">
-                    {user?.name?.split(' ').map(n => n[0]).join('') || 'U'}
+                    {user?.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
                   </span>
                 )}
               </div>

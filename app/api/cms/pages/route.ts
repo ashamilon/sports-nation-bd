@@ -19,18 +19,18 @@ export async function GET(request: NextRequest) {
     const pages = await prisma.page.findMany({
       where,
       include: {
-        author: {
+        User: {
           select: {
             id: true,
             name: true,
             email: true
           }
         },
-        sections: {
+        PageSection: {
           orderBy: { order: 'asc' }
         },
         _count: {
-          select: { sections: true }
+          select: { PageSection: true }
         }
       },
       orderBy: { updatedAt: 'desc' },
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
         publishedAt: isPublished ? new Date() : null,
         authorId: session.user.id,
         updatedAt: new Date(),
-        sections: sections ? {
+        PageSection: sections ? {
           create: sections.map((section: any, index: number) => ({
             id: `section_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
             title: section.title,
@@ -124,14 +124,14 @@ export async function POST(request: NextRequest) {
         } : undefined
       },
       include: {
-        author: {
+        User: {
           select: {
             id: true,
             name: true,
             email: true
           }
         },
-        sections: {
+        PageSection: {
           orderBy: { order: 'asc' }
         }
       }

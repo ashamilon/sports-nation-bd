@@ -193,11 +193,11 @@ export default function WishlistItems() {
           >
             {/* Product Image */}
             <div className="relative mb-2">
-              <Link href={`/product/${item.product.slug}`}>
+              <Link href={`/product/${item.product?.slug || '#'}`}>
                 <div className="aspect-square rounded-lg overflow-hidden bg-muted">
                   <Image
-                    src={getImageUrl(item.product.images)}
-                    alt={item.product.name}
+                    src={getImageUrl(item.product?.images || '')}
+                    alt={item.product?.name || 'Product'}
                     width={200}
                     height={200}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -218,19 +218,19 @@ export default function WishlistItems() {
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
-                  {item.product.category?.name || 'Category'}
+                  {item.product?.category?.name || 'Category'}
                 </span>
                 <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                  (item.variant?.stock || item.product.stock) > 0
+                  (item.variant?.stock || item.product?.stock || 0) > 0
                     ? 'text-green-600 bg-green-100 dark:bg-green-900/20 dark:text-green-400'
                     : 'text-red-600 bg-red-100 dark:bg-red-900/20 dark:text-red-400'
                 }`}>
-                  {(item.variant?.stock || item.product.stock) > 0 ? 'In Stock' : 'Out of Stock'}
+                  {(item.variant?.stock || item.product?.stock || 0) > 0 ? 'In Stock' : 'Out of Stock'}
                 </span>
               </div>
               
               <h3 className="font-medium text-xs text-foreground line-clamp-2">
-                {item.product.name}
+                {item.product?.name || 'Product'}
               </h3>
               
               {item.variant && (
@@ -242,9 +242,9 @@ export default function WishlistItems() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-1">
                   <span className="text-sm font-bold text-foreground">
-                    {formatPrice(item.variant?.price || item.product.price)}
+                    {formatPrice(item.variant?.price || item.product?.price || 0)}
                   </span>
-                  {item.product.comparePrice && (
+                  {item.product?.comparePrice && (
                     <span className="text-xs text-red-500 line-through">
                       {formatPrice(item.product.comparePrice)}
                     </span>
@@ -256,7 +256,7 @@ export default function WishlistItems() {
             {/* Actions */}
             <div className="flex space-x-1 pt-2">
               <Link
-                href={`/product/${item.product.slug}`}
+                href={`/product/${item.product?.slug || '#'}`}
                 className="flex-1 glass-button py-1.5 rounded-lg text-center flex items-center justify-center space-x-1"
               >
                 <Eye className="h-3 w-3" />
@@ -265,7 +265,7 @@ export default function WishlistItems() {
               
               <button
                 onClick={() => handleAddToCart(item)}
-                disabled={(item.variant?.stock || item.product.stock) <= 0}
+                disabled={(item.variant?.stock || item.product?.stock || 0) <= 0}
                 className="flex-1 glass-button py-1.5 rounded-lg text-center flex items-center justify-center space-x-1 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ShoppingCart className="h-3 w-3" />

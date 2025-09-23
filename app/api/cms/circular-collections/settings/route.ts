@@ -89,12 +89,14 @@ export async function PUT(request: NextRequest) {
         updatedAt: new Date()
       },
       create: {
+        id: crypto.randomUUID(),
         key: 'circular_collections_carousel_settings',
         title: 'Circular Collections Carousel Settings',
         content: JSON.stringify(settingsData),
         type: 'json',
         category: 'carousel',
-        isActive: true
+        isActive: true,
+        updatedAt: new Date()
       }
     })
 

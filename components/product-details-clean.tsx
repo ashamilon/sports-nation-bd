@@ -112,13 +112,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
       await removeFromWishlist(product.id, variantId)
       toast.success('Removed from wishlist!')
     } else {
-      await addToWishlist({
-        productId: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.images[selectedImage] || '/api/placeholder/300',
-        variantId: variantId
-      })
+      await addToWishlist(product.id, variantId)
       toast.success('Added to wishlist!')
     }
   }

@@ -78,12 +78,14 @@ export function useHomepageData() {
   })
 
   const fetchData = useCallback(async () => {
+    let timeoutId: NodeJS.Timeout | null = null
+    
     try {
       console.log('🚀 Starting homepage data fetch...')
       setState(prev => ({ ...prev, loading: true, error: null }))
       
       // Add a timeout to prevent infinite loading
-      const timeoutId = setTimeout(() => {
+      timeoutId = setTimeout(() => {
         console.log('⏰ Data fetch timeout - using fallback data')
         setState(prev => ({
           ...prev,
@@ -210,12 +212,12 @@ export function useHomepageData() {
               error: errors.length > 0 ? `Some data failed to load: ${errors.join(', ')}` : null
             }))
 
-            clearTimeout(timeoutId) // Clear the timeout since we got data
+            if (timeoutId) clearTimeout(timeoutId) // Clear the timeout since we got data
             console.log('✅ Homepage data fetch completed successfully')
 
     } catch (error) {
       console.error('💥 Critical error in fetchData:', error)
-      clearTimeout(timeoutId) // Clear the timeout on error
+      if (timeoutId) clearTimeout(timeoutId) // Clear the timeout on error
       setState(prev => ({
         ...prev,
         loading: false,

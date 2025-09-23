@@ -34,7 +34,7 @@ export default function ExclusiveProducts({ className = "" }: ExclusiveProductsP
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
   const { addItem } = useCartStore()
-  const { items: wishlistItems, toggleItem } = useWishlistStore()
+  const { items: wishlistItems, addToWishlist, removeFromWishlist } = useWishlistStore()
 
   useEffect(() => {
     setMounted(true)
@@ -68,29 +68,25 @@ export default function ExclusiveProducts({ className = "" }: ExclusiveProductsP
     const variant = product.variants?.[0]
     if (variant) {
       addItem({
-        id: variant.id,
         productId: product.id,
         name: product.name,
         price: variant.price,
         image: product.images[0] || '/placeholder-product.jpg',
         quantity: 1,
-        variant: variant
+        variantId: variant.id,
+        variantName: variant.name ? `${variant.name}: ${variant.value}` : undefined
       })
       toast.success(`${product.name} added to cart`)
     }
   }
 
-  const handleToggleWishlist = (product: Product) => {
-    const variant = product.variants?.[0]
-    if (variant) {
-      toggleItem({
-        id: variant.id,
-        productId: product.id,
-        name: product.name,
-        price: variant.price,
-        image: product.images[0] || '/placeholder-product.jpg',
-        variant: variant
-      })
+  const handleToggleWishlist = async (product: Product) => {
+    const isInWishlist = wishlistItems.some(item => item.productId === product.id)
+    
+    if (isInWishlist) {
+      await removeFromWishlist('', product.id)
+    } else {
+      await addToWishlist(product.id)
     }
   }
 

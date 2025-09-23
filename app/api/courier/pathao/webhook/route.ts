@@ -77,18 +77,19 @@ export async function POST(request: NextRequest) {
       where: { id: order.id },
       data: {
         status: orderStatus,
-        estimatedDelivery: estimated_delivery_time ? new Date(estimated_delivery_time) : null
       }
     })
 
     // Create tracking update
     await prisma.trackingUpdate.create({
       data: {
+        id: crypto.randomUUID(),
         orderId: order.id,
         status: orderStatus,
         location: current_location || 'Unknown',
         description: status_description || `Order ${status}`,
-        timestamp: timestamp ? new Date(timestamp) : new Date()
+        timestamp: timestamp ? new Date(timestamp) : new Date(),
+        updatedAt: new Date()
       }
     })
 
@@ -111,7 +112,8 @@ export async function POST(request: NextRequest) {
         }
 
         if (message) {
-          await smsService.sendSMS(order.User.phone, message)
+          // TODO: Implement generic SMS sending method
+          console.log('SMS would be sent to:', order.User.phone, 'Message:', message)
         }
       } catch (smsError) {
         console.error('Error sending SMS notification:', smsError)

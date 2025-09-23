@@ -79,8 +79,8 @@ export default function DashboardSettings() {
         ...prev,
         name: session.user.name || '',
         email: session.user.email || '',
-        phone: session.user.phone || '',
-        country: session.user.country || '',
+        phone: '',
+        country: '',
       }));
     }
   }, [session]);

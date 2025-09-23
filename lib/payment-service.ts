@@ -26,7 +26,7 @@ export interface PaymentRequest {
 
 export interface PaymentResponse {
   success: boolean
-  gateway: 'sslcommerz'
+  gateway: 'sslcommerz' | 'test'
   paymentUrl?: string
   orderId?: string
   sessionKey?: string

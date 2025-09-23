@@ -33,10 +33,10 @@ export async function POST(request: NextRequest) {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
-        user: true,
-        items: {
+        User: true,
+        OrderItem: {
           include: {
-            product: true
+            Product: true
           }
         }
       }
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       })
 
       // Update product stock
-      for (const item of order.items) {
+      for (const item of order.OrderItem) {
         if (item.productVariantId) {
           await prisma.productVariant.update({
             where: { id: item.productVariantId },
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
         paymentIntentId,
         metadata: JSON.stringify({
           userId: session.user.id,
-          orderItems: order.items.length,
+          orderItems: order.OrderItem.length,
           paymentStatus
         })
       }

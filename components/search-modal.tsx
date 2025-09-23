@@ -74,7 +74,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   })
   
   const inputRef = useRef<HTMLInputElement>(null)
-  const searchTimeoutRef = useRef<NodeJS.Timeout>()
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Load search history from localStorage
   useEffect(() => {

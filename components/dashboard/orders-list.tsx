@@ -35,10 +35,24 @@ interface Order {
   status: string
   paymentStatus: string
   total: number
+  subtotal: number
+  shippingCost: number
+  tipAmount?: number
+  currency: string
+  paymentMethod?: string
   createdAt: string
   shippingAddress: string
   trackingNumber?: string
   OrderItem: OrderItem[]
+  Payment?: Array<{
+    id: string
+    amount: number
+    status: string
+    paymentMethod: string
+    transactionId?: string
+    metadata?: string
+    createdAt: string
+  }>
 }
 
 export default function OrdersList() {

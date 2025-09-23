@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
         averageRating: Math.round(averageRating * 10) / 10,
         reviewCount: reviews.length,
         variants: product.ProductVariant || [],
-        isNew: product.isNew || false,
+        isNew: false,
         category: product.Category?.name || null,
         sortOrder: product.ExclusiveProductSettings?.sortOrder || 0
       }

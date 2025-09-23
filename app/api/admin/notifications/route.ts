@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Format notifications
-    const notifications = []
+    const notifications: any[] = []
 
     // Add order notifications
     recentOrders.forEach(order => {

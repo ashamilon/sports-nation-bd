@@ -708,10 +708,13 @@ export default function OrdersManagement() {
                                                 src={badge.image} 
                                                 alt={badge.name || `Badge ${badgeIndex + 1}`}
                                                 className="w-full h-full object-cover"
-                                                onError={(e) => {
-                                                  e.currentTarget.style.display = 'none'
-                                                  e.currentTarget.nextElementSibling.style.display = 'flex'
-                                                }}
+                                                 onError={(e) => {
+                                                   e.currentTarget.style.display = 'none'
+                                                   const nextElement = e.currentTarget.nextElementSibling as HTMLElement
+                                                   if (nextElement) {
+                                                     nextElement.style.display = 'flex'
+                                                   }
+                                                 }}
                                               />
                                             ) : null}
                                             <div 

@@ -16,7 +16,7 @@ export async function GET(
     }
 
     const { id } = await params
-    const badge = await prisma.badge.findUnique({
+    const badge = await prisma.badges.findUnique({
       where: { id }
     })
 
@@ -66,7 +66,7 @@ export async function PUT(
       }, { status: 400 })
     }
 
-    const badge = await prisma.badge.update({
+    const badge = await prisma.badges.update({
       where: { id },
       data: {
         name,
@@ -99,7 +99,7 @@ export async function DELETE(
 
     const { id } = await params
     // Check if badge is used in any products
-    const productBadges = await prisma.productBadge.findMany({
+    const productBadges = await prisma.product_badges.findMany({
       where: { badgeId: id }
     })
 
@@ -109,7 +109,7 @@ export async function DELETE(
       }, { status: 400 })
     }
 
-    await prisma.badge.delete({
+    await prisma.badges.delete({
       where: { id }
     })
 

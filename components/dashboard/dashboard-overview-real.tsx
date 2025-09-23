@@ -106,7 +106,7 @@ export default async function DashboardOverviewReal() {
       // Try to find user by email as fallback
       console.log('Trying to find user by email...')
       const userByEmail = await prisma.user.findUnique({
-        where: { email: session.user.email },
+        where: { email: session.user.email || '' },
         select: {
           id: true,
           email: true,

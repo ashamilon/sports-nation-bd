@@ -166,7 +166,9 @@ export default function ReviewsList({ productId, productName, onReviewUpdate }: 
                     {review.User.name || 'Anonymous'}
                   </h4>
                   {review.isVerified && (
-                    <CheckCircle className="h-4 w-4 text-green-500" title="Verified Purchase" />
+                    <div title="Verified Purchase">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    </div>
                   )}
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-gray-500">

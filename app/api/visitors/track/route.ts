@@ -31,9 +31,7 @@ async function getLocationFromIP(ip: string) {
       }
     }
 
-    const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,country,regionName,city,timezone,isp,lat,lon,query`, {
-      timeout: 5000
-    })
+    const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,country,regionName,city,timezone,isp,lat,lon,query`)
     
     if (!response.ok) {
       throw new Error('Location API failed')

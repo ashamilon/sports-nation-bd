@@ -37,15 +37,15 @@ export async function POST(request: NextRequest) {
         ]
       },
       include: {
-        user: {
+        User: {
           select: {
             name: true,
             phone: true
           }
         },
-        items: {
+        OrderItem: {
           include: {
-            product: {
+            Product: {
               select: {
                 name: true,
                 weight: true
@@ -76,23 +76,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Parse shipping address
+    const shippingAddress = typeof order.shippingAddress === 'string' 
+      ? JSON.parse(order.shippingAddress) 
+      : order.shippingAddress
+
     // Prepare Pathao order request
     const pathaoOrder: PathaoOrderRequest = {
       merchant_order_id: order.orderNumber,
-      recipient_name: order.shippingAddress.name,
-      recipient_phone: order.shippingAddress.phone,
-      recipient_address: order.shippingAddress.address,
-      recipient_city: order.shippingAddress.city,
-      recipient_zone: order.shippingAddress.area,
+      recipient_name: shippingAddress.name,
+      recipient_phone: shippingAddress.phone,
+      recipient_address: shippingAddress.address,
+      recipient_city: shippingAddress.city,
+      recipient_zone: shippingAddress.area,
       delivery_type: '48', // 48 hours delivery
       item_type: '2', // Parcel
-      item_quantity: order.items.reduce((sum, item) => sum + item.quantity, 0),
-      item_weight: order.items.reduce((sum, item) => sum + (item.product.weight * item.quantity), 0),
-      item_description: order.items.map(item => `${item.product.name} (${item.quantity}x)`).join(', '),
+      item_quantity: order.OrderItem.reduce((sum, item) => sum + item.quantity, 0),
+      item_weight: order.OrderItem.reduce((sum, item) => sum + ((item.Product.weight || 0) * item.quantity), 0),
+      item_description: order.OrderItem.map(item => `${item.Product.name} (${item.quantity}x)`).join(', '),
       item_price: order.total,
       item_category: 'Sports & Fitness',
       special_instruction: 'Handle with care',
-      item_sku: order.items.map(item => item.product.name).join(', '),
+      item_sku: order.OrderItem.map(item => item.Product.name).join(', '),
       pickup_address: 'Sports Nation BD, Dhaka',
       pickup_city: 'Dhaka',
       pickup_zone: 'Dhanmondi'

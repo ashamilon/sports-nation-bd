@@ -94,9 +94,9 @@ export async function GET(
     // Generate invoice data
     const invoiceData = {
       orderNumber: order.orderNumber,
-      orderDate: order.createdAt,
+      orderDate: order.createdAt.toISOString(),
       customer: {
-        name: order.User.name,
+        name: order.User.name || 'Unknown Customer',
         email: order.User.email
       },
       shippingAddress: JSON.parse(order.shippingAddress || '{}'),
@@ -131,9 +131,14 @@ export async function GET(
       currency: order.currency,
       status: order.status,
       paymentStatus: order.paymentStatus,
-      paymentMethod: order.paymentMethod,
-      trackingNumber: order.trackingNumber,
-      payments: order.Payment || []
+      paymentMethod: order.paymentMethod || 'Unknown',
+      trackingNumber: order.trackingNumber || undefined,
+      payments: (order.Payment || []).map(payment => ({
+        ...payment,
+        createdAt: payment.createdAt.toISOString(),
+        transactionId: payment.transactionId || undefined,
+        metadata: payment.metadata || undefined
+      }))
     }
 
     // Generate HTML invoice

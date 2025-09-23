@@ -133,10 +133,12 @@ export default function CollectionProducts({ collectionId, className = "" }: Col
     variants.forEach(variant => {
       if (variant.sizes) {
         try {
-          const sizes = JSON.parse(variant.sizes)
-          sizes.forEach((size: any) => {
-            if (size.price) prices.push(size.price)
-          })
+          const sizes = typeof variant.sizes === 'string' ? JSON.parse(variant.sizes) : variant.sizes
+          if (Array.isArray(sizes)) {
+            sizes.forEach((size: any) => {
+              if (size.price) prices.push(size.price)
+            })
+          }
         } catch (error) {
           console.error('Error parsing sizes:', error)
         }
@@ -187,28 +189,21 @@ export default function CollectionProducts({ collectionId, className = "" }: Col
 
   const handleAddToCart = (product: Product) => {
     addItem({
-      id: product.id,
+      productId: product.id,
       name: product.name,
       price: product.price,
       image: product.images[0] || '',
-      quantity: 1,
-      slug: product.slug
+      quantity: 1
     })
   }
 
-  const handleWishlistToggle = (product: Product) => {
-    const isInWishlist = wishlistItems.some(item => item.id === product.id)
+  const handleWishlistToggle = async (product: Product) => {
+    const isInWishlist = wishlistItems.some(item => item.productId === product.id)
     
     if (isInWishlist) {
-      removeFromWishlist(product.id)
+      await removeFromWishlist('', product.id)
     } else {
-      addToWishlist({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.images[0] || '',
-        slug: product.slug
-      })
+      await addToWishlist(product.id)
     }
   }
 
@@ -277,7 +272,7 @@ export default function CollectionProducts({ collectionId, className = "" }: Col
              <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                {products.map((collectionProduct, index) => {
                  const product = collectionProduct.product
-                 const isInWishlist = wishlistItems.some(item => item.id === product.id)
+                 const isInWishlist = wishlistItems.some(item => item.productId === product.id)
                  const variantInfo = getVariantInfo(product)
                  
                  return (
@@ -447,7 +442,7 @@ export default function CollectionProducts({ collectionId, className = "" }: Col
                <div className="grid grid-cols-2 gap-4">
                  {products.map((collectionProduct, index) => {
                    const product = collectionProduct.product
-                   const isInWishlist = wishlistItems.some(item => item.id === product.id)
+                   const isInWishlist = wishlistItems.some(item => item.productId === product.id)
                    const variantInfo = getVariantInfo(product)
                    
                    return (

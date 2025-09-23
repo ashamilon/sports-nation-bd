@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
       })
     ])
     } catch (dbError) {
-      console.log('Main database queries failed:', dbError.message)
+      console.log('Main database queries failed:', dbError instanceof Error ? dbError.message : String(dbError))
       // Return zero data if database queries fail
       totalRevenue = { _sum: { total: 0 } }
       totalOrders = 0
@@ -156,9 +156,9 @@ export async function GET(request: NextRequest) {
         WHERE "createdAt" >= ${startDate} AND "createdAt" <= ${now}
         GROUP BY DATE("createdAt")
         ORDER BY DATE("createdAt")
-      `
+      ` as any[]
     } catch (dbError) {
-      console.log('Database query failed:', dbError.message)
+      console.log('Database query failed:', dbError instanceof Error ? dbError.message : String(dbError))
       // Return empty data if database query fails
       dailyData = []
     }
@@ -244,7 +244,7 @@ export async function GET(request: NextRequest) {
       
       processedTopProducts = productSalesData.sort((a, b) => b.sales - a.sales)
     } catch (dbError) {
-      console.log('Top products query failed, using sample data:', dbError.message)
+      console.log('Top products query failed, using sample data:', dbError instanceof Error ? dbError.message : String(dbError))
       // Generate sample top products data
       processedTopProducts = [
         { id: '1', name: 'Premium Football Jersey', sales: 45, revenue: 22500, growth: '+15%', category: 'Jerseys', price: 500 },
@@ -306,7 +306,7 @@ export async function GET(request: NextRequest) {
         })
       )
     } catch (dbError) {
-      console.log('Category query failed, using sample data:', dbError.message)
+      console.log('Category query failed, using sample data:', dbError instanceof Error ? dbError.message : String(dbError))
       // Generate sample category data
       processedCategoryData = [
         { name: 'Jerseys', value: 45, revenue: 125000, color: 'bg-blue-500' },
@@ -373,7 +373,7 @@ export async function GET(request: NextRequest) {
         }
       ]
     } catch (dbError) {
-      console.log('Customer segments query failed, using sample data:', dbError.message)
+      console.log('Customer segments query failed, using sample data:', dbError instanceof Error ? dbError.message : String(dbError))
       customerSegments = [
         {
           segment: 'New Customers',

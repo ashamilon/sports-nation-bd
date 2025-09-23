@@ -206,7 +206,7 @@ export default function Header() {
                   {item.type === 'menu-dropdown' ? (
                     <HeaderDropdown
                       title={item.name}
-                      collections={item.collections}
+                      collections={'collections' in item ? item.collections : []}
                       href={`/collections`}
                     />
                   ) : item.type === 'loyalty-dropdown' ? (
@@ -215,7 +215,7 @@ export default function Header() {
                     />
                   ) : (
                     <Link
-                      href={item.href || '#'}
+                      href={'href' in item ? item.href || '#' : '#'}
                       className="text-sm font-medium hover:text-primary transition-colors"
                     >
                       {item.name}
@@ -291,7 +291,7 @@ export default function Header() {
                         <span>{item.name}</span>
                       </div>
                       <div className="ml-4 space-y-1">
-                        {item.collections.map((collection) => (
+                        {'collections' in item && item.collections.map((collection) => (
                           <Link
                             key={collection.id}
                             href={`/collections/${collection.slug}`}
@@ -300,7 +300,7 @@ export default function Header() {
                           >
                             {collection.name}
                             <span className="text-xs text-muted-foreground ml-2">
-                              ({collection.productCount})
+                              ({collection._count?.CollectionProduct || 0})
                             </span>
                           </Link>
                         ))}
@@ -337,7 +337,7 @@ export default function Header() {
                     </div>
                   ) : (
                     <Link
-                      href={item.href || '#'}
+                      href={'href' in item ? item.href || '#' : '#'}
                       className="glass-button px-4 py-2 rounded-lg"
                       onClick={() => setIsMenuOpen(false)}
                     >

@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
       
       if (courierData.cityId) {
         const cities = await pathaoCourier.getCities()
-        const city = cities.find(c => c.city_id === courierData.cityId)
+        const city = cities.data?.find(c => c.city_id === courierData.cityId)
         if (city) {
           recipientCity = city.city_name
         }
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       
       if (courierData.zoneId && courierData.cityId) {
         const zones = await pathaoCourier.getZones(courierData.cityId)
-        const zone = zones.find(z => z.zone_id === courierData.zoneId)
+        const zone = zones.data?.find(z => z.zone_id === courierData.zoneId)
         if (zone) {
           recipientZone = zone.zone_name
         }
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
       
       if (courierData.areaId && courierData.zoneId) {
         const areas = await pathaoCourier.getAreas(courierData.zoneId)
-        const area = areas.find(a => a.area_id === courierData.areaId)
+        const area = areas.data?.find(a => a.area_id === courierData.areaId)
         if (area) {
           recipientArea = area.area_name
         }
@@ -149,8 +149,6 @@ export async function POST(request: NextRequest) {
         courierTrackingId: pathaoResponse.data?.tracking_code || '',
         trackingNumber: pathaoResponse.data?.tracking_code || '',
         status: 'shipped',
-        courierOrderId: pathaoResponse.data?.order_id?.toString() || '',
-        courierInvoiceId: pathaoResponse.data?.invoice_id?.toString() || ''
       },
       include: {
         User: {
@@ -162,11 +160,13 @@ export async function POST(request: NextRequest) {
     // Create tracking update
     await prisma.trackingUpdate.create({
       data: {
+        id: crypto.randomUUID(),
         orderId: orderId,
         status: 'shipped',
         location: 'Warehouse',
         description: 'Order shipped via Pathao courier',
-        timestamp: new Date()
+        timestamp: new Date(),
+        updatedAt: new Date()
       }
     })
 
@@ -220,7 +220,7 @@ export async function GET(request: NextRequest) {
     if (trackingId && !orderId) {
       const order = await prisma.order.findFirst({
         where: { courierTrackingId: trackingId },
-        select: { courierOrderId: true }
+        select: { id: true }
       })
       
       if (!order) {
@@ -230,7 +230,7 @@ export async function GET(request: NextRequest) {
         )
       }
       
-      pathaoOrderId = order.courierOrderId
+      pathaoOrderId = order.id
     }
 
     if (!pathaoOrderId) {

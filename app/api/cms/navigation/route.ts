@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const navigation = await prisma.navigation.findMany({
       where,
       include: {
-        children: {
+        other_Navigation: {
           where: { isActive: true },
           orderBy: { order: 'asc' }
         }
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     const filteredNavigation = active === 'true' 
       ? navigation.map(item => ({
           ...item,
-          children: item.children.filter(child => child.isActive)
+          other_Navigation: item.other_Navigation.filter(child => child.isActive)
         }))
       : navigation
 
@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
 
     const navigation = await prisma.navigation.create({
       data: {
+        id: crypto.randomUUID(),
         title,
         url,
         parentId,
@@ -80,10 +81,11 @@ export async function POST(request: NextRequest) {
         isExternal: isExternal || false,
         target: target || '_self',
         icon,
-        metadata: metadata ? JSON.stringify(metadata) : null
+        metadata: metadata ? JSON.stringify(metadata) : null,
+        updatedAt: new Date()
       },
       include: {
-        children: {
+        other_Navigation: {
           orderBy: { order: 'asc' }
         }
       }

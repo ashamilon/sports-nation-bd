@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     for (const item of items) {
       const productVariant = await prisma.productVariant.findUnique({
         where: { id: item.variantId },
-        include: { product: true }
+        include: { Product: true }
       })
 
       if (!productVariant) {
@@ -62,14 +62,14 @@ export async function POST(request: NextRequest) {
 
       if (productVariant.stock < item.quantity) {
         return NextResponse.json(
-          { message: `Insufficient stock for ${productVariant.product.name}` },
+          { message: `Insufficient stock for ${productVariant.Product.name}` },
           { status: 400 }
         )
       }
 
       if (!productVariant.price) {
         return NextResponse.json(
-          { message: `Price not available for ${productVariant.product.name}` },
+          { message: `Price not available for ${productVariant.Product.name}` },
           { status: 400 }
         )
       }
@@ -108,15 +108,15 @@ export async function POST(request: NextRequest) {
         shippingAddress: JSON.stringify(shippingAddress),
         billingAddress: JSON.stringify(billingAddress),
         customerLocation: location,
-        items: {
+        OrderItem: {
           create: orderItems
         }
       },
       include: {
-        items: {
+        OrderItem: {
           include: {
-            product: true,
-            productVariant: true
+            Product: true,
+            ProductVariant: true
           }
         }
       }

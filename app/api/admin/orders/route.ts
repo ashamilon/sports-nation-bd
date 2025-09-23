@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
         customer: {
           name: order.User?.name || 'Unknown Customer',
           email: order.User?.email || '',
-          phone: shippingAddress.phone || shippingAddress.mobile || ''
+          phone: (shippingAddress as any)?.phone || (shippingAddress as any)?.mobile || ''
         },
         items: await Promise.all(order.OrderItem.map(async item => {
           // Parse custom options if they exist
@@ -146,9 +146,9 @@ export async function GET(request: NextRequest) {
         orderDate: order.createdAt.toLocaleDateString(),
         deliveryDate: order.status === 'completed' ? order.updatedAt.toLocaleDateString() : null,
         shippingAddress: {
-          address: shippingAddress.address || '',
-          city: shippingAddress.city || '',
-          postalCode: shippingAddress.postalCode || '',
+          address: (shippingAddress as any)?.address || '',
+          city: (shippingAddress as any)?.city || '',
+          postalCode: (shippingAddress as any)?.postalCode || '',
           ...shippingAddress
         }
       }

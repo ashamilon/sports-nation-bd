@@ -30,17 +30,17 @@ export async function GET(request: NextRequest) {
     
     // Exact match (highest priority)
     fuzzyConditions.push(
-      { name: { contains: query, mode: 'insensitive' } },
-      { description: { contains: query, mode: 'insensitive' } },
-      { slug: { contains: query, mode: 'insensitive' } }
+      { name: { contains: query, mode: 'insensitive' as const } },
+      { description: { contains: query, mode: 'insensitive' as const } },
+      { slug: { contains: query, mode: 'insensitive' as const } }
     )
     
     // Partial word matching for each search term
     searchTerms.forEach(term => {
       if (term.length >= 2) { // Only for terms with 2+ characters
         fuzzyConditions.push(
-          { name: { contains: term, mode: 'insensitive' } },
-          { description: { contains: term, mode: 'insensitive' } }
+          { name: { contains: term, mode: 'insensitive' as const } },
+          { description: { contains: term, mode: 'insensitive' as const } }
         )
       }
     })
@@ -50,8 +50,8 @@ export async function GET(request: NextRequest) {
     fuzzyVariations.forEach(variation => {
       if (variation.length >= 2) {
         fuzzyConditions.push(
-          { name: { contains: variation, mode: 'insensitive' } },
-          { description: { contains: variation, mode: 'insensitive' } }
+          { name: { contains: variation, mode: 'insensitive' as const } },
+          { description: { contains: variation, mode: 'insensitive' as const } }
         )
       }
     })
@@ -285,12 +285,12 @@ async function generateSearchSuggestions(query: string) {
     // Generate fuzzy variations for suggestions
     const fuzzyVariations = generateFuzzyVariations(query)
     const suggestionConditions = [
-      { name: { contains: query, mode: 'insensitive' } }
+      { name: { contains: query, mode: 'insensitive' as const } }
     ]
     
     // Add fuzzy variations for suggestions
     fuzzyVariations.slice(0, 5).forEach(variation => {
-      suggestionConditions.push({ name: { contains: variation, mode: 'insensitive' } })
+      suggestionConditions.push({ name: { contains: variation, mode: 'insensitive' as const } })
     })
 
     // Get product names that match the query and variations
