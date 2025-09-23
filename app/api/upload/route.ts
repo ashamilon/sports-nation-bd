@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { uploadToSupabaseStorage, STORAGE_BUCKETS } from '@/lib/supabase-storage'
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,45 +30,75 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File size must be less than 5MB' }, { status: 400 })
     }
 
-    // For Vercel deployment, we'll use a placeholder service
-    // In production, you should integrate with a cloud storage service like:
-    // - AWS S3
-    // - Cloudinary
-    // - Vercel Blob Storage
-    // - Supabase Storage
-    
-    // For now, we'll generate a placeholder URL
+    // Determine bucket based on folder
+    let bucket = STORAGE_BUCKETS.GENERAL
+    switch (folder.toLowerCase()) {
+      case 'products':
+        bucket = STORAGE_BUCKETS.PRODUCTS
+        break
+      case 'categories':
+        bucket = STORAGE_BUCKETS.CATEGORIES
+        break
+      case 'badges':
+        bucket = STORAGE_BUCKETS.BADGES
+        break
+      case 'banners':
+        bucket = STORAGE_BUCKETS.BANNERS
+        break
+      case 'users':
+        bucket = STORAGE_BUCKETS.USERS
+        break
+      default:
+        bucket = STORAGE_BUCKETS.GENERAL
+    }
+
+    // Create unique filename
     const timestamp = Date.now()
     const randomString = Math.random().toString(36).substring(2, 15)
     const extension = file.name.split('.').pop()
-    const filename = `${folder}-${timestamp}-${randomString}.${extension}`
+    const filename = `${timestamp}-${randomString}.${extension}`
     
-    // Generate a placeholder URL (you can replace this with actual cloud storage)
-    const placeholderUrl = `https://picsum.photos/400/400?random=${timestamp}`
-    
-    // In a real implementation, you would:
-    // 1. Upload to cloud storage (S3, Cloudinary, etc.)
-    // 2. Get the actual URL from the storage service
-    // 3. Return that URL
-    
-    console.log('📁 File upload request:', {
+    // Create path with folder structure
+    const path = `${folder}/${filename}`
+
+    console.log('📁 Uploading to Supabase Storage:', {
       filename: file.name,
       size: file.size,
       type: file.type,
-      folder,
-      generatedFilename: filename
+      bucket,
+      path
     })
+
+    // Upload to Supabase Storage
+    const result = await uploadToSupabaseStorage(file, bucket, path, {
+      cacheControl: '3600',
+      upsert: false
+    })
+
+    if (!result.success) {
+      console.error('Upload failed:', result.error)
+      return NextResponse.json({ 
+        error: result.error || 'Upload failed' 
+      }, { status: 500 })
+    }
+
+    console.log('✅ Upload successful:', result.url)
 
     return NextResponse.json({
       success: true,
-      url: placeholderUrl,
+      url: result.url,
       filename,
+      path: result.path,
+      bucket,
       size: file.size,
       type: file.type,
-      message: 'File uploaded successfully (using placeholder service)'
+      message: 'File uploaded successfully to Supabase Storage'
     })
   } catch (error) {
     console.error('Upload error:', error)
-    return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Upload failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
