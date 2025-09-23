@@ -21,7 +21,20 @@ export function SkeletonCard() {
 
 export function SkeletonBanner() {
   return (
-    <div className="w-full h-64 md:h-80 bg-gray-200 rounded-lg animate-pulse" />
+    <motion.div 
+      className="w-full h-64 md:h-80 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded-lg"
+      animate={{
+        backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+      }}
+      transition={{
+        duration: 1.5,
+        repeat: Infinity,
+        ease: "linear"
+      }}
+      style={{
+        backgroundSize: '200% 100%'
+      }}
+    />
   )
 }
 

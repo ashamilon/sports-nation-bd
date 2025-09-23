@@ -17,10 +17,10 @@ export async function GET(
     const collection = await prisma.collection.findUnique({
       where: { id },
       include: {
-        parent: true,
-        children: includeChildren ? {
+        Collection: true, // parent relationship
+        other_Collection: includeChildren ? {
           include: {
-            products: includeProducts ? {
+            CollectionProduct: includeProducts ? {
               include: {
                 product: {
                   include: {
@@ -36,7 +36,7 @@ export async function GET(
             } : false
           }
         } : false,
-        products: includeProducts ? {
+        CollectionProduct: includeProducts ? {
           include: {
             product: {
               include: {
@@ -55,8 +55,8 @@ export async function GET(
         } : false,
         _count: {
           select: {
-            children: true,
-            products: true
+            other_Collection: true,
+            CollectionProduct: true
           }
         }
       }
@@ -132,21 +132,27 @@ export async function PUT(
         ...(metadata !== undefined && { metadata: metadata ? JSON.stringify(metadata) : null })
       },
       include: {
-        parent: true,
-        children: true,
+        Collection: true, // parent relationship
+        other_Collection: true, // children relationship
         _count: {
           select: {
-            children: true,
-            products: true
+            other_Collection: true,
+            CollectionProduct: true
           }
         }
       }
     })
 
-    return NextResponse.json({
+    // Trigger real-time update event for collections
+    const response = NextResponse.json({
       success: true,
       data: collection
     })
+    
+    // Add header to indicate collections were updated
+    response.headers.set('X-Collections-Updated', 'true')
+    
+    return response
   } catch (error) {
     console.error('Error updating collection:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -171,8 +177,8 @@ export async function DELETE(
     const existingCollection = await prisma.collection.findUnique({
       where: { id },
       include: {
-        children: true,
-        products: true
+        other_Collection: true, // children relationship
+        CollectionProduct: true // products relationship
       }
     })
 
@@ -181,7 +187,7 @@ export async function DELETE(
     }
 
     // Check if collection has children
-    if (existingCollection.children.length > 0) {
+    if (existingCollection.other_Collection.length > 0) {
       return NextResponse.json({ 
         error: 'Cannot delete collection with sub-collections. Please delete sub-collections first.' 
       }, { status: 400 })
@@ -192,10 +198,16 @@ export async function DELETE(
       where: { id }
     })
 
-    return NextResponse.json({
+    // Trigger real-time update event for collections
+    const response = NextResponse.json({
       success: true,
       message: 'Collection deleted successfully'
     })
+    
+    // Add header to indicate collections were updated
+    response.headers.set('X-Collections-Updated', 'true')
+    
+    return response
   } catch (error) {
     console.error('Error deleting collection:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

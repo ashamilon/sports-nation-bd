@@ -21,8 +21,8 @@ export async function GET() {
       data: result.rows
     })
     
-    // Add caching headers for better performance
-    response.headers.set('Cache-Control', 'public, max-age=600, s-maxage=600') // 10 minutes cache
+    // Add caching headers for better performance (but allow cache busting)
+    response.headers.set('Cache-Control', 'public, max-age=300, s-maxage=300') // 5 minutes cache
     response.headers.set('Vary', 'Accept-Encoding')
     
     return response
@@ -63,8 +63,12 @@ export async function POST(request: NextRequest) {
 
     await client.connect()
     
+    // Generate unique ID for the homepage setting
+    const id = `homepage_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
     const query = `
       INSERT INTO "HomepageSettings" (
+        "id",
         "sectionKey", 
         "sectionName", 
         "isVisible", 
@@ -72,11 +76,12 @@ export async function POST(request: NextRequest) {
         "metadata", 
         "createdAt", 
         "updatedAt"
-      ) VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
       RETURNING *
     `
     
     const values = [
+      id,
       sectionKey,
       sectionName,
       isVisible ?? true,

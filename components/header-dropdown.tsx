@@ -75,7 +75,7 @@ export default function HeaderDropdown({ collections, title, href = '#' }: Heade
             {/* Collections Grid */}
             <div className="p-4">
               <div className="grid grid-cols-1 gap-2">
-                {collections.map((collection, index) => (
+                {collections && collections.length > 0 ? collections.map((collection, index) => (
                   <motion.div
                     key={collection.id}
                     initial={{ opacity: 0, x: -20 }}
@@ -130,7 +130,11 @@ export default function HeaderDropdown({ collections, title, href = '#' }: Heade
                       />
                     </Link>
                   </motion.div>
-                ))}
+                )) : (
+                  <div className="p-4 text-center text-muted-foreground">
+                    No collections available
+                  </div>
+                )}
               </div>
 
               {/* View All Button */}

@@ -17,8 +17,6 @@ import {
   Star,
   Gift
 } from 'lucide-react'
-import { RegionalSelector } from './regional-selector'
-import { RegionalTopBar } from './regional-topbar'
 import HeaderDropdown from './header-dropdown'
 import LoyaltyDropdown from './loyalty-dropdown'
 import SearchModal from './search-modal'
@@ -30,7 +28,7 @@ interface Collection {
   description?: string
   image?: string
   _count: {
-    products: number
+    CollectionProduct: number
   }
 }
 
@@ -49,6 +47,7 @@ export default function Header() {
   const [isMounted, setIsMounted] = useState(false)
   const [menuConfigs, setMenuConfigs] = useState<MenuConfig[]>([])
   const [allCollections, setAllCollections] = useState<Collection[]>([])
+  const [isMenuLoading, setIsMenuLoading] = useState(true)
   const { getTotalItems, toggleCart } = useCartStore()
 
   useEffect(() => {
@@ -58,15 +57,32 @@ export default function Header() {
 
   const fetchMenuConfigs = async () => {
     try {
-      // Fetch menu configs and collections in parallel with optimized queries
+      setIsMenuLoading(true)
+      
+      // Check client-side cache first
+      const cacheKey = 'header-menu-cache'
+      const cachedData = localStorage.getItem(cacheKey)
+      const cacheTimestamp = localStorage.getItem(`${cacheKey}-timestamp`)
+      const now = Date.now()
+      const cacheExpiry = 5 * 60 * 1000 // 5 minutes
+      
+      if (cachedData && cacheTimestamp && (now - parseInt(cacheTimestamp)) < cacheExpiry) {
+        const parsedData = JSON.parse(cachedData)
+        setMenuConfigs(parsedData.menuConfigs)
+        setAllCollections(parsedData.collections)
+        setIsMenuLoading(false)
+        return
+      }
+      
+      // Fetch menu configs and collections in parallel
       const [menuResponse, collectionsResponse] = await Promise.all([
         fetch('/api/cms/menu-config', { 
-          cache: 'force-cache',
-          next: { revalidate: 300 } // Cache for 5 minutes
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
         }),
         fetch('/api/collections?isActive=true&limit=50', { 
-          cache: 'force-cache',
-          next: { revalidate: 300 } // Cache for 5 minutes
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
         })
       ])
       
@@ -84,19 +100,33 @@ export default function Header() {
         setAllCollections(collectionsData.data)
       }
       
+      // Cache the data for faster subsequent loads
+      const dataToCache = {
+        menuConfigs: menuData.success ? menuData.data.filter((config: MenuConfig) => 
+          config.menuType === 'header' && config.isActive
+        ) : [],
+        collections: collectionsData.success ? collectionsData.data : []
+      }
+      localStorage.setItem(cacheKey, JSON.stringify(dataToCache))
+      localStorage.setItem(`${cacheKey}-timestamp`, now.toString())
+      
     } catch (error) {
       console.error('Error fetching menu configs:', error)
+    } finally {
+      setIsMenuLoading(false)
     }
   }
 
   const getCollectionsForMenu = (config: MenuConfig): Collection[] => {
     try {
       const collectionIds = JSON.parse(config.collections)
-      return allCollections.filter(collection => 
+      const filteredCollections = allCollections.filter(collection => 
         collectionIds.includes(collection.id)
-      ).map(collection => ({
+      )
+      
+      return filteredCollections.map(collection => ({
         ...collection,
-        productCount: collection._count?.products || 0
+        productCount: collection._count?.CollectionProduct || 0
       }))
     } catch (error) {
       console.error('Error parsing collections for menu:', error)
@@ -116,12 +146,15 @@ export default function Header() {
   // Put existing dropdown menus (Jerseys, Sneakers, Shorts, Watches) right after Home
   const existingDropdowns = menuConfigs
     .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map(config => ({
-      name: config.title,
-      type: 'menu-dropdown' as const,
-      config: config,
-      collections: getCollectionsForMenu(config)
-    }))
+    .map(config => {
+      const collections = getCollectionsForMenu(config)
+      return {
+        name: config.title,
+        type: 'menu-dropdown' as const,
+        config: config,
+        collections: collections
+      }
+    })
 
   const navigation = [
     staticNavigation[0], // Home
@@ -133,10 +166,21 @@ export default function Header() {
 
   return (
     <>
-    <header className="sticky top-0 z-50 w-full glass-nav">
-      {/* Top Bar */}
-      <RegionalTopBar />
+      {/* Header Side Scrolling Notification Bar */}
+      <div className="bg-primary text-white py-2 overflow-hidden">
+        <div className="animate-scroll">
+          <div className="flex space-x-8 whitespace-nowrap">
+            <span>🚚 Free delivery on orders over ৳2,000</span>
+            <span>💳 Secure payment with SSLCommerz</span>
+            <span>📞 Call us: +880 1647 429992</span>
+            <span>🚚 Free delivery on orders over ৳2,000</span>
+            <span>💳 Secure payment with SSLCommerz</span>
+            <span>📞 Call us: +880 1647 429992</span>
+          </div>
+        </div>
+      </div>
 
+    <header className="sticky top-0 z-50 w-full glass-nav">
       {/* Main Header */}
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
@@ -147,28 +191,39 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8 flex-1 justify-center">
-            {navigation.map((item) => (
-              <div key={item.name}>
-                {item.type === 'menu-dropdown' ? (
-                  <HeaderDropdown
-                    title={item.name}
-                    collections={item.collections}
-                    href={`/collections`}
-                  />
-                ) : item.type === 'loyalty-dropdown' ? (
-                  <LoyaltyDropdown
-                    title={item.name}
-                  />
-                ) : (
-                  <Link
-                    href={item.href || '#'}
-                    className="text-sm font-medium hover:text-primary transition-colors"
-                  >
-                    {item.name}
-                  </Link>
-                )}
-              </div>
-            ))}
+            {isMenuLoading ? (
+              // Loading skeleton for navigation
+              <>
+                {[...Array(6)].map((_, index) => (
+                  <div key={index} className="animate-pulse">
+                    <div className="h-4 bg-gray-300 rounded w-16"></div>
+                  </div>
+                ))}
+              </>
+            ) : (
+              navigation.map((item) => (
+                <div key={item.name}>
+                  {item.type === 'menu-dropdown' ? (
+                    <HeaderDropdown
+                      title={item.name}
+                      collections={item.collections}
+                      href={`/collections`}
+                    />
+                  ) : item.type === 'loyalty-dropdown' ? (
+                    <LoyaltyDropdown
+                      title={item.name}
+                    />
+                  ) : (
+                    <Link
+                      href={item.href || '#'}
+                      className="text-sm font-medium hover:text-primary transition-colors"
+                    >
+                      {item.name}
+                    </Link>
+                  )}
+                </div>
+              ))
+            )}
           </nav>
 
           {/* Right Side Actions */}
@@ -181,9 +236,6 @@ export default function Header() {
               <Search className="h-5 w-5" />
             </button>
 
-
-            {/* Regional Selector */}
-            <RegionalSelector />
 
             {/* Theme Toggle */}
             <ThemeToggle />
@@ -221,7 +273,17 @@ export default function Header() {
         {isMounted && isMenuOpen && (
           <div className="md:hidden py-4 border-t border-white/10">
             <nav className="flex flex-col space-y-2">
-              {navigation.map((item) => (
+              {isMenuLoading ? (
+                // Loading skeleton for mobile navigation
+                <>
+                  {[...Array(6)].map((_, index) => (
+                    <div key={index} className="animate-pulse">
+                      <div className="h-8 bg-gray-300 rounded w-full"></div>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                navigation.map((item) => (
                 <div key={item.name}>
                   {item.type === 'menu-dropdown' ? (
                     <div className="space-y-1">
@@ -283,7 +345,8 @@ export default function Header() {
                     </Link>
                   )}
                 </div>
-              ))}
+                ))
+              )}
             </nav>
           </div>
         )}

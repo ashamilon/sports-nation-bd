@@ -103,33 +103,34 @@ model Category {
 }
 
 model Collection {
-  id                String              @id
-  name              String
-  slug              String              @unique
-  description       String?
-  image             String?
-  parentId          String?
-  isActive          Boolean             @default(true)
-  isFeatured        Boolean             @default(false)
-  sortOrder         Int                 @default(0)
-  isInCarousel      Boolean             @default(false)
-  carouselOrder     Int?
-  metadata          String?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime
-  Collection        Collection?         @relation("CollectionToCollection", fields: [parentId], references: [id])
-  other_Collection  Collection[]        @relation("CollectionToCollection")
-  CollectionProduct CollectionProduct[]
+  id                         String                      @id
+  name                       String
+  slug                       String                      @unique
+  description                String?
+  image                      String?
+  parentId                   String?
+  isActive                   Boolean                     @default(true)
+  isFeatured                 Boolean                     @default(false)
+  sortOrder                  Int                         @default(0)
+  metadata                   String?
+  createdAt                  DateTime                    @default(now())
+  updatedAt                  DateTime
+  carouselOrder              Int?
+  isInCarousel               Boolean                     @default(false)
+  Collection                 Collection?                 @relation("CollectionToCollection", fields: [parentId], references: [id])
+  other_Collection           Collection[]                @relation("CollectionToCollection")
+  CollectionProduct          CollectionProduct[]
+  HomepageCollectionSettings HomepageCollectionSettings?
 }
 
 model CollectionProduct {
-  id           String     @id
+  id           String     @id @default(cuid())
   collectionId String
   productId    String
   sortOrder    Int        @default(0)
   isFeatured   Boolean    @default(false)
   createdAt    DateTime   @default(now())
-  updatedAt    DateTime
+  updatedAt    DateTime   @updatedAt
   Collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
   Product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
 
@@ -207,6 +208,26 @@ model HomepageSettings {
   updatedAt   DateTime
 }
 
+model HomepageCollectionSettings {
+  id           String     @id @default(cuid())
+  collectionId String     @unique
+  isVisible    Boolean    @default(true)
+  sortOrder    Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  Collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+}
+
+model ExclusiveProductSettings {
+  id        String   @id @default(cuid())
+  productId String   @unique
+  isVisible Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
 model LoyaltyHistory {
   id          String   @id
   userId      String
@@ -219,6 +240,18 @@ model LoyaltyHistory {
   totalSpent  Float
   createdAt   DateTime @default(now())
   User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model OTP {
+  id         String   @id @default(cuid())
+  identifier String   @unique
+  code       String
+  type       String
+  attempts   Int      @default(0)
+  isVerified Boolean  @default(false)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Media {
@@ -396,33 +429,34 @@ model Payment {
 }
 
 model Product {
-  id                String              @id @default(cuid())
-  name              String
-  slug              String              @unique
-  description       String
-  price             Float
-  comparePrice      Float?
-  sku               String              @unique
-  stock             Int                 @default(0)
-  images            String[]
-  isActive          Boolean             @default(true)
-  isFeatured        Boolean             @default(false)
-  weight            Float?
-  dimensions        String?
-  categoryId        String
-  allowNameNumber   Boolean             @default(false)
-  nameNumberPrice   Float?              @default(250)
-  selectedBadges    String?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  CartItem          CartItem[]
-  CollectionProduct CollectionProduct[]
-  OrderItem         OrderItem[]
-  Category          Category            @relation(fields: [categoryId], references: [id])
-  ProductVariant    ProductVariant[]
-  Review            Review[]
-  WishlistItem      WishlistItem[]
-  product_badges    product_badges[]
+  id                       String                    @id @default(cuid())
+  name                     String
+  slug                     String                    @unique
+  description              String
+  price                    Float
+  comparePrice             Float?
+  sku                      String                    @unique
+  stock                    Int                       @default(0)
+  images                   String[]
+  isActive                 Boolean                   @default(true)
+  isFeatured               Boolean                   @default(false)
+  weight                   Float?
+  dimensions               String?
+  categoryId               String
+  allowNameNumber          Boolean                   @default(false)
+  nameNumberPrice          Float?                    @default(250)
+  selectedBadges           String?
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
+  CartItem                 CartItem[]
+  CollectionProduct        CollectionProduct[]
+  ExclusiveProductSettings ExclusiveProductSettings?
+  OrderItem                OrderItem[]
+  Category                 Category                  @relation(fields: [categoryId], references: [id])
+  ProductVariant           ProductVariant[]
+  Review                   Review[]
+  WishlistItem             WishlistItem[]
+  product_badges           product_badges[]
 }
 
 model ProductVariant {
@@ -569,6 +603,7 @@ model User {
   Media                   Media[]
   Order                   Order[]
   Page                    Page[]
+  PathaoOrder             PathaoOrder[]
   ModeratedReviews        Review[]           @relation("ReviewModerator")
   Review                  Review[]
   Session                 Session[]
@@ -680,4 +715,43 @@ model CustomerBehavior {
   Visitor     Visitor? @relation(fields: [visitorId], references: [id])
 
   @@unique([sessionId, behavior])
+}
+
+model CountdownBanner {
+  id              String   @id @default(cuid())
+  title           String
+  subtitle        String?
+  targetDate      DateTime
+  backgroundImage String?
+  isVisible       Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model PathaoOrder {
+  id                      String   @id @default(cuid())
+  consignmentId           String   @unique
+  merchantOrderId         String?
+  storeId                 Int
+  recipientName           String
+  recipientPhone          String
+  recipientSecondaryPhone String?
+  recipientAddress        String
+  recipientCity           Int?
+  recipientZone           Int?
+  recipientArea           Int?
+  deliveryType            Int
+  itemType                Int
+  specialInstruction      String?
+  itemQuantity            Int
+  itemWeight              Float
+  itemDescription         String?
+  amountToCollect         Int
+  orderStatus             String   @default("Pending")
+  deliveryFee             Float?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  userId                  String?
+  User                    User?    @relation(fields: [userId], references: [id])
 }

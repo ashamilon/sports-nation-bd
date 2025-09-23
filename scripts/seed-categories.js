@@ -4,34 +4,34 @@ const prisma = new PrismaClient()
 
 const categories = [
   {
-    name: 'Jerseys',
-    slug: 'jerseys',
-    description: 'Football jerseys and sports apparel',
-    image: '/api/placeholder/300/300'
-  },
-  {
-    name: 'Sneakers',
-    slug: 'sneakers', 
-    description: 'Sports shoes and sneakers',
-    image: '/api/placeholder/300/300'
-  },
-  {
-    name: 'Shorts',
-    slug: 'shorts',
-    description: 'Sports shorts and athletic wear',
-    image: '/api/placeholder/300/300'
-  },
-  {
-    name: 'Watches',
+    name: 'Naviforce Watches',
     slug: 'watches',
-    description: 'Sports watches and fitness trackers',
-    image: '/api/placeholder/300/300'
+    description: 'Premium timepieces for champions',
+    image: '/images/categories/watches.jpg'
   },
   {
-    name: 'Accessories',
-    slug: 'accessories',
-    description: 'Sports accessories and equipment',
-    image: '/api/placeholder/300/300'
+    name: 'Club Jerseys',
+    slug: 'jerseys',
+    description: 'Fan & Player versions available',
+    image: '/images/categories/jerseys.jpg'
+  },
+  {
+    name: 'Premium Sneakers',
+    slug: 'sneakers',
+    description: 'Top brands & latest models',
+    image: '/images/categories/sneakers.jpg'
+  },
+  {
+    name: 'Club Shorts',
+    slug: 'shorts',
+    description: 'Match your jersey perfectly',
+    image: '/images/categories/shorts.jpg'
+  },
+  {
+    name: 'Premium Badges',
+    slug: 'badges',
+    description: 'League, UCL & FIFA badges',
+    image: '/images/categories/badges.jpg'
   }
 ]
 
@@ -40,10 +40,24 @@ async function seedCategories() {
     console.log('🌱 Seeding categories...')
     
     for (const category of categories) {
-      await prisma.category.create({
-        data: category
+      const id = `cat_${category.slug}_${Date.now()}`
+      
+      await prisma.category.upsert({
+        where: { slug: category.slug },
+        update: {
+          name: category.name,
+          description: category.description,
+          image: category.image,
+          updatedAt: new Date()
+        },
+        create: {
+          id,
+          ...category,
+          updatedAt: new Date()
+        }
       })
-      console.log(`✅ Created category: ${category.name}`)
+      
+      console.log(`✅ Upserted category: ${category.name}`)
     }
     
     console.log('🎉 Categories seeded successfully!')

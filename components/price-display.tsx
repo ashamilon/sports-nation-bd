@@ -20,13 +20,14 @@ export function PriceDisplay({
   const regionalPrice = convertPrice(price)
   const regionalComparePrice = comparePrice ? convertPrice(comparePrice) : undefined
   
+  
   return (
     <div className={`space-y-1 ${className}`}>
       <div className="flex items-center gap-2">
         <span className="text-lg font-semibold text-primary">
           {formatPrice(regionalPrice)}
         </span>
-        {regionalComparePrice && regionalComparePrice > regionalPrice && (
+        {regionalComparePrice && regionalComparePrice > 0 && (
           <span className="text-sm text-red-500 line-through">
             {formatPrice(regionalComparePrice)}
           </span>

@@ -1,5 +1,32 @@
 @import "tailwindcss";
 
+/* Freckle Face Font */
+.freckle-face-regular {
+  font-family: "Freckle Face", system-ui;
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar { 
+  display: none;  /* Safari and Chrome */
+}
+
+/* Circular carousel responsive width */
+.circular-carousel-mobile {
+  width: calc(var(--item-count) * 96px) !important; /* 80px + 16px space */
+}
+
+@media (min-width: 768px) {
+  .circular-carousel-mobile {
+    width: calc(var(--item-count) * 152px) !important; /* 128px + 24px space */
+  }
+}
+
 :root {
   /* Brand Colors - Light Mode (Exact from palette) */
   --background: #FEFEFE;
@@ -34,24 +61,31 @@
 }
 
 .dark {
-  /* Brand Colors - Dark Mode */
-  --background: #051747;
-  --foreground: #FEFEFE;
-  --primary: #081F62;
-  --primary-foreground: #FEFEFE;
-  --secondary: #535F80;
-  --secondary-foreground: #FEFEFE;
-  --muted: #535F80;
-  --muted-foreground: #E7E9F0;
-  --accent: #E7E9F0;
-  --accent-foreground: #051747;
+  /* Brand Colors - Dark Mode (Using Black & White Palette) */
+  --background: #0A0E15; /* black-100 - Deep black background */
+  --foreground: #FFFFFF; /* white-100 - Pure white text */
+  --primary: #212631; /* black-90 - Dark charcoal for primary elements */
+  --primary-foreground: #FFFFFF; /* white-100 - White text on primary */
+  --secondary: #373F4E; /* black-80 - Dark gray for secondary elements */
+  --secondary-foreground: #F0F1F5; /* white-90 - Light gray text */
+  --muted: #4E576A; /* black-70 - Medium dark gray for muted elements */
+  --muted-foreground: #E0E4EB; /* white-80 - Light gray for muted text */
+  --accent: #667085; /* black-60 - Medium gray for accents */
+  --accent-foreground: #FFFFFF; /* white-100 - White text on accent */
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
   --success: #22c55e;
   --success-foreground: #ffffff;
-  --border: #535F80;
-  --input: #535F80;
-  --ring: #081F62;
+  --border: #373F4E; /* black-80 - Dark gray borders */
+  --input: #212631; /* black-90 - Dark charcoal inputs */
+  --ring: #667085; /* black-60 - Medium gray for focus rings */
+  
+  /* Brand Color Variables for Dark Mode */
+  --brand-light: #FFFFFF; /* white-100 */
+  --brand-light-gray: #F0F1F5; /* white-90 */
+  --brand-dark: #0A0E15; /* black-100 */
+  --brand-medium: #667085; /* black-60 */
+  --brand-accent: #373F4E; /* black-80 */
 }
 
 @theme inline {
@@ -103,6 +137,23 @@
 .border-brand-dark { border-color: var(--brand-dark); }
 .border-brand-medium { border-color: var(--brand-medium); }
 .border-brand-accent { border-color: var(--brand-accent); }
+
+/* Dark Mode Specific Utility Classes */
+.dark .bg-black-100 { background-color: #0A0E15; }
+.dark .bg-black-90 { background-color: #212631; }
+.dark .bg-black-80 { background-color: #373F4E; }
+.dark .bg-black-70 { background-color: #4E576A; }
+.dark .bg-black-60 { background-color: #667085; }
+
+.dark .text-white-100 { color: #FFFFFF; }
+.dark .text-white-90 { color: #F0F1F5; }
+.dark .text-white-80 { color: #E0E4EB; }
+.dark .text-white-70 { color: #D1D6E0; }
+.dark .text-white-60 { color: #BFC6D4; }
+
+.dark .border-black-80 { border-color: #373F4E; }
+.dark .border-black-70 { border-color: #4E576A; }
+.dark .border-white-90 { border-color: #F0F1F5; }
 
 /* Hover states for brand colors */
 .hover\:bg-brand-dark:hover { background-color: var(--brand-dark); }
@@ -298,8 +349,9 @@ body {
 }
 
 .dark .glass-nav {
-  background: rgba(5, 23, 71, 0.9);
-  border-bottom: 1px solid rgba(231, 233, 240, 0.2);
+  background: rgba(10, 14, 21, 0.95); /* black-100 with high transparency */
+  border-bottom: 1px solid rgba(55, 63, 78, 0.3); /* black-80 border */
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.4); /* Enhanced dark shadow */
 }
 
 .glass-topbar {
@@ -307,6 +359,11 @@ body {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(231, 233, 240, 0.1);
+}
+
+.dark .glass-topbar {
+  background: linear-gradient(135deg, rgba(10, 14, 21, 0.95), rgba(33, 38, 49, 0.9)); /* black-100 to black-90 */
+  border-bottom: 1px solid rgba(55, 63, 78, 0.2); /* black-80 border */
 }
 
 .glass-input {
@@ -318,9 +375,9 @@ body {
 }
 
 .dark .glass-input {
-  background: rgba(5, 23, 71, 0.3);
-  border: 1px solid rgba(8, 31, 98, 0.2);
-  box-shadow: 0 4px 16px rgba(8, 31, 98, 0.2);
+  background: rgba(33, 38, 49, 0.4); /* black-90 with transparency */
+  border: 1px solid rgba(55, 63, 78, 0.3); /* black-80 border */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); /* Dark shadow */
 }
 
 .glass-sidebar {
@@ -332,7 +389,7 @@ body {
 }
 
 .dark .glass-sidebar {
-  background: rgba(5, 23, 71, 0.9);
-  border-left: 1px solid rgba(8, 31, 98, 0.2);
-  box-shadow: -10px 0 30px rgba(8, 31, 98, 0.2);
+  background: rgba(10, 14, 21, 0.95); /* black-100 with high transparency */
+  border-left: 1px solid rgba(55, 63, 78, 0.3); /* black-80 border */
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.4); /* Enhanced dark shadow */
 }

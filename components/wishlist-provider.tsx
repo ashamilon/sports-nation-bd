@@ -5,8 +5,8 @@ import { useWishlistStore } from '@/lib/store/wishlist-store'
 
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    // Hydrate the wishlist store on client side
-    useWishlistStore.persist.rehydrate()
+    // Since we're using skipHydration: true, we don't need to manually rehydrate
+    // The store will handle hydration automatically when needed
   }, [])
 
   return <>{children}</>

@@ -341,17 +341,44 @@ export default function CMSPage() {
 
   const handleToggleHomepageSection = async (id: string, currentStatus: boolean) => {
     try {
+      // Update local state immediately for better UX
+      setHomepageSettings(prev => 
+        prev.map(setting => 
+          setting.id === id 
+            ? { ...setting, isVisible: !currentStatus }
+            : setting
+        )
+      )
+
       const response = await fetch(`/api/cms/homepage-settings/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
         body: JSON.stringify({ isVisible: !currentStatus })
       })
       
       if (!response.ok) throw new Error('Failed to update section visibility')
       
       toast.success(`Section ${!currentStatus ? 'shown' : 'hidden'} successfully!`)
+      
+      // Clear homepage cache to ensure fresh data
+      if (typeof window !== 'undefined') {
+        // Clear the homepage cache by triggering a page refresh or cache clear
+        window.dispatchEvent(new CustomEvent('homepage-settings-updated'))
+      }
+      
       fetchData() // Refresh data
     } catch (error) {
+      // Revert local state on error
+      setHomepageSettings(prev => 
+        prev.map(setting => 
+          setting.id === id 
+            ? { ...setting, isVisible: currentStatus }
+            : setting
+        )
+      )
       toast.error('Failed to update section visibility')
       console.error(error)
     }
@@ -471,10 +498,13 @@ export default function CMSPage() {
               { id: 'blog', name: 'Blog Posts' },
               { id: 'banners', name: 'Banners' },
               { id: 'countdowns', name: 'Countdowns' },
+              { id: 'countdown-banners', name: 'Countdown Banners' },
               { id: 'testimonials', name: 'Testimonials' },
               { id: 'faq', name: 'FAQs' },
               { id: 'badges', name: 'Football Badges' },
               { id: 'collections', name: 'Collections' },
+              { id: 'homepage-collections', name: 'Homepage Collections' },
+              { id: 'exclusive-products', name: 'Exclusive Products' },
               { id: 'homepage', name: 'Homepage Sections' },
               { id: 'menu-config', name: 'Menu Configuration' },
               { id: 'other', name: 'Other' }
@@ -765,6 +795,29 @@ export default function CMSPage() {
           </div>
         )}
 
+        {/* Countdown Banners Tab */}
+        {activeTab === 'countdown-banners' && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Countdown Banners</h2>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => window.open('/admin/cms/countdown-banners', '_blank')}
+                  className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90"
+                >
+                  Manage Countdown Banners
+                </button>
+              </div>
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-blue-800 text-sm">
+                Create and manage modern countdown banner sections for your homepage. 
+                These banners feature attractive designs with countdown timers and customizable backgrounds.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Testimonials Tab */}
         {activeTab === 'testimonials' && (
           <div className="space-y-4">
@@ -984,6 +1037,82 @@ export default function CMSPage() {
                 className="mt-4 bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90"
               >
                 Open Collection Manager
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Homepage Collections Tab */}
+        {activeTab === 'homepage-collections' && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Homepage Collections</h2>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => window.open('/admin/cms/homepage-collections', '_blank')}
+                  className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90"
+                >
+                  Manage Homepage Collections
+                </button>
+              </div>
+            </div>
+            <div className="glass-card p-6 text-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Package className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Homepage Collection Section Management</h3>
+              <p className="text-muted-foreground mb-4">
+                Control which collections appear in the dedicated collection section on your homepage. Select, reorder, and manage the display of collections.
+              </p>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>• Select which collections appear on the homepage</p>
+                <p>• Reorder collections for optimal display</p>
+                <p>• Toggle section visibility on/off</p>
+                <p>• Preview collection arrangement</p>
+              </div>
+              <button 
+                onClick={() => window.open('/admin/cms/homepage-collections', '_blank')}
+                className="mt-4 bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90"
+              >
+                Open Homepage Collections Manager
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Exclusive Products Tab */}
+        {activeTab === 'exclusive-products' && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Exclusive Products</h2>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => window.open('/admin/cms/exclusive-products', '_blank')}
+                  className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90"
+                >
+                  Manage Exclusive Products
+                </button>
+              </div>
+            </div>
+            <div className="glass-card p-6 text-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Package className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Exclusive Products Section Management</h3>
+              <p className="text-muted-foreground mb-4">
+                Control which products appear in the "Exclusive Products" section on your homepage. Select, reorder, and manage the display of exclusive products.
+              </p>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>• Select which products appear in exclusive section</p>
+                <p>• Reorder products for optimal display</p>
+                <p>• Toggle product visibility on/off</p>
+                <p>• Bulk add/remove products</p>
+              </div>
+              <button 
+                onClick={() => window.open('/admin/cms/exclusive-products', '_blank')}
+                className="mt-4 bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90"
+              >
+                Open Exclusive Products Manager
               </button>
             </div>
           </div>

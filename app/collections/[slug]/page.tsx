@@ -2,7 +2,10 @@ import { notFound } from 'next/navigation'
 import Header from '@/components/header'
 import CartSidebar from '@/components/cart-sidebar'
 import Footer from '@/components/footer'
-import CollectionsDisplay from '@/components/collections-display'
+import CollectionProducts from '@/components/collection-products'
+import SubCollectionsDisplay from '@/components/sub-collections-display'
+import CollectionCountdownBanner from '@/components/collection-countdown-banner'
+import Breadcrumb from '@/components/breadcrumb'
 import { prisma } from '@/lib/prisma'
 
 interface CollectionPageProps {
@@ -20,8 +23,8 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
       isActive: true
     },
     include: {
-      parent: true,
-      children: {
+      Collection: true, // parent relationship
+      other_Collection: {
         where: {
           isActive: true
         },
@@ -31,8 +34,8 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
       },
       _count: {
         select: {
-          children: true,
-          products: true
+          other_Collection: true,
+          CollectionProduct: true
         }
       }
     }
@@ -46,44 +49,73 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-8">
-        {/* Collection Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
-            {collection.parent && (
-              <>
-                <a 
-                  href={`/collections/${collection.parent.slug}`}
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {collection.parent.name}
-                </a>
-                <span className="text-muted-foreground">/</span>
-              </>
+        <Breadcrumb 
+          items={[
+            { label: 'Collections', href: '/collections' },
+            ...(collection.Collection ? [{ label: collection.Collection.name, href: `/collections/${collection.Collection.slug}` }] : []),
+            { label: collection.name }
+          ]}
+          className="mb-6"
+        />
+        {/* Countdown Banner for Limited Time Offer */}
+        {collection.slug === 'limited-time-offer' && (
+          <CollectionCountdownBanner 
+            collectionName={collection.name}
+            productCount={collection._count.CollectionProduct}
+          />
+        )}
+
+        {/* Collection Header - Only show for non-limited-time-offer collections */}
+        {collection.slug !== 'limited-time-offer' && (
+          <div className="mb-8">
+            <div className="flex items-center gap-4 mb-4">
+              {collection.Collection && (
+                <>
+                  <a 
+                    href={`/collections/${collection.Collection.slug}`}
+                    className="text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {collection.Collection.name}
+                  </a>
+                  <span className="text-muted-foreground">/</span>
+                </>
+              )}
+              <h1 className="text-3xl font-bold">{collection.name}</h1>
+            </div>
+            
+            {collection.description && (
+              <p className="text-lg text-muted-foreground max-w-3xl">
+                {collection.description}
+              </p>
             )}
-            <h1 className="text-3xl font-bold">{collection.name}</h1>
+            
+            <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
+              <span>{collection._count.CollectionProduct} products</span>
+              {collection._count.other_Collection > 0 && (
+                <span>{collection._count.other_Collection} sub-collections</span>
+              )}
+            </div>
           </div>
-          
-          {collection.description && (
-            <p className="text-lg text-muted-foreground max-w-3xl">
-              {collection.description}
-            </p>
-          )}
-          
-          <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
-            <span>{collection._count.products} products</span>
-            {collection._count.children > 0 && (
-              <span>{collection._count.children} sub-collections</span>
+        )}
+
+        {/* Collection Info for Limited Time Offer */}
+        {collection.slug === 'limited-time-offer' && (
+          <div className="mb-8">
+            {collection.description && (
+              <p className="text-lg text-muted-foreground max-w-3xl mb-4">
+                {collection.description}
+              </p>
             )}
+            
           </div>
-        </div>
+        )}
 
         {/* Sub-collections */}
-        {collection.children.length > 0 && (
+        {collection.other_Collection.length > 0 && (
           <div className="mb-8">
             <h2 className="text-2xl font-bold mb-6">Sub-collections</h2>
-            <CollectionsDisplay
+            <SubCollectionsDisplay
               parentId={collection.id}
-              showProducts={false}
               className="mb-8"
             />
           </div>
@@ -92,10 +124,7 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
         {/* Collection Products */}
         <div>
           <h2 className="text-2xl font-bold mb-6">Products</h2>
-          <CollectionsDisplay
-            parentId={collection.id}
-            showProducts={true}
-          />
+          <CollectionProducts collectionId={collection.id} />
         </div>
       </main>
       <Footer />

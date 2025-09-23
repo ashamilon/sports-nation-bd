@@ -3,6 +3,7 @@ import Header from '@/components/header'
 import CartSidebar from '@/components/cart-sidebar'
 import Footer from '@/components/footer'
 import ProductDetails from '@/components/product-details'
+import Breadcrumb from '@/components/breadcrumb'
 import { prisma } from '@/lib/prisma'
 import { promises as fs } from 'fs'
 import path from 'path'
@@ -52,6 +53,17 @@ export default async function ProductPage({ params }: ProductPageProps) {
         orderBy: {
           createdAt: 'desc'
         }
+      },
+      CollectionProduct: {
+        include: {
+          Collection: {
+            select: {
+              id: true,
+              name: true,
+              slug: true
+            }
+          }
+        }
       }
     }
   })
@@ -98,13 +110,24 @@ export default async function ProductPage({ params }: ProductPageProps) {
       },
       createdAt: review.createdAt.toISOString()
     })),
-    badges: product.selectedBadges ? await getBadgesFromIds(JSON.parse(product.selectedBadges)) : []
+    badges: product.selectedBadges ? await getBadgesFromIds(JSON.parse(product.selectedBadges)) : [],
+    collections: product.CollectionProduct?.map(cp => cp.Collection) || []
   }
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main>
+        <div className="container mx-auto px-4 py-6">
+          <Breadcrumb 
+            items={[
+              { label: 'Products', href: '/products' },
+              ...(product.Category ? [{ label: product.Category.name, href: `/category/${product.Category.slug}` }] : []),
+              { label: product.name }
+            ]}
+            className="mb-6"
+          />
+        </div>
         <ProductDetails product={productWithRating} />
       </main>
       <Footer />

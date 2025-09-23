@@ -1,13 +1,18 @@
 "use client"
 
+import { useEffect } from 'react'
 import { useHomepageData } from '@/lib/hooks/use-homepage-data'
-import BannerSlideshow from '@/components/banner-slideshow'
+import BannerSlideshowSimple from '@/components/banner-slideshow-simple'
+import BannerPreloader from '@/components/banner-preloader'
 import CountdownTimer from '@/components/countdown-timer'
 import HeroSection from '@/components/hero-section'
 import CircularCollectionsCarousel from '@/components/circular-collections-carousel'
 import CategoriesSection from '@/components/categories-section'
+import CountdownBanner from '@/components/countdown-banner'
 import CollectionsSection from '@/components/collections-section'
+import CollectionsDisplay from '@/components/collections-display'
 import FeaturedProducts from '@/components/featured-products'
+import ExclusiveProducts from '@/components/exclusive-products'
 import ReviewsCarousel from '@/components/reviews-carousel'
 import { 
   SkeletonBanner, 
@@ -18,68 +23,52 @@ import {
 export default function DynamicHome() {
   const { data, loading, error, isHydrated, isSectionVisible } = useHomepageData()
 
-  // Show skeleton loading while data is being fetched
+  // Show loading state
   if (loading || !isHydrated) {
     return (
       <div className="space-y-8">
-        {/* Skeleton for Home Top Banners */}
         <div className="container mx-auto px-4 pt-8">
           <SkeletonBanner />
         </div>
-
-        {/* Hero Section - Always render */}
-        <HeroSection />
-        
-        {/* Circular Collections Carousel - Always render */}
-        <CircularCollectionsCarousel />
-        
-        {/* Skeleton for Home Hero Banners */}
-        <div className="container mx-auto px-4 pt-8">
-          <SkeletonBanner />
-        </div>
-
-        {/* Skeleton for Countdown Timers */}
         <div className="container mx-auto px-4">
-          <SkeletonCountdown />
+          <SkeletonSection title="Loading...">
+            <div className="animate-pulse">
+              <div className="h-4 bg-gray-300 rounded w-3/4 mb-4"></div>
+              <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+            </div>
+          </SkeletonSection>
         </div>
-        
-        {/* Categories Section - Always render */}
-        <CategoriesSection />
-        
-        {/* Collections Section - Always render */}
-        <CollectionsSection />
-        
-        {/* Featured Products - Always render */}
-        <FeaturedProducts />
-        
-        {/* Reviews Carousel - Always render */}
-        <ReviewsCarousel />
+        <div className="container mx-auto px-4">
+          <SkeletonSection title="Loading...">
+            <div className="animate-pulse">
+              <div className="h-4 bg-gray-300 rounded w-3/4 mb-4"></div>
+              <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+            </div>
+          </SkeletonSection>
+        </div>
       </div>
     )
   }
 
-  // Show error state if data fetching failed
+  // Show error state
   if (error) {
-    console.error('Homepage data error:', error)
-    // Fallback to basic layout without dynamic content
     return (
-      <div className="space-y-8">
-        <HeroSection />
-        <CircularCollectionsCarousel />
-        <CategoriesSection />
-        <CollectionsSection />
-        <FeaturedProducts />
-        <ReviewsCarousel />
+      <div className="container mx-auto px-4 pt-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <h2 className="text-lg font-semibold text-red-800 mb-2">Error Loading Homepage</h2>
+          <p className="text-red-600">{error}</p>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="space-y-8">
+
       {/* Home Top Banners - Slideshow */}
-      {isSectionVisible('banners_top') && data?.banners.homeTop.length > 0 && (
+      {isSectionVisible('banner') && data?.banners?.homeTop && data.banners.homeTop.length > 0 && data && (
         <div className="container mx-auto px-4 pt-8">
-          <BannerSlideshow 
+          <BannerSlideshowSimple 
             banners={data.banners.homeTop}
             className="shadow-lg"
           />
@@ -93,9 +82,9 @@ export default function DynamicHome() {
       <CircularCollectionsCarousel />
 
       {/* Home Hero Banners - Slideshow */}
-      {isSectionVisible('banners_hero') && data?.banners.homeHero.length > 0 && (
+      {isSectionVisible('banner') && data?.banners?.homeHero && data.banners.homeHero.length > 0 && data && (
         <div className="container mx-auto px-4 pt-8">
-          <BannerSlideshow 
+          <BannerSlideshowSimple 
             banners={data.banners.homeHero}
             className="shadow-lg"
           />
@@ -103,7 +92,7 @@ export default function DynamicHome() {
       )}
 
       {/* Countdown Timers */}
-      {isSectionVisible('countdowns') && data?.countdowns.length > 0 && (
+      {isSectionVisible('countdown') && data?.countdowns && data.countdowns.length > 0 && data && (
         <div className="container mx-auto px-4">
           <div className="space-y-4">
             {data.countdowns.map((countdown) => (
@@ -119,11 +108,24 @@ export default function DynamicHome() {
       {/* Categories Section */}
       {isSectionVisible('categories') && <CategoriesSection />}
 
+      {/* Countdown Banner */}
+      <div className="container mx-auto px-4">
+        <CountdownBanner />
+      </div>
+
       {/* Collections Section */}
-      {isSectionVisible('collections') && <CollectionsSection />}
+      {isSectionVisible('collections') && data?.collections && data.collections.length > 0 && (
+        <CollectionsSection collections={data.collections} />
+      )}
+
+      {/* Collections Display Section */}
+      <CollectionsDisplay />
 
       {/* Featured Products */}
-      {isSectionVisible('products') && <FeaturedProducts />}
+      {isSectionVisible('featured-products') && <FeaturedProducts />}
+
+      {/* Exclusive Products */}
+      <ExclusiveProducts />
 
       {/* Reviews Carousel */}
       <ReviewsCarousel />

@@ -15,7 +15,8 @@ import {
   MoreVertical,
   Download,
   Printer,
-  MapPin
+  MapPin,
+  X
 } from 'lucide-react'
 import CourierSelector from './courier-selector'
 
@@ -25,6 +26,8 @@ export default function OrdersManagement() {
   const [selectedOrders, setSelectedOrders] = useState<number[]>([])
   const [selectedOrderForCourier, setSelectedOrderForCourier] = useState<string | null>(null)
   const [showCourierSelector, setShowCourierSelector] = useState(false)
+  const [selectedOrderDetails, setSelectedOrderDetails] = useState<any | null>(null)
+  const [showOrderDetails, setShowOrderDetails] = useState(false)
 
   const [orders, setOrders] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -35,7 +38,9 @@ export default function OrdersManagement() {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch('/api/admin/orders')
+      const response = await fetch('/api/admin/orders', {
+        credentials: 'include'
+      })
       if (response.ok) {
         const data = await response.json()
         setOrders(data.orders || [])
@@ -127,6 +132,11 @@ export default function OrdersManagement() {
   const handleAssignCourier = (orderId: string) => {
     setSelectedOrderForCourier(orderId)
     setShowCourierSelector(true)
+  }
+
+  const handleViewOrderDetails = (order: any) => {
+    setSelectedOrderDetails(order)
+    setShowOrderDetails(true)
   }
 
   const handleCourierUpdate = (courierService: string, trackingId: string) => {
@@ -324,13 +334,17 @@ export default function OrdersManagement() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="border-b border-border/30 hover:bg-accent/50 transition-colors"
+                  className="border-b border-border/30 hover:bg-accent/50 transition-colors cursor-pointer"
+                  onClick={() => handleViewOrderDetails(order)}
                 >
                   <td className="p-4">
                     <input
                       type="checkbox"
                       checked={selectedOrders.includes(parseInt(order.id.replace('ORD-', '')))}
-                      onChange={() => handleSelectOrder(order.id)}
+                      onChange={(e) => {
+                        e.stopPropagation()
+                        handleSelectOrder(order.id)
+                      }}
                       className="rounded border-border"
                     />
                   </td>
@@ -402,6 +416,10 @@ export default function OrdersManagement() {
                       <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleViewOrderDetails(order)
+                        }}
                         className="glass-button p-2 rounded-lg"
                         title="View Details"
                       >
@@ -411,7 +429,10 @@ export default function OrdersManagement() {
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                          onClick={() => handleAssignCourier(order.id)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleAssignCourier(order.id)
+                          }}
                           className="glass-button p-2 rounded-lg text-blue-600 hover:bg-blue-500/10"
                           title="Assign Courier"
                         >
@@ -421,6 +442,7 @@ export default function OrdersManagement() {
                       <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
+                        onClick={(e) => e.stopPropagation()}
                         className="glass-button p-2 rounded-lg"
                         title="More Actions"
                       >
@@ -461,16 +483,16 @@ export default function OrdersManagement() {
 
       {/* Courier Selector Modal */}
       {showCourierSelector && selectedOrderForCourier && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white/90 dark:bg-black-90/90 backdrop-blur-md rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/20 dark:border-black-80/20 shadow-2xl">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-semibold text-foreground">
                   Assign Courier Service
                 </h3>
                 <button
                   onClick={() => setShowCourierSelector(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-muted-foreground hover:text-foreground transition-colors p-2 rounded-lg hover:bg-white/20 dark:hover:bg-black-80/20"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -485,6 +507,285 @@ export default function OrdersManagement() {
                 currentTrackingId={orders.find(order => order.id === selectedOrderForCourier)?.courierTrackingId}
                 onCourierUpdate={handleCourierUpdate}
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Order Details Modal */}
+      {showOrderDetails && selectedOrderDetails && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white/90 dark:bg-black-90/90 backdrop-blur-md rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-white/20 dark:border-black-80/20 shadow-2xl">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-foreground">Order Details</h2>
+                <button
+                  onClick={() => setShowOrderDetails(false)}
+                  className="text-muted-foreground hover:text-foreground transition-colors p-2 rounded-lg hover:bg-white/20 dark:hover:bg-black-80/20"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Order Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground">Order Information</h3>
+                  <div className="glass-card p-4 rounded-lg">
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Order ID:</span>
+                        <span className="font-medium">{selectedOrderDetails.id || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Status:</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          selectedOrderDetails.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          selectedOrderDetails.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                          selectedOrderDetails.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
+                          selectedOrderDetails.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {selectedOrderDetails.status || 'Unknown'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Date:</span>
+                        <span className="font-medium">
+                          {selectedOrderDetails.createdAt ? new Date(selectedOrderDetails.createdAt).toLocaleDateString() : 'N/A'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Total:</span>
+                        <span className="font-medium">৳{selectedOrderDetails.total || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Payment Method:</span>
+                        <span className="font-medium">{selectedOrderDetails.paymentMethod || 'N/A'}</span>
+                      </div>
+                      {selectedOrderDetails.trackingNumber && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Tracking:</span>
+                          <span className="font-medium">{selectedOrderDetails.trackingNumber}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Customer Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground">Customer Information</h3>
+                  <div className="glass-card p-4 rounded-lg">
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Name:</span>
+                        <span className="font-medium">{selectedOrderDetails.customer?.name || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Email:</span>
+                        <span className="font-medium">{selectedOrderDetails.customer?.email || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Phone:</span>
+                        <span className="font-medium">{selectedOrderDetails.customer?.phone || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Shipping Address */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground">Shipping Address</h3>
+                  <div className="glass-card p-4 rounded-lg">
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Address:</span>
+                        <span className="font-medium text-right">{selectedOrderDetails.shippingAddress?.address || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">City:</span>
+                        <span className="font-medium">{selectedOrderDetails.shippingAddress?.city || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Postal Code:</span>
+                        <span className="font-medium">{selectedOrderDetails.shippingAddress?.postalCode || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Order Items */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground">Order Items</h3>
+                  <div className="glass-card p-4 rounded-lg">
+                    <div className="space-y-3">
+                      {selectedOrderDetails.items?.map((item: any, index: number) => (
+                        <div key={index} className="p-4 bg-accent/20 rounded-lg space-y-3">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                              <Package className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium text-foreground">{item.product.name}</p>
+                              <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
+                              <p className="text-sm text-muted-foreground">Price: ৳{item.price}</p>
+                            </div>
+                          </div>
+                          
+                          {/* Customization Details */}
+                          {item.customOptions && (
+                            <div className="ml-15 space-y-2">
+                              <h4 className="text-sm font-medium text-foreground">Customization Details:</h4>
+                              <div className="bg-white/50 dark:bg-black-80/50 rounded-lg p-3 space-y-2">
+                                {/* Basic Product Options */}
+                                {item.customOptions.size && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">Size:</span>
+                                    <span className="font-medium">{item.customOptions.size}</span>
+                                  </div>
+                                )}
+                                {item.customOptions.color && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">Color:</span>
+                                    <span className="font-medium">{item.customOptions.color}</span>
+                                  </div>
+                                )}
+                                {item.customOptions.fabric && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">Fabric:</span>
+                                    <span className="font-medium">{item.customOptions.fabric}</span>
+                                  </div>
+                                )}
+                                
+                                {/* Name and Number Printing */}
+                                {item.customOptions.name && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">Player Name:</span>
+                                    <span className="font-medium">{item.customOptions.name}</span>
+                                  </div>
+                                )}
+                                {item.customOptions.number && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">Jersey Number:</span>
+                                    <span className="font-medium">#{item.customOptions.number}</span>
+                                  </div>
+                                )}
+                                
+                                {/* Badges - Simple List (only show if badgeDetails not available) */}
+                                {item.customOptions.badges && Array.isArray(item.customOptions.badges) && item.customOptions.badges.length > 0 && !item.customOptions.badgeDetails && (
+                                  <div className="text-sm">
+                                    <span className="text-muted-foreground">Badges ({item.customOptions.badges.length}):</span>
+                                    <div className="mt-1 space-y-1">
+                                      {item.customOptions.badges.map((badge: any, badgeIndex: number) => (
+                                        <div key={badgeIndex} className="flex items-center space-x-2">
+                                          <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                          <span className="font-medium">
+                                            {typeof badge === 'string' ? badge : badge.name || badge.id || `Badge ${badgeIndex + 1}`}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    {item.customOptions.badgeNote && (
+                                      <div className="mt-1 text-xs text-muted-foreground italic">
+                                        {item.customOptions.badgeNote}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                                
+                                {/* Badge Details (if available) */}
+                                {item.customOptions.badgeDetails && Array.isArray(item.customOptions.badgeDetails) && item.customOptions.badgeDetails.length > 0 && (
+                                  <div className="text-sm">
+                                    <span className="text-muted-foreground">Badge Details:</span>
+                                    <div className="mt-2 space-y-3">
+                                      {item.customOptions.badgeDetails.map((badge: any, badgeIndex: number) => (
+                                        <div key={badgeIndex} className="flex items-center space-x-3 p-2 bg-white/30 dark:bg-black-70/30 rounded-lg">
+                                          {/* Badge Image */}
+                                          <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                                            {badge.image ? (
+                                              <img 
+                                                src={badge.image} 
+                                                alt={badge.name || `Badge ${badgeIndex + 1}`}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                  e.currentTarget.style.display = 'none'
+                                                  e.currentTarget.nextElementSibling.style.display = 'flex'
+                                                }}
+                                              />
+                                            ) : null}
+                                            <div 
+                                              className="w-full h-full bg-gray-200 dark:bg-black-60 flex items-center justify-center text-xs font-medium"
+                                              style={{ display: badge.image ? 'none' : 'flex' }}
+                                            >
+                                              {badge.name ? badge.name.charAt(0).toUpperCase() : 'B'}
+                                            </div>
+                                          </div>
+                                          
+                                          {/* Badge Info */}
+                                          <div className="flex-1 min-w-0">
+                                            <div className="font-medium text-foreground truncate">
+                                              {badge.name || badge.id || `Badge ${badgeIndex + 1}`}
+                                            </div>
+                                            {badge.description && (
+                                              <div className="text-xs text-muted-foreground truncate">
+                                                {badge.description}
+                                              </div>
+                                            )}
+                                          </div>
+                                          
+                                          {/* Badge Price */}
+                                          {badge.price && (
+                                            <div className="text-sm font-medium text-green-600 dark:text-green-400">
+                                              ৳{badge.price}
+                                            </div>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {/* Legacy fields for backward compatibility */}
+                                {item.customOptions.badge && !item.customOptions.badges && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">Badge:</span>
+                                    <span className="font-medium">{item.customOptions.badge}</span>
+                                  </div>
+                                )}
+                                {item.customOptions.customText && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">Custom Text:</span>
+                                    <span className="font-medium">{item.customOptions.customText}</span>
+                                  </div>
+                                )}
+                                {item.customOptions.jerseyNumber && !item.customOptions.number && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">Jersey Number:</span>
+                                    <span className="font-medium">#{item.customOptions.jerseyNumber}</span>
+                                  </div>
+                                )}
+                                {item.customOptions.playerName && !item.customOptions.name && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">Player Name:</span>
+                                    <span className="font-medium">{item.customOptions.playerName}</span>
+                                  </div>
+                                )}
+                                {item.customOptions.notes && (
+                                  <div className="text-sm">
+                                    <span className="text-muted-foreground">Notes:</span>
+                                    <p className="font-medium mt-1">{item.customOptions.notes}</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

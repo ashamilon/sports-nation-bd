@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import Image from 'next/image'
 
 interface Banner {
   id: string
@@ -28,6 +29,12 @@ export default function BannerSlideshow({ banners, className = "" }: BannerSlide
   const activeBanners = banners
     .filter(banner => banner.isActive)
     .sort((a, b) => b.priority - a.priority)
+
+  // Debug logging
+  useEffect(() => {
+    console.log('BannerSlideshow received banners:', banners)
+    console.log('Active banners:', activeBanners)
+  }, [banners, activeBanners])
 
   // Auto-play functionality
   useEffect(() => {
@@ -65,11 +72,17 @@ export default function BannerSlideshow({ banners, className = "" }: BannerSlide
     const banner = activeBanners[0]
     return (
       <div className={`relative overflow-hidden rounded-lg ${className}`}>
-        <img
+        <Image
           src={banner.image}
           alt={banner.title}
-          className="w-full h-auto object-cover"
-          style={{ width: '100%', height: 'auto' }}
+          width={1200}
+          height={400}
+          className="w-full h-auto object-cover transition-opacity duration-300"
+          priority
+          quality={85}
+          unoptimized={banner.image.startsWith('blob:')}
+          placeholder="blur"
+          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
         />
         {banner.title && (
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
@@ -100,10 +113,17 @@ export default function BannerSlideshow({ banners, className = "" }: BannerSlide
             transition={{ duration: 0.5, ease: "easeInOut" }}
             className="absolute inset-0"
           >
-            <img
+            <Image
               src={activeBanners[currentIndex].image}
               alt={activeBanners[currentIndex].title}
-              className="w-full h-full object-cover"
+              width={1200}
+              height={400}
+              className="w-full h-full object-cover transition-opacity duration-300"
+              priority={currentIndex === 0}
+              quality={85}
+              unoptimized={activeBanners[currentIndex].image.startsWith('blob:')}
+              placeholder="blur"
+              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
             />
             
             {/* Overlay with title */}

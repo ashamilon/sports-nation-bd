@@ -24,7 +24,7 @@ export default function HeroSection() {
                 transition={{ duration: 0.8, delay: 0.2 }}
                 className="text-4xl lg:text-6xl font-bold leading-tight"
               >
-                Premium Sports Gear
+                Buy Your Dream Here
                 <span className="block text-primary">For Champions</span>
               </motion.h1>
               

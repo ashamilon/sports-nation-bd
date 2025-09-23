@@ -433,7 +433,7 @@ export async function generateInvoiceHTML(invoiceData: InvoiceData): Promise<str
                     <img src="${logoBase64}" alt="Sports Nation BD Logo" />
                 </div>
                 <h1>INVOICE</h1>
-                <p>Sports Nation BD - Premium Sports Gear</p>
+                <p>Sports Nation BD - Buy Your Dream Here</p>
             </div>
             
             <div class="content">
@@ -563,7 +563,7 @@ export async function generateInvoiceHTML(invoiceData: InvoiceData): Promise<str
             
             <div class="footer">
                 <p><strong>Thank you for your business!</strong></p>
-                <p>Sports Nation BD - Premium Sports Gear & Jerseys</p>
+                <p>Sports Nation BD - Buy Your Dream Here</p>
                 <p>For support, contact us at support@sportsnationbd.com</p>
             </div>
         </div>

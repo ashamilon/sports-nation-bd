@@ -16,7 +16,7 @@ async function main() {
       email: 'admin@sportsnationbd.com',
       password: hashedPassword,
       role: 'admin',
-      phone: '+880 1868 556390'
+      phone: '+880 1647 429992'
     }
   })
 

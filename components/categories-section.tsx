@@ -7,58 +7,58 @@ import MobileCategorySlideshow from './mobile-category-slideshow'
 
 const categories = [
   {
-    name: 'Naviforce Watches',
-    slug: 'watches',
+    name: 'Watches',
+    slug: 'watch',
     icon: Watch,
     description: 'Premium timepieces for champions',
     image: '⌚',
     color: 'from-blue-500/20 to-blue-600/20',
-    href: '/category/watches'
+    href: '/category/watch'
   },
   {
-    name: 'Club Jerseys',
-    slug: 'jerseys',
+    name: 'Jerseys',
+    slug: 'jersey',
     icon: Shirt,
     description: 'Fan & Player versions available',
     image: '⚽',
     color: 'from-green-500/20 to-green-600/20',
-    href: '/category/jerseys'
+    href: '/category/jersey'
   },
   {
-    name: 'Premium Sneakers',
-    slug: 'sneakers',
+    name: 'Sneakers',
+    slug: 'sneaker',
     icon: Footprints,
     description: 'Top brands & latest models',
     image: '👟',
     color: 'from-purple-500/20 to-purple-600/20',
-    href: '/category/sneakers'
+    href: '/category/sneaker'
   },
   {
-    name: 'Club Shorts',
-    slug: 'shorts',
+    name: 'Shorts',
+    slug: 'short',
     icon: ShirtIcon,
     description: 'Match your jersey perfectly',
     image: '🩳',
     color: 'from-orange-500/20 to-orange-600/20',
-    href: '/category/shorts'
+    href: '/category/short'
   },
   {
     name: 'Custom Jerseys',
-    slug: 'custom',
+    slug: 'custom-jersey',
     icon: Scissors,
     description: 'Minimum 11 pieces order',
     image: '✂️',
     color: 'from-red-500/20 to-red-600/20',
-    href: '/custom-jerseys'
+    href: '/category/custom-jersey'
   },
   {
-    name: 'Premium Badges',
-    slug: 'badges',
+    name: 'Badges',
+    slug: 'badge',
     icon: Crown,
     description: 'League, UCL & FIFA badges',
     image: '🏆',
     color: 'from-yellow-500/20 to-yellow-600/20',
-    href: '/category/badges'
+    href: '/category/badge'
   }
 ]
 

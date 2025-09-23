@@ -117,7 +117,13 @@ export const useCartStore = create<CartStore>()(
         }
       }),
       partialize: (state) => ({ items: state.items }),
-      skipHydration: true
+      skipHydration: true,
+      onRehydrateStorage: () => (state) => {
+        // Handle rehydration completion
+        if (state) {
+          // Optional: Add any post-rehydration logic here
+        }
+      }
     }
   )
 )

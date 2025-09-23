@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Real-time Updates</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #e9ecef;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Real-time Updates Test</h1>
+        <p>This page demonstrates the real-time update functionality for collections. When you click the buttons below, it will trigger the same events that would be fired when collections are updated in the CMS.</p>
+        
+        <div class="status info">
+            <strong>Instructions:</strong> 
+            <ol>
+                <li>Open the homepage in another tab</li>
+                <li>Click the buttons below to simulate collection updates</li>
+                <li>Watch the homepage automatically refresh the collections section</li>
+            </ol>
+        </div>
+
+        <h2>Test Actions</h2>
+        <button class="button" onclick="triggerCollectionsUpdate()">Trigger Collections Update</button>
+        <button class="button" onclick="triggerHomepageSettingsUpdate()">Trigger Homepage Settings Update</button>
+        <button class="button" onclick="clearCache()">Clear Cache</button>
+
+        <div id="status" class="status">
+            Ready to test real-time updates...
+        </div>
+
+        <h2>Event Log</h2>
+        <div id="log" style="background: #f8f9fa; padding: 15px; border-radius: 5px; max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+            <div>Waiting for events...</div>
+        </div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function triggerCollectionsUpdate() {
+            log('Triggering collections-updated event...');
+            window.dispatchEvent(new CustomEvent('collections-updated', {
+                detail: { 
+                    timestamp: Date.now(),
+                    source: 'test-page'
+                }
+            }));
+            updateStatus('Collections update event triggered! Check the homepage.', 'success');
+            log('✓ collections-updated event dispatched');
+        }
+
+        function triggerHomepageSettingsUpdate() {
+            log('Triggering homepage-settings-updated event...');
+            window.dispatchEvent(new CustomEvent('homepage-settings-updated', {
+                detail: { 
+                    timestamp: Date.now(),
+                    source: 'test-page'
+                }
+            }));
+            updateStatus('Homepage settings update event triggered! Check the homepage.', 'success');
+            log('✓ homepage-settings-updated event dispatched');
+        }
+
+        function clearCache() {
+            log('Clearing homepage cache...');
+            // This would clear the cache in the real implementation
+            updateStatus('Cache cleared! (This is a demo - real cache clearing would happen in the app)', 'info');
+            log('✓ Cache clear requested');
+        }
+
+        // Listen for events from the main app
+        window.addEventListener('collections-updated', (event) => {
+            log(`📥 Received collections-updated event: ${JSON.stringify(event.detail)}`);
+        });
+
+        window.addEventListener('homepage-settings-updated', (event) => {
+            log(`📥 Received homepage-settings-updated event: ${JSON.stringify(event.detail)}`);
+        });
+
+        // Initialize
+        log('Test page loaded and ready');
+        log('Open http://localhost:3000 in another tab to see the real-time updates');
+    </script>
+</body>
+</html>
+

@@ -87,15 +87,15 @@ export default function ReviewsCarousel() {
 
   if (loading) {
     return (
-      <section className="py-16 bg-muted/30">
+      <section className="py-16 bg-muted/30 dark:bg-black-90/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Customer Reviews</h2>
-            <p className="text-muted-foreground">What our customers are saying</p>
+            <h2 className="text-3xl font-bold mb-4 text-foreground dark:text-white-100">Customer Reviews</h2>
+            <p className="text-muted-foreground dark:text-white-80">What our customers are saying</p>
           </div>
           <div className="flex space-x-6 overflow-hidden">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex-shrink-0 w-80 h-48 bg-muted rounded-lg animate-pulse" />
+              <div key={i} className="flex-shrink-0 w-80 h-48 bg-muted dark:bg-black-80 rounded-lg animate-pulse" />
             ))}
           </div>
         </div>
@@ -108,11 +108,11 @@ export default function ReviewsCarousel() {
   }
 
   return (
-    <section className="py-16 bg-muted/30">
+    <section className="py-16 bg-muted/30 dark:bg-black-90/30">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">5-Star Customer Reviews</h2>
-          <p className="text-muted-foreground">What our satisfied customers are saying</p>
+          <h2 className="text-3xl font-bold mb-4 text-foreground dark:text-white-100">5-Star Customer Reviews</h2>
+          <p className="text-muted-foreground dark:text-white-80">What our satisfied customers are saying</p>
         </div>
 
         <div 
@@ -155,7 +155,7 @@ function ReviewCard({ review }: { review: Review }) {
   }
 
   return (
-    <div className="flex-shrink-0 w-80 bg-white rounded-lg shadow-lg p-6 border border-border/50 hover:shadow-xl transition-shadow duration-300">
+    <div className="flex-shrink-0 w-80 bg-white dark:bg-black-90 rounded-lg shadow-lg p-6 border border-border/50 dark:border-black-80 hover:shadow-xl transition-shadow duration-300">
       {/* Header with user info and rating */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
@@ -178,8 +178,8 @@ function ReviewCard({ review }: { review: Review }) {
             )}
           </div>
           <div>
-            <h4 className="font-semibold text-sm">{review.User.name}</h4>
-            <p className="text-xs text-muted-foreground">{formatDate(review.createdAt)}</p>
+            <h4 className="font-semibold text-sm text-foreground dark:text-white-100">{review.User.name}</h4>
+            <p className="text-xs text-muted-foreground dark:text-white-70">{formatDate(review.createdAt)}</p>
           </div>
         </div>
         
@@ -196,23 +196,23 @@ function ReviewCard({ review }: { review: Review }) {
 
       {/* Product info */}
       <div className="mb-4">
-        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+        <div className="flex items-center space-x-2 text-sm text-muted-foreground dark:text-white-70">
           <span>Reviewed:</span>
-          <span className="font-medium text-foreground">{review.Product.name}</span>
+          <span className="font-medium text-foreground dark:text-white-100">{review.Product.name}</span>
         </div>
       </div>
 
       {/* Review comment */}
       <div className="relative">
         <Quote className="absolute -top-2 -left-2 w-6 h-6 text-primary/20" />
-        <p className="text-sm text-muted-foreground leading-relaxed pl-4">
+        <p className="text-sm text-muted-foreground dark:text-white-80 leading-relaxed pl-4">
           "{truncateComment(review.comment)}"
         </p>
       </div>
 
       {/* Verified badge */}
       <div className="mt-4 flex items-center justify-end">
-        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500 text-white shadow-sm">
           ✓ Verified Purchase
         </span>
       </div>

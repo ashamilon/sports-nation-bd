@@ -1,4 +1,4 @@
-# 🏆 Sports Nation BD - Premium Sports Gear E-commerce Platform
+# 🏆 Sports Nation BD - Buy Your Dream Here E-commerce Platform
 
 A comprehensive, modern e-commerce platform built with Next.js 15, featuring regional pricing, multi-language support, and advanced admin management.
 

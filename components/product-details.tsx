@@ -11,6 +11,7 @@ import ReviewsSummary from './reviews-summary'
 import ReviewsList from './reviews-list'
 import ReviewForm from './review-form'
 import RelatedProducts from './related-products'
+import CollectionCountdownBanner from './collection-countdown-banner'
 import Image from 'next/image'
 import toast from 'react-hot-toast'
 
@@ -54,6 +55,11 @@ interface Product {
     description?: string
     price: number
     image?: string
+  }>
+  collections?: Array<{
+    id: string
+    name: string
+    slug: string
   }>
 }
 
@@ -446,6 +452,15 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
             )}
           </div>
 
+          {/* Countdown Timer for Limited Time Offer Collection */}
+          {product.collections?.some(collection => collection.slug === 'limited-time-offer') && (
+            <div className="mt-4">
+              <CollectionCountdownBanner
+                collectionName="Limited Time Offer"
+                productCount={1}
+              />
+            </div>
+          )}
 
           {/* Variants */}
           {product.variants.length > 0 && (

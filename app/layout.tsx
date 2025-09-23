@@ -10,6 +10,7 @@ import { LoadingProvider } from "@/lib/loading-context";
 import LoadingOverlay from "@/components/loading-overlay";
 import WhatsAppButton from "@/components/whatsapp-button";
 import VisitorTracking from "@/components/visitor-tracking";
+import RealtimeUpdates from "@/components/realtime-updates";
 import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
@@ -28,8 +29,14 @@ const bebasNeue = Bebas_Neue({
   weight: "400",
 });
 
+// Add Freckle Face font
+const freckleFace = {
+  variable: "--font-freckle-face",
+  className: "freckle-face-regular",
+};
+
 export const metadata: Metadata = {
-  title: "Sports Nation BD - Premium Sports Gear & Jerseys",
+  title: "Sports Nation BD - Buy Your Dream Here",
   description: "Shop premium sports gear, Naviforce watches, sneakers, and custom club jerseys. Fan and player versions available with custom badges, names, and numbers.",
   keywords: "sports gear, jerseys, watches, sneakers, football, basketball, custom jerseys, Bangladesh",
   authors: [{ name: "Sports Nation BD" }],
@@ -38,7 +45,7 @@ export const metadata: Metadata = {
     apple: '/logo.png',
   },
   openGraph: {
-    title: "Sports Nation BD - Premium Sports Gear",
+    title: "Sports Nation BD - Buy Your Dream Here",
     description: "Shop premium sports gear, Naviforce watches, sneakers, and custom club jerseys.",
     type: "website",
     locale: "en_US",
@@ -60,6 +67,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Freckle+Face&display=swap" rel="stylesheet" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${bebasNeue.variable} antialiased`}
       >
@@ -87,6 +99,7 @@ export default function RootLayout({
                         },
                       }}
                     />
+                    <RealtimeUpdates />
                   </RegionalProvider>
                 </WishlistProvider>
               </CartProvider>

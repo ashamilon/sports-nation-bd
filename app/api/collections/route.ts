@@ -76,16 +76,21 @@ export async function GET(request: NextRequest) {
 // POST - Create a new collection
 export async function POST(request: NextRequest) {
   try {
+    console.log('POST /api/collections - Starting request')
+    
     const session = await getServerSession(authOptions)
     
     if (!session?.user || session.user.role !== 'admin') {
+      console.log('Unauthorized access attempt')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
-    const { name, description, image, parentId, isActive, isFeatured, sortOrder, metadata } = body
+    console.log('Request body:', body)
+    const { name, description, image, parentId, isActive, isFeatured, sortOrder, metadata, isInCarousel, carouselOrder } = body
 
     if (!name) {
+      console.log('Validation failed - name is required')
       return NextResponse.json({ error: 'Name is required' }, { status: 400 })
     }
 
@@ -96,11 +101,13 @@ export async function POST(request: NextRequest) {
       .replace(/(^-|-$)/g, '')
 
     // Check if slug already exists
+    console.log('Generated slug:', slug)
     const existingCollection = await prisma.collection.findUnique({
       where: { slug }
     })
 
     if (existingCollection) {
+      console.log('Validation failed - slug already exists:', slug)
       return NextResponse.json({ error: 'Collection with this name already exists' }, { status: 400 })
     }
 
@@ -118,6 +125,8 @@ export async function POST(request: NextRequest) {
         isActive: isActive !== undefined ? isActive : true,
         isFeatured: isFeatured !== undefined ? isFeatured : false,
         sortOrder: sortOrder || 0,
+        isInCarousel: isInCarousel !== undefined ? isInCarousel : false,
+        carouselOrder: carouselOrder || 0,
         metadata: metadata ? JSON.stringify(metadata) : null,
         updatedAt: new Date()
       },
@@ -133,10 +142,18 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({
+    console.log('Collection created successfully:', collection.id, collection.name)
+    
+    // Trigger real-time update event for collections
+    const response = NextResponse.json({
       success: true,
       data: collection
     })
+    
+    // Add header to indicate collections were updated
+    response.headers.set('X-Collections-Updated', 'true')
+    
+    return response
   } catch (error) {
     console.error('Error creating collection:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

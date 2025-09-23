@@ -49,10 +49,10 @@ export default function Logo({ className = '', showText = true, size = 'md', hre
       
       {showText && (
         <div className="flex flex-col">
-          <h1 className={`${textSizeClasses[size]} font-display font-bold text-brand-dark dark:text-brand-light hidden sm:block`}>
+          <h1 className={`${textSizeClasses[size]} font-display font-bold text-brand-dark dark:text-white-100 hidden sm:block`}>
             Sports Nation BD
           </h1>
-          <p className="text-xs text-brand-medium dark:text-brand-light-gray hidden sm:block">Premium Sports Gear</p>
+          <p className="text-xs text-brand-medium dark:text-white-90 hidden sm:block">Buy Your Dream Here</p>
         </div>
       )}
     </div>

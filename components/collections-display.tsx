@@ -2,13 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Package, ChevronRight, Star, ShoppingCart, Heart, Eye } from 'lucide-react'
+import { Package, ArrowRight, Star, Eye, ShoppingBag } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
-import toast from 'react-hot-toast'
-import { useCartStore } from '@/lib/store/cart-store'
-import { useWishlistStore } from '@/lib/store/wishlist-store'
-import { PriceDisplay } from './price-display'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 interface Collection {
   id: string
@@ -16,417 +14,297 @@ interface Collection {
   slug: string
   description?: string
   image?: string
-  parentId?: string
   isActive: boolean
   isFeatured: boolean
   sortOrder: number
-  createdAt: string
-  updatedAt: string
-  _count: {
-    children: number
-    products: number
+  _count?: {
+    CollectionProduct: number
   }
 }
 
-interface Product {
-  id: string
-  name: string
-  slug: string
-  price: number
-  comparePrice?: number
-  images: string[]
-  isActive: boolean
-  isFeatured: boolean
-  averageRating: number
-  reviewCount: number
-  variants: any[]
-}
-
-interface CollectionProduct {
-  id: string
-  collectionId: string
-  productId: string
-  sortOrder: number
-  isFeatured: boolean
-  createdAt: string
-  updatedAt: string
-  product: Product
-}
-
-interface CollectionsDisplayProps {
-  featuredOnly?: boolean
-  parentId?: string
-  limit?: number
-  showProducts?: boolean
-  className?: string
-}
-
-export default function CollectionsDisplay({ 
-  featuredOnly = false, 
-  parentId = 'null',
-  limit,
-  showProducts = true,
-  className = ""
-}: CollectionsDisplayProps) {
+export default function CollectionsDisplay() {
   const [collections, setCollections] = useState<Collection[]>([])
   const [loading, setLoading] = useState(true)
-  const [expandedCollections, setExpandedCollections] = useState<Set<string>>(new Set())
-  const [collectionProducts, setCollectionProducts] = useState<Record<string, CollectionProduct[]>>({})
-  const { addItem } = useCartStore()
-  const { addToWishlist, isInWishlist } = useWishlistStore()
 
   useEffect(() => {
+    const fetchCollections = async () => {
+      try {
+        const response = await fetch('/api/cms/homepage-collections')
+        
+        if (response.ok) {
+          const data = await response.json()
+          
+          if (data.success && data.data && data.data.settings) {
+            // Get collections from homepage settings
+            const homepageCollections = data.data.settings
+              .filter((setting: any) => setting.isVisible)
+              .sort((a: any, b: any) => a.sortOrder - b.sortOrder)
+              .map((setting: any) => setting.Collection)
+              .filter(Boolean)
+            
+            setCollections(homepageCollections)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching collections:', error)
+        setCollections([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
     fetchCollections()
-  }, [featuredOnly, parentId])
-
-  const fetchCollections = async () => {
-    try {
-      setLoading(true)
-      const params = new URLSearchParams()
-      
-      if (featuredOnly) {
-        params.append('isFeatured', 'true')
-      }
-      
-      if (parentId !== 'null') {
-        params.append('parentId', parentId)
-      } else {
-        params.append('parentId', 'null')
-      }
-      
-      params.append('isActive', 'true')
-      params.append('includeChildren', 'true')
-
-      const response = await fetch(`/api/collections?${params}&_t=${Date.now()}`, {
-        cache: 'no-store'
-      })
-      const data = await response.json()
-      
-      if (data.success) {
-        let collectionsData = data.data
-        
-        if (limit) {
-          collectionsData = collectionsData.slice(0, limit)
-        }
-        
-        setCollections(collectionsData)
-        
-        // Fetch products for each collection if showProducts is true
-        if (showProducts) {
-          const productPromises = collectionsData.map((collection: Collection) =>
-            fetchCollectionProducts(collection.id)
-          )
-          await Promise.all(productPromises)
-        }
-      } else {
-        toast.error('Failed to fetch collections')
-      }
-    } catch (error) {
-      console.error('Error fetching collections:', error)
-      toast.error('Failed to fetch collections')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchCollectionProducts = async (collectionId: string) => {
-    try {
-      const response = await fetch(`/api/collections/${collectionId}/products?limit=4&_t=${Date.now()}`, {
-        cache: 'no-store'
-      })
-      const data = await response.json()
-      
-      if (data.success) {
-        setCollectionProducts(prev => ({
-          ...prev,
-          [collectionId]: data.data
-        }))
-      }
-    } catch (error) {
-      console.error('Error fetching collection products:', error)
-    }
-  }
-
-  const toggleExpanded = (collectionId: string) => {
-    const newExpanded = new Set(expandedCollections)
-    if (newExpanded.has(collectionId)) {
-      newExpanded.delete(collectionId)
-    } else {
-      newExpanded.add(collectionId)
-      // Fetch products when expanding if not already fetched
-      if (!collectionProducts[collectionId]) {
-        fetchCollectionProducts(collectionId)
-      }
-    }
-    setExpandedCollections(newExpanded)
-  }
-
-  const handleAddToCart = (product: Product) => {
-    addItem({
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      image: (product.images && product.images.length > 0 && !product.images[0].startsWith('blob:'))
-        ? product.images[0]
-        : '/api/placeholder/300',
-      quantity: 1,
-      variantId: product.variants[0]?.id,
-      variantName: product.variants[0]?.name
-    })
-    toast.success(`${product.name} added to cart!`)
-  }
-
-  const handleToggleWishlist = async (product: Product) => {
-    const success = await addToWishlist(product.id)
-    if (success) {
-      toast.success('Added to wishlist!')
-    } else {
-      toast.error('Failed to add to wishlist')
-    }
-  }
-
-  const getChildCollections = (parentId: string) => {
-    return collections.filter(c => c.parentId === parentId)
-  }
+  }, [])
 
   if (loading) {
     return (
-      <div className={`space-y-4 ${className}`}>
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="glass-card p-6 animate-pulse">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-muted rounded-lg"></div>
-              <div className="flex-1">
-                <div className="h-6 bg-muted rounded w-1/3 mb-2"></div>
-                <div className="h-4 bg-muted rounded w-2/3"></div>
-              </div>
+      <section className="container mx-auto px-4 py-12">
+        <div className="text-center mb-8">
+          <div className="h-8 bg-gray-200 rounded w-64 mx-auto mb-4 animate-pulse"></div>
+          <div className="h-4 bg-gray-200 rounded w-96 mx-auto animate-pulse"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="glass-card p-6 rounded-xl">
+              <div className="aspect-video bg-gray-200 rounded-lg mb-4 animate-pulse"></div>
+              <div className="h-6 bg-gray-200 rounded mb-2 animate-pulse"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </section>
     )
   }
 
   if (collections.length === 0) {
     return (
-      <div className={`text-center py-12 ${className}`}>
-        <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-semibold mb-2">No collections found</h3>
-        <p className="text-muted-foreground">
-          {featuredOnly ? 'No featured collections available' : 'No collections available at the moment'}
-        </p>
-      </div>
+      <section className="container mx-auto px-4 py-12">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold mb-4">Our Collections</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            No collections configured for homepage display
+          </p>
+        </div>
+      </section>
     )
   }
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      {collections.map((collection) => {
-        const hasChildren = collection._count.children > 0
-        const isExpanded = expandedCollections.has(collection.id)
-        const children = getChildCollections(collection.id)
-        const products = collectionProducts[collection.id] || []
+    <section className="container mx-auto px-4 py-12">
+      <div className="text-center mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h2 className="text-3xl font-bold mb-4">Our Collections</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Explore our carefully curated collections featuring the best products in each category
+          </p>
+        </motion.div>
+      </div>
 
-        return (
+      {/* Desktop Grid */}
+      <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {collections.map((collection, index) => (
           <motion.div
             key={collection.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="glass-card rounded-2xl overflow-hidden"
+            transition={{ duration: 0.5, delay: index * 0.1 }}
+            className="group glass-card p-6 hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-1 active:scale-95 transition-all duration-300 rounded-xl"
           >
             {/* Collection Header */}
-            <div className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center">
-                    <Package className="h-8 w-8 text-primary" />
-                  </div>
-                  
-                  <div>
-                    <h2 className="text-2xl font-bold mb-1">{collection.name}</h2>
-                    {collection.description && (
-                      <p className="text-muted-foreground mb-2">{collection.description}</p>
-                    )}
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>{collection._count.products} products</span>
-                      {hasChildren && (
-                        <span>{collection._count.children} sub-collections</span>
-                      )}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg group-hover:text-primary transition-colors line-clamp-1">
+                  {collection.name}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {collection._count?.CollectionProduct || 0} products
+                </p>
+              </div>
+              {collection.isFeatured && (
+                <Badge variant="outline" className="text-xs">
+                  <Star className="h-3 w-3 mr-1" />
+                  Featured
+                </Badge>
+              )}
+            </div>
+
+            {/* Collection Description */}
+            {collection.description && (
+              <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                {collection.description}
+              </p>
+            )}
+
+            {/* Collection Image */}
+            <div className="mb-4">
+              <div className="relative aspect-video bg-muted rounded-xl overflow-hidden group/collection shadow-md hover:shadow-lg hover:shadow-primary/10 transition-all duration-300">
+                {collection.image ? (
+                  <Image
+                    src={collection.image}
+                    alt={collection.name}
+                    fill
+                    className="object-cover group-hover/collection:scale-110 transition-transform duration-500 ease-out"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+                    <div className="text-center">
+                      <Package className="h-12 w-12 text-primary/50 mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">No image available</p>
                     </div>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {hasChildren && (
-                    <button
-                      onClick={() => toggleExpanded(collection.id)}
-                      className="p-2 hover:bg-muted rounded-lg transition-colors"
-                    >
-                      <ChevronRight 
-                        className={`h-5 w-5 transition-transform ${
-                          isExpanded ? 'rotate-90' : ''
-                        }`} 
-                      />
-                    </button>
-                  )}
-                  
-                  <Link
-                    href={`/collections/${collection.slug}`}
-                    className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
-                  >
-                    View All
-                  </Link>
+                )}
+                
+                {/* Collection overlay on hover */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover/collection:opacity-100 transition-all duration-300 flex items-end justify-center pb-4">
+                  <div className="text-center text-white transform translate-y-4 group-hover/collection:translate-y-0 transition-transform duration-300">
+                    <p className="text-sm font-medium mb-1 drop-shadow-lg">
+                      {collection.name}
+                    </p>
+                    <p className="text-xs opacity-90 drop-shadow-md">
+                      {collection._count?.CollectionProduct || 0} products
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Sub-collections */}
-            {hasChildren && isExpanded && (
-              <div className="px-6 pb-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {children.map((child) => (
-                    <Link
-                      key={child.id}
-                      href={`/collections/${child.slug}`}
-                      className="group p-4 border border-border rounded-lg hover:border-primary/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                          <Package className="h-5 w-5 text-primary" />
+            {/* Collection Footer */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShoppingBag className="h-4 w-4 text-primary" />
+                <span className="text-sm text-muted-foreground">
+                  Collection
+                </span>
+              </div>
+              
+              <Link href={`/collections/${collection.slug}`}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-md group-hover:shadow-primary/20 group-hover:-translate-y-0.5 active:scale-95 transition-all duration-300 rounded-lg"
+                >
+                  View All
+                  <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Mobile Horizontal Scrolling */}
+      <div className="md:hidden">
+        <div className="flex gap-4 overflow-x-auto pb-4">
+          {collections.map((collection, index) => (
+            <motion.div
+              key={collection.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              className="group flex-shrink-0 w-[calc(50%-0.5rem)]"
+            >
+              <Link href={`/collections/${collection.slug}`}>
+                <div className="glass-card p-4 hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-1 active:scale-95 transition-all duration-300 rounded-xl h-full">
+                  {/* Collection Header */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-base group-hover:text-primary transition-colors line-clamp-1">
+                        {collection.name}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        {collection._count?.CollectionProduct || 0} products
+                      </p>
+                    </div>
+                    {collection.isFeatured && (
+                      <Badge variant="outline" className="text-xs">
+                        <Star className="h-3 w-3 mr-1" />
+                        Featured
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* Collection Description */}
+                  {collection.description && (
+                    <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
+                      {collection.description}
+                    </p>
+                  )}
+
+                  {/* Collection Image */}
+                  <div className="mb-3">
+                    <div className="relative aspect-video bg-muted rounded-lg overflow-hidden group/collection shadow-md hover:shadow-lg hover:shadow-primary/10 transition-all duration-300">
+                      {collection.image ? (
+                        <Image
+                          src={collection.image}
+                          alt={collection.name}
+                          fill
+                          className="object-cover group-hover/collection:scale-110 transition-transform duration-500 ease-out"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+                          <div className="text-center">
+                            <Package className="h-8 w-8 text-primary/50 mx-auto mb-1" />
+                            <p className="text-xs text-muted-foreground">No image</p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-semibold group-hover:text-primary transition-colors">
-                            {child.name}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            {child._count.products} products
+                      )}
+                      
+                      {/* Collection overlay on hover */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover/collection:opacity-100 transition-all duration-300 flex items-end justify-center pb-2">
+                        <div className="text-center text-white transform translate-y-2 group-hover/collection:translate-y-0 transition-transform duration-300">
+                          <p className="text-xs font-medium mb-1 drop-shadow-lg">
+                            {collection.name}
+                          </p>
+                          <p className="text-xs opacity-90 drop-shadow-md">
+                            {collection._count?.CollectionProduct || 0} products
                           </p>
                         </div>
                       </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
+                    </div>
+                  </div>
 
-            {/* Collection Products */}
-            {showProducts && products.length > 0 && (
-              <div className="px-6 pb-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {products.map((collectionProduct) => {
-                    const product = collectionProduct.product
+                  {/* Collection Footer */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                      <ShoppingBag className="h-3 w-3 text-primary" />
+                      <span className="text-xs text-muted-foreground">
+                        Collection
+                      </span>
+                    </div>
                     
-                    return (
-                      <motion.div
-                        key={collectionProduct.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="group relative"
-                      >
-                        <div className="glass-card rounded-xl overflow-hidden h-full">
-                          {/* Product Image */}
-                          <div className="relative aspect-square overflow-hidden">
-                            {product.images && product.images.length > 0 && !product.images[0].startsWith('blob:') ? (
-                              <Image
-                                src={product.images[0]}
-                                alt={product.name}
-                                width={300}
-                                height={300}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-                                <span className="text-6xl opacity-20">⚽</span>
-                              </div>
-                            )}
-
-                            {/* Badges */}
-                            <div className="absolute top-2 left-2 flex flex-col gap-1">
-                              {product.comparePrice && product.comparePrice > product.price && (
-                                <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                                  -{Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)}%
-                                </span>
-                              )}
-                              {product.isFeatured && (
-                                <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
-                                  Featured
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Quick Actions */}
-                            <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button
-                                onClick={() => handleToggleWishlist(product)}
-                                className={`p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors ${
-                                  isInWishlist(product.id) ? 'text-red-500' : ''
-                                }`}
-                              >
-                                <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
-                              </button>
-                              <Link
-                                href={`/product/${product.slug}`}
-                                className="p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Link>
-                            </div>
-                          </div>
-
-                          {/* Product Info */}
-                          <div className="p-4">
-                            <Link href={`/product/${product.slug}`} className="block">
-                              <h3 className="font-semibold mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                                {product.name}
-                              </h3>
-                            </Link>
-
-                            {/* Rating */}
-                            <div className="flex items-center gap-1 mb-2">
-                              <div className="flex items-center">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={`h-3 w-3 ${
-                                      i < Math.floor(product.averageRating)
-                                        ? 'text-yellow-400 fill-current'
-                                        : 'text-gray-300'
-                                    }`}
-                                  />
-                                ))}
-                              </div>
-                              <span className="text-xs text-muted-foreground">
-                                ({product.reviewCount})
-                              </span>
-                            </div>
-
-                            {/* Price */}
-                            <PriceDisplay
-                              price={product.price}
-                              comparePrice={product.comparePrice}
-                              className="mb-3"
-                            />
-
-                            {/* Add to Cart Button */}
-                            <button
-                              onClick={() => handleAddToCart(product)}
-                              className="w-full bg-primary text-primary-foreground py-2 px-3 rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 text-sm"
-                            >
-                              <ShoppingCart className="h-4 w-4" />
-                              Add to Cart
-                            </button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )
-                  })}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-md group-hover:shadow-primary/20 group-hover:-translate-y-0.5 active:scale-95 transition-all duration-300 rounded-lg text-xs px-2 py-1 h-6"
+                    >
+                      View
+                      <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </motion.div>
-        )
-      })}
-    </div>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* View All Collections Button */}
+      <div className="text-center mt-8">
+        <Link href="/collections">
+          <Button 
+            variant="outline" 
+            size="lg"
+            className="hover:bg-primary hover:text-primary-foreground hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-1 active:scale-95 transition-all duration-300 rounded-xl"
+          >
+            <Eye className="h-5 w-5 mr-2" />
+            View All Collections
+          </Button>
+        </Link>
+      </div>
+    </section>
   )
 }
-

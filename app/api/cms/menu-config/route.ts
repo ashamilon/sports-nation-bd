@@ -14,15 +14,22 @@ export async function GET() {
 
     const result = await client.query(`
       SELECT * FROM "MenuConfig" 
+      WHERE "isActive" = true
       ORDER BY "sortOrder" ASC, "createdAt" ASC
     `)
 
     await client.end()
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: result.rows
     })
+
+    // Add caching headers for better performance
+    response.headers.set('Cache-Control', 'public, max-age=300, s-maxage=300') // 5 minutes cache
+    response.headers.set('Vary', 'Accept-Encoding')
+    
+    return response
   } catch (error) {
     console.error('Error fetching menu config:', error)
     return NextResponse.json(
@@ -67,8 +74,12 @@ export async function POST(request: NextRequest) {
 
     await client.connect()
     
+    // Generate unique ID for the menu config
+    const id = `menu_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
     const query = `
       INSERT INTO "MenuConfig" (
+        "id",
         "menuType", 
         "title", 
         "collections", 
@@ -77,11 +88,12 @@ export async function POST(request: NextRequest) {
         "metadata", 
         "createdAt", 
         "updatedAt"
-      ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
       RETURNING *
     `
     
     const values = [
+      id,
       menuType,
       title,
       JSON.stringify(collections),

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Image from 'next/image'
 import { useCartStore } from '@/lib/store/cart-store'
 import { useSession } from 'next-auth/react'
@@ -45,6 +46,7 @@ export default function CheckoutPage() {
   const [customTip, setCustomTip] = useState('')
   const [useDefaultAddress, setUseDefaultAddress] = useState(false)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     name: '',
     email: '',
@@ -663,11 +665,39 @@ export default function CheckoutPage() {
                   )}
                 </div>
 
+                {/* Terms and Conditions Agreement */}
+                <div className="space-y-3">
+                  <div className="flex items-start space-x-3">
+                    <input
+                      type="checkbox"
+                      id="terms-agreement"
+                      checked={agreedToTerms}
+                      onChange={(e) => setAgreedToTerms(e.target.checked)}
+                      className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                    />
+                    <label htmlFor="terms-agreement" className="text-sm text-gray-700 leading-relaxed">
+                      I have read and agree to the{' '}
+                      <Link href="/terms-and-conditions" className="text-primary hover:underline font-medium" target="_blank">
+                        Terms & Conditions
+                      </Link>
+                      ,{' '}
+                      <Link href="/privacy-policy" className="text-primary hover:underline font-medium" target="_blank">
+                        Privacy Policy
+                      </Link>
+                      , and{' '}
+                      <Link href="/return-refund-policy" className="text-primary hover:underline font-medium" target="_blank">
+                        Return & Refund Policy
+                      </Link>
+                      . I understand that by proceeding with this order, I am bound by these terms.
+                    </label>
+                  </div>
+                </div>
+
                 {/* Payment Button */}
                 <Button
                   onClick={handlePayment}
-                  disabled={isLoading}
-                  className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                  disabled={isLoading || !agreedToTerms}
+                  className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <Loader2 className="h-6 w-6 animate-spin mr-2" />

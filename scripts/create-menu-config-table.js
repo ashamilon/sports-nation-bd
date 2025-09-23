@@ -43,7 +43,7 @@ async function createMenuConfigTable() {
       },
       {
         menuType: 'header',
-        title: 'Premium Gear',
+        title: 'Buy Your Dream Here',
         collections: JSON.stringify(['watches_collection', 'sneakers_collection']),
         isActive: true,
         sortOrder: 2,

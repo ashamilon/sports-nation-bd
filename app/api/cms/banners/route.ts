@@ -25,15 +25,33 @@ export async function GET(request: NextRequest) {
       orderBy: [
         { priority: 'desc' },
         { createdAt: 'desc' }
-      ]
+      ],
+      select: {
+        id: true,
+        title: true,
+        image: true,
+        link: true,
+        description: true,
+        isActive: true,
+        position: true,
+        priority: true,
+        startsAt: true,
+        expiresAt: true,
+        metadata: true,
+        createdAt: true,
+        updatedAt: true
+      }
     })
 
     const response = NextResponse.json({ success: true, data: banners })
     
-    // Add caching headers for better performance (only for public requests)
+    // Add aggressive caching headers for better performance (only for public requests)
     if (active !== false) {
-      response.headers.set('Cache-Control', 'public, max-age=600, s-maxage=600') // 10 minutes cache
+      response.headers.set('Cache-Control', 'public, max-age=1800, s-maxage=1800, stale-while-revalidate=3600') // 30 minutes cache, 1 hour stale-while-revalidate
       response.headers.set('Vary', 'Accept-Encoding')
+      response.headers.set('ETag', `"banners-${position || 'all'}-${banners.length}"`)
+      // Removed Content-Encoding: gzip as it's handled automatically by Next.js
+      response.headers.set('Content-Type', 'application/json; charset=utf-8')
     } else {
       // Disable caching for admin requests (when active=false)
       response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')

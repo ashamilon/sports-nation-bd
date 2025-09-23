@@ -119,9 +119,9 @@ export default function SizeChartsManagement() {
   const handleEdit = (chart: SizeChart) => {
     setEditingChart(chart)
     setFormData({
-      fabricType: chart.fabricType,
-      title: chart.title,
-      content: chart.content,
+      fabricType: chart.fabricType || '',
+      title: chart.title || '',
+      content: chart.content || '',
       isActive: chart.isActive
     })
     setShowForm(true)

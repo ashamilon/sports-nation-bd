@@ -4,17 +4,11 @@ import { useEffect } from 'react'
 import { useRegionalStore } from '@/lib/store/regional-store'
 
 export function RegionalProvider({ children }: { children: React.ReactNode }) {
-  const { detectAndSetRegion } = useRegionalStore()
-
+  // Since we simplified the regional store to only support Bangladesh,
+  // we don't need any hydration or region detection logic
   useEffect(() => {
-    // Hydrate the regional store on client side
-    useRegionalStore.persist.rehydrate()
-    
-    // Detect and set region after hydration
-    setTimeout(() => {
-      detectAndSetRegion()
-    }, 100)
-  }, [detectAndSetRegion])
+    // No-op: Regional store is now simplified and doesn't need hydration
+  }, [])
 
   return <>{children}</>
 }

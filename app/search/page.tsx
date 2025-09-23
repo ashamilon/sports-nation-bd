@@ -24,6 +24,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
+import Breadcrumb from '@/components/breadcrumb'
 import { useCartStore } from '@/lib/store/cart-store'
 import { useWishlistStore } from '@/lib/store/wishlist-store'
 
@@ -210,17 +211,13 @@ export default function SearchPage() {
       
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-          <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
-          <span>/</span>
-          <span>Search</span>
-          {query && (
-            <>
-              <span>/</span>
-              <span className="text-foreground">{query}</span>
-            </>
-          )}
-        </div>
+        <Breadcrumb 
+          items={[
+            { label: 'Search' },
+            ...(query ? [{ label: query }] : [])
+          ]}
+          className="mb-6"
+        />
 
         {/* Header */}
         <div className="mb-8">

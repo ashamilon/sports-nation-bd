@@ -185,7 +185,13 @@ export const useWishlistStore = create<WishlistStore>()(
         }
       }),
       partialize: (state) => ({ items: state.items }),
-      skipHydration: true, // Skip hydration to prevent mismatch
+      skipHydration: true,
+      onRehydrateStorage: () => (state) => {
+        // Handle rehydration completion
+        if (state) {
+          // Optional: Add any post-rehydration logic here
+        }
+      }
     }
   )
 )

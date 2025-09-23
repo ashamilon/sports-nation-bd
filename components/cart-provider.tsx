@@ -7,8 +7,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const { items } = useCartStore()
 
   useEffect(() => {
-    // Hydrate the cart store on client side
-    useCartStore.persist.rehydrate()
+    // Since we're using skipHydration: true, we don't need to manually rehydrate
+    // The store will handle hydration automatically when needed
   }, [])
 
   return <>{children}</>

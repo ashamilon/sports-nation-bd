@@ -1,7 +1,7 @@
 // WhatsApp Configuration
 export const whatsappConfig = {
   // Replace with your actual WhatsApp number (include country code without +)
-  phoneNumber: '8801868556390', // Your actual WhatsApp number
+  phoneNumber: '8801647429992', // Your actual WhatsApp number
   
   // Default message when user clicks the button
   defaultMessage: 'Hello! I need help with my order from Sports Nation BD.',

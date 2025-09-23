@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 // GET /api/admin/badges/[id] - Get single badge
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -15,8 +15,9 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
     const badge = await prisma.badge.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!badge) {
@@ -33,7 +34,7 @@ export async function GET(
 // PUT /api/admin/badges/[id] - Update badge
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -42,6 +43,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
     const body = await request.json()
     const { name, description, image, category, price, isActive } = body
 
@@ -65,7 +67,7 @@ export async function PUT(
     }
 
     const badge = await prisma.badge.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name,
         description: description || null,
@@ -86,7 +88,7 @@ export async function PUT(
 // DELETE /api/admin/badges/[id] - Delete badge
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -95,9 +97,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
     // Check if badge is used in any products
     const productBadges = await prisma.productBadge.findMany({
-      where: { badgeId: params.id }
+      where: { badgeId: id }
     })
 
     if (productBadges.length > 0) {
@@ -107,7 +110,7 @@ export async function DELETE(
     }
 
     await prisma.badge.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({ message: 'Badge deleted successfully' })

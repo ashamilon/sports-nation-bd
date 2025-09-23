@@ -106,7 +106,8 @@ export async function POST(
       await prisma.collectionProduct.createMany({
         data: collectionIds.map((collectionId: string) => ({
           productId,
-          collectionId
+          collectionId,
+          updatedAt: new Date()
         }))
       })
     }

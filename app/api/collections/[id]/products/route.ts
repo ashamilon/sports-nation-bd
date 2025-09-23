@@ -35,10 +35,10 @@ export async function GET(
     const collectionProducts = await prisma.collectionProduct.findMany({
       where,
       include: {
-        product: {
+        Product: {
           include: {
-            variants: true,
-            reviews: {
+            ProductVariant: true,
+            Review: {
               select: {
                 rating: true
               }
@@ -56,9 +56,10 @@ export async function GET(
 
     // Calculate average ratings for products
     const productsWithRating = collectionProducts.map(cp => {
-      const product = cp.product
-      const avgRating = product.reviews.length > 0 
-        ? product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length
+      const product = cp.Product
+      const reviews = product.Review || []
+      const avgRating = reviews.length > 0 
+        ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
         : 0
 
       return {
@@ -67,7 +68,7 @@ export async function GET(
           ...product,
           images: product.images || [],
           averageRating: avgRating,
-          reviewCount: product.reviews.length
+          reviewCount: reviews.length
         }
       }
     })
@@ -135,10 +136,10 @@ export async function POST(
             isFeatured: isFeatured || false
           },
           include: {
-            product: {
+            Product: {
               include: {
-                variants: true,
-                reviews: {
+                ProductVariant: true,
+                Review: {
                   select: {
                     rating: true
                   }
