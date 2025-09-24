@@ -32,7 +32,7 @@ export default function CollectionsSection({ collections }: CollectionsSectionPr
   }
 
   return (
-    <section className="container mx-auto px-4 py-12">
+    <section className="container mx-auto px-4 py-6 md:py-12">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold mb-4">Shop by Collection</h2>
         <p className="text-muted-foreground max-w-2xl mx-auto">

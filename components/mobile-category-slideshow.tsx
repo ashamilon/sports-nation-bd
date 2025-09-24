@@ -23,7 +23,7 @@ interface MobileCategorySlideshowProps {
 
 export default function MobileCategorySlideshow({ 
   categories, 
-  title = "Categories",
+  title = "",
   className = "" 
 }: MobileCategorySlideshowProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -104,20 +104,20 @@ export default function MobileCategorySlideshow({
                 className="h-full"
               >
                 <Link href={category.href}>
-                  <div className="group relative overflow-hidden rounded-2xl glass-card transition-all duration-300 h-full">
+                  <div className="group relative overflow-hidden rounded-2xl transition-all duration-300 h-full category-card hover:shadow-lg hover:shadow-[#27355C]/20" style={{ backgroundColor: '#F8F9FB', border: '1px solid rgba(39, 53, 92, 0.1)' }}>
                     {/* Background gradient */}
                     <div className={`absolute inset-0 bg-gradient-to-br ${category.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
                     
                     <div className="relative p-4 h-full flex flex-col">
                       <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors duration-300">
-                        {React.createElement(category.icon, { className: "h-6 w-6 text-primary" })}
+                        {React.createElement(category.icon, { className: "h-6 w-6 dark:text-white category-icon", style: { color: '#27355C' } })}
                       </div>
                       
                       <div className="flex-grow">
-                        <h3 className="text-lg font-semibold group-hover:text-primary transition-colors duration-300 mb-2">
+                        <h3 className="text-lg font-semibold group-hover:text-primary transition-colors duration-300 mb-2 category-title" style={{ color: '#27355C' }}>
                           {category.name}
                         </h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
+                        <p className="text-sm text-muted-foreground line-clamp-2 category-description" style={{ color: '#27355C' }}>
                           {category.description}
                         </p>
                       </div>

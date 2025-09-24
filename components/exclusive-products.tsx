@@ -151,22 +151,27 @@ export default function ExclusiveProducts({ className = "" }: ExclusiveProductsP
 
   if (loading) {
     return (
-      <section className={`py-16 bg-gradient-to-br from-gray-50 to-white dark:from-black-90 dark:to-black-80 ${className}`}>
+      <section 
+        className={`py-8 md:py-16 exclusive-products-section ${className}`}
+        style={{
+          background: 'linear-gradient(to bottom right, #FBFCFD, #FBFCFD)'
+        }}
+      >
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white-100 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold dark:text-white mb-4" style={{ color: '#27355C' }}>
               Exclusive Products
             </h2>
-            <p className="text-lg text-gray-600 dark:text-white-80 max-w-2xl mx-auto">
-              Discover our handpicked collection of premium products
+            <p className="text-lg dark:text-white max-w-2xl mx-auto" style={{ color: '#27355C' }}>
+              Premium products for champions
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="animate-pulse">
-                <div className="bg-gray-200 aspect-square rounded-lg mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="bg-gray-200 dark:bg-gray-700 aspect-square rounded-lg mb-4"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
               </div>
             ))}
           </div>
@@ -180,7 +185,12 @@ export default function ExclusiveProducts({ className = "" }: ExclusiveProductsP
   }
 
   return (
-    <section className={`py-16 bg-gradient-to-br from-gray-50 to-white dark:from-black-90 dark:to-black-80 ${className}`}>
+    <section 
+      className={`py-8 md:py-16 exclusive-products-section ${className}`}
+      style={{
+        background: 'linear-gradient(to bottom right, #FBFCFD, #FBFCFD)'
+      }}
+    >
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -189,11 +199,11 @@ export default function ExclusiveProducts({ className = "" }: ExclusiveProductsP
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white-100 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold dark:text-white mb-4" style={{ color: '#27355C' }}>
             Exclusive Products
           </h2>
-          <p className="text-lg text-gray-600 dark:text-white-80 max-w-2xl mx-auto">
-            Discover our handpicked collection of premium products, carefully selected for their exceptional quality and style
+          <p className="text-lg dark:text-white max-w-2xl mx-auto" style={{ color: '#27355C' }}>
+            Premium products for champions
           </p>
         </motion.div>
 
@@ -213,7 +223,7 @@ export default function ExclusiveProducts({ className = "" }: ExclusiveProductsP
                   viewport={{ once: true }}
                   className="group flex-shrink-0 w-72"
                 >
-                  <div className="product-card glass-card rounded-2xl overflow-hidden h-full bg-white shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
+                  <div className="product-card glass-card rounded-2xl overflow-hidden h-full">
                     {/* Product Image */}
                     <div className="relative aspect-square overflow-hidden">
                       {product.images && product.images.length > 0 && !product.images[0].startsWith('blob:') ? (
@@ -225,8 +235,8 @@ export default function ExclusiveProducts({ className = "" }: ExclusiveProductsP
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <span className="text-gray-400">No Image</span>
+                        <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                          <span className="text-gray-400 dark:text-gray-300">No Image</span>
                         </div>
                       )}
                       
@@ -272,7 +282,7 @@ export default function ExclusiveProducts({ className = "" }: ExclusiveProductsP
                     {/* Product Info */}
                     <div className="p-4">
                       <Link href={`/product/${product.slug}`} className="block group">
-                        <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                        <h3 className="font-semibold dark:text-white mb-2 line-clamp-2 group-hover:text-primary transition-colors" style={{ color: '#27355C' }}>
                           {product.name}
                         </h3>
                       </Link>
@@ -291,14 +301,14 @@ export default function ExclusiveProducts({ className = "" }: ExclusiveProductsP
                             />
                           ))}
                         </div>
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-gray-600 dark:text-white-80">
                           ({product.reviewCount})
                         </span>
                       </div>
 
                       {/* Price */}
                       <div className="flex items-center gap-2 mb-3">
-                        <span className="text-lg font-bold text-gray-900">
+                        <span className="text-lg font-bold dark:text-white" style={{ color: '#27355C' }}>
                           {product.variants?.some(v => v.type === 'jersey') 
                             ? getJerseyPriceRange(product)
                             : variantInfo.maxPrice 
@@ -307,7 +317,7 @@ export default function ExclusiveProducts({ className = "" }: ExclusiveProductsP
                           }
                         </span>
                         {variantInfo.comparePrice && variantInfo.comparePrice > variantInfo.price && (
-                          <span className="text-sm text-gray-500 line-through">
+                          <span className="text-sm text-gray-600 dark:text-white-80 line-through">
                             {formatCurrency(variantInfo.comparePrice)}
                           </span>
                         )}
@@ -346,7 +356,7 @@ export default function ExclusiveProducts({ className = "" }: ExclusiveProductsP
                   viewport={{ once: true }}
                   className="group flex-shrink-0 w-48"
                 >
-                  <div className="product-card glass-card rounded-xl overflow-hidden h-full bg-white shadow-sm border border-gray-100">
+                  <div className="product-card glass-card rounded-xl overflow-hidden h-full">
                     {/* Product Image */}
                     <div className="relative aspect-square overflow-hidden">
                       {product.images && product.images.length > 0 && !product.images[0].startsWith('blob:') ? (
@@ -358,8 +368,8 @@ export default function ExclusiveProducts({ className = "" }: ExclusiveProductsP
                           sizes="(max-width: 768px) 192px, 25vw"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <span className="text-gray-400 text-sm">No Image</span>
+                        <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                          <span className="text-gray-400 dark:text-gray-300 text-sm">No Image</span>
                         </div>
                       )}
                       
@@ -393,7 +403,7 @@ export default function ExclusiveProducts({ className = "" }: ExclusiveProductsP
                     {/* Product Info */}
                     <div className="p-3">
                       <Link href={`/product/${product.slug}`} className="block">
-                        <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2 text-sm">
+                        <h3 className="font-semibold dark:text-white mb-1 line-clamp-2 text-sm" style={{ color: '#27355C' }}>
                           {product.name}
                         </h3>
                       </Link>
@@ -412,14 +422,14 @@ export default function ExclusiveProducts({ className = "" }: ExclusiveProductsP
                             />
                           ))}
                         </div>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-600 dark:text-white-80">
                           ({product.reviewCount})
                         </span>
                       </div>
 
                       {/* Price */}
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-sm font-bold text-gray-900">
+                        <span className="text-sm font-bold dark:text-white" style={{ color: '#27355C' }}>
                           {product.variants?.some(v => v.type === 'jersey') 
                             ? getJerseyPriceRange(product)
                             : variantInfo.maxPrice 
@@ -428,7 +438,7 @@ export default function ExclusiveProducts({ className = "" }: ExclusiveProductsP
                           }
                         </span>
                         {variantInfo.comparePrice && variantInfo.comparePrice > variantInfo.price && (
-                          <span className="text-xs text-gray-500 line-through">
+                          <span className="text-xs text-gray-600 dark:text-white-80 line-through">
                             {formatCurrency(variantInfo.comparePrice)}
                           </span>
                         )}

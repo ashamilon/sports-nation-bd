@@ -48,6 +48,7 @@ export default function Header() {
   const [menuConfigs, setMenuConfigs] = useState<MenuConfig[]>([])
   const [allCollections, setAllCollections] = useState<Collection[]>([])
   const [isMenuLoading, setIsMenuLoading] = useState(true)
+  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set())
   const { getTotalItems, toggleCart } = useCartStore()
 
   useEffect(() => {
@@ -133,6 +134,40 @@ export default function Header() {
       return []
     }
   }
+
+  const toggleMenuExpansion = (menuName: string) => {
+    setExpandedMenus(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(menuName)) {
+        newSet.delete(menuName)
+      } else {
+        newSet.add(menuName)
+      }
+      return newSet
+    })
+  }
+
+  const closeMobileMenu = () => {
+    setIsMenuOpen(false)
+    setExpandedMenus(new Set()) // Close all expanded menus
+  }
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isMenuOpen && isMounted) {
+        const target = event.target as HTMLElement
+        if (!target.closest('[data-mobile-menu]')) {
+          closeMobileMenu()
+        }
+      }
+    }
+
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isMenuOpen, isMounted])
 
 
   const staticNavigation = [
@@ -260,8 +295,9 @@ export default function Header() {
 
             {/* Mobile Menu Button */}
             <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              onClick={() => isMenuOpen ? closeMobileMenu() : setIsMenuOpen(true)}
               className="md:hidden glass-button p-2 rounded-lg"
+              data-mobile-menu
             >
               {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
@@ -271,8 +307,9 @@ export default function Header() {
 
         {/* Mobile Navigation */}
         {isMounted && isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-white/10">
-            <nav className="flex flex-col space-y-2">
+          <div className="md:hidden fixed inset-0 top-[120px] bg-background/95 backdrop-blur-sm z-50 overflow-y-auto" data-mobile-menu>
+            <div className="py-4 border-t border-white/10">
+              <nav className="flex flex-col space-y-2 px-4">
               {isMenuLoading ? (
                 // Loading skeleton for mobile navigation
                 <>
@@ -287,67 +324,82 @@ export default function Header() {
                 <div key={item.name}>
                   {item.type === 'menu-dropdown' ? (
                     <div className="space-y-1">
-                      <div className="glass-button px-4 py-2 rounded-lg font-medium text-primary">
+                      <button
+                        onClick={() => toggleMenuExpansion(item.name)}
+                        className="w-full glass-button px-4 py-2 rounded-lg font-medium text-primary flex items-center justify-between"
+                      >
                         <span>{item.name}</span>
-                      </div>
-                      <div className="ml-4 space-y-1">
-                        {'collections' in item && item.collections.map((collection) => (
-                          <Link
-                            key={collection.id}
-                            href={`/collections/${collection.slug}`}
-                            className="block glass-button px-4 py-2 rounded-lg text-sm"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            {collection.name}
-                            <span className="text-xs text-muted-foreground ml-2">
-                              ({collection._count?.CollectionProduct || 0})
-                            </span>
-                          </Link>
-                        ))}
-                      </div>
+                        <ChevronDown className={`h-4 w-4 transition-transform ${expandedMenus.has(item.name) ? 'rotate-180' : ''}`} />
+                      </button>
+                      {expandedMenus.has(item.name) && (
+                        <div className="ml-4 space-y-1">
+                          {'collections' in item && item.collections.map((collection) => (
+                            <Link
+                              key={collection.id}
+                              href={`/collections/${collection.slug}`}
+                              className="block glass-button px-4 py-2 rounded-lg text-sm"
+                              onClick={() => closeMobileMenu()}
+                            >
+                              {collection.name}
+                              <span className="text-xs text-muted-foreground ml-2">
+                                ({collection._count?.CollectionProduct || 0})
+                              </span>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ) : item.type === 'loyalty-dropdown' ? (
                     <div className="space-y-1">
-                      <div className="glass-button px-4 py-2 rounded-lg font-medium text-primary flex items-center space-x-2">
-                        <Crown className="w-4 h-4 text-yellow-500" />
-                        <span>{item.name}</span>
-                      </div>
-                      <div className="ml-4 space-y-1">
-                        <Link
-                          href="/loyalty-status"
-                          className="block glass-button px-4 py-2 rounded-lg text-sm"
-                          onClick={() => setIsMenuOpen(false)}
-                        >
-                          <div className="flex items-center space-x-2">
-                            <Star className="w-4 h-4 text-yellow-500" />
-                            <span>Loyalty Status</span>
-                          </div>
-                        </Link>
-                        <Link
-                          href="/loyalty-demo"
-                          className="block glass-button px-4 py-2 rounded-lg text-sm"
-                          onClick={() => setIsMenuOpen(false)}
-                        >
-                          <div className="flex items-center space-x-2">
-                            <Gift className="w-4 h-4 text-purple-500" />
-                            <span>Loyalty Demo</span>
-                          </div>
-                        </Link>
-                      </div>
+                      <button
+                        onClick={() => toggleMenuExpansion(item.name)}
+                        className="w-full glass-button px-4 py-2 rounded-lg font-medium text-primary flex items-center justify-between"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <Crown className="w-4 h-4 text-yellow-500" />
+                          <span>{item.name}</span>
+                        </div>
+                        <ChevronDown className={`h-4 w-4 transition-transform ${expandedMenus.has(item.name) ? 'rotate-180' : ''}`} />
+                      </button>
+                      {expandedMenus.has(item.name) && (
+                        <div className="ml-4 space-y-1">
+                          <Link
+                            href="/loyalty-status"
+                            className="block glass-button px-4 py-2 rounded-lg text-sm"
+                            onClick={() => closeMobileMenu()}
+                          >
+                            <div className="flex items-center space-x-2">
+                              <Star className="w-4 h-4 text-yellow-500" />
+                              <span>Loyalty Status</span>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/loyalty-demo"
+                            className="block glass-button px-4 py-2 rounded-lg text-sm"
+                            onClick={() => closeMobileMenu()}
+                          >
+                            <div className="flex items-center space-x-2">
+                              <Gift className="w-4 h-4 text-purple-500" />
+                              <span>Loyalty Demo</span>
+                            </div>
+                          </Link>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <Link
                       href={'href' in item ? item.href || '#' : '#'}
-                      className="glass-button px-4 py-2 rounded-lg"
-                      onClick={() => setIsMenuOpen(false)}
+                      className="w-full glass-button px-4 py-2 rounded-lg font-medium text-primary flex items-center justify-between"
+                      onClick={() => closeMobileMenu()}
                     >
-                      {item.name}
+                      <span>{item.name}</span>
                     </Link>
                   )}
                 </div>
                 ))
               )}
-            </nav>
+              </nav>
+            </div>
           </div>
         )}
       </div>

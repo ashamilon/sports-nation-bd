@@ -58,7 +58,7 @@ export default function CollectionsDisplay() {
 
   if (loading) {
     return (
-      <section className="container mx-auto px-4 py-12">
+      <section className="container mx-auto px-4 py-6 md:py-12">
         <div className="text-center mb-8">
           <div className="h-8 bg-gray-200 rounded w-64 mx-auto mb-4 animate-pulse"></div>
           <div className="h-4 bg-gray-200 rounded w-96 mx-auto animate-pulse"></div>
@@ -78,7 +78,7 @@ export default function CollectionsDisplay() {
 
   if (collections.length === 0) {
     return (
-      <section className="container mx-auto px-4 py-12">
+      <section className="container mx-auto px-4 py-6 md:py-12">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold mb-4">Our Collections</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -90,7 +90,7 @@ export default function CollectionsDisplay() {
   }
 
   return (
-    <section className="container mx-auto px-4 py-12">
+    <section className="container mx-auto px-4 py-6 md:py-12">
       <div className="text-center mb-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

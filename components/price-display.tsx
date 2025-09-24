@@ -24,7 +24,7 @@ export function PriceDisplay({
   return (
     <div className={`space-y-1 ${className}`}>
       <div className="flex items-center gap-2">
-        <span className="text-lg font-semibold text-primary">
+        <span className="text-lg font-semibold dark:text-white" style={{ color: '#27355C' }}>
           {formatPrice(regionalPrice)}
         </span>
         {regionalComparePrice && regionalComparePrice > 0 && (
@@ -35,7 +35,7 @@ export function PriceDisplay({
       </div>
       
       {showOriginal && settings.region !== 'BD' && (
-        <div className="text-xs text-muted-foreground">
+        <div className="text-xs text-muted-foreground dark:text-white-80">
           Original: ৳{price.toLocaleString()}
         </div>
       )}

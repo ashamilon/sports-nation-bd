@@ -69,8 +69,8 @@ export async function GET(request: NextRequest) {
       
       if (product.ProductVariant && product.ProductVariant.length > 0) {
         product.ProductVariant.forEach(variant => {
-          if (variant.fabricType && variant.sizes) {
-            // Jersey variant with sizes array
+          // Check if variant has sizes (for jersey/tracksuit variants)
+          if (variant.sizes) {
             try {
               const sizes = typeof variant.sizes === 'string' ? JSON.parse(variant.sizes) : variant.sizes
               if (Array.isArray(sizes)) {
@@ -169,6 +169,18 @@ export async function POST(request: NextRequest) {
         // Jersey variant with fabric type and sizes
         return {
           fabricType: variant.fabricType,
+          tracksuitType: null,
+          sizes: JSON.stringify(variant.sizes),
+          name: null,
+          value: null,
+          price: null,
+          stock: 0
+        }
+      } else if (variant.tracksuitType) {
+        // Tracksuit variant with tracksuit type and sizes
+        return {
+          fabricType: null,
+          tracksuitType: variant.tracksuitType,
           sizes: JSON.stringify(variant.sizes),
           name: null,
           value: null,
@@ -179,6 +191,7 @@ export async function POST(request: NextRequest) {
         // Simple variant
         return {
           fabricType: null,
+          tracksuitType: null,
           sizes: null,
           name: variant.name || '',
           value: variant.value || '',

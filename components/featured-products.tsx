@@ -198,7 +198,7 @@ export default function FeaturedProducts() {
 
   if (isLoading) {
     return (
-      <SkeletonSection title="Featured Products" className="py-16 lg:py-24">
+      <SkeletonSection title="Featured Products" className="py-8 md:py-16 lg:py-24">
         <div className="container mx-auto px-4">
           <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
@@ -220,7 +220,7 @@ export default function FeaturedProducts() {
   }
 
   return (
-    <section className="py-16 lg:py-24">
+    <section className="py-8 md:py-16 lg:py-24">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -255,7 +255,7 @@ export default function FeaturedProducts() {
                 viewport={{ once: true }}
                 className="group flex-shrink-0 w-80 h-[500px]"
               >
-                <div className="product-card rounded-2xl overflow-hidden bg-white shadow-lg border border-gray-200 hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
+                <div className="product-card glass-card rounded-2xl overflow-hidden h-full flex flex-col">
                   {/* Product Image */}
                   <div className="relative aspect-square overflow-hidden">
                     {product.images && product.images.length > 0 && !product.images[0].startsWith('blob:') ? (
@@ -352,14 +352,15 @@ export default function FeaturedProducts() {
                               {variantInfo.fabrics.map((fabric, index) => (
                                 <span
                                   key={index}
-                                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20"
+                                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 dark:text-white border border-primary/20"
+                                  style={{ color: '#27355C' }}
                                 >
                                   {fabric}
                                 </span>
                               ))}
                             </div>
                             {variantInfo.priceRange && (
-                              <div className="text-xs text-muted-foreground">
+                              <div className="text-xs text-muted-foreground dark:text-white-80">
                                 {typeof variantInfo.priceRange === 'number' 
                                   ? `From ${formatCurrency(variantInfo.priceRange)}`
                                   : `${formatCurrency(variantInfo.priceRange.min)} - ${formatCurrency(variantInfo.priceRange.max)}`
@@ -376,7 +377,8 @@ export default function FeaturedProducts() {
                             {variantInfo.variants.map((variant, index) => (
                               <span
                                 key={index}
-                                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground"
+                                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted dark:text-white"
+                                style={{ color: '#27355C' }}
                               >
                                 {variant.name}: {variant.value}
                               </span>
@@ -421,7 +423,7 @@ export default function FeaturedProducts() {
                 viewport={{ once: true }}
                 className="group flex-shrink-0 w-64 h-[400px]"
               >
-                <div className="product-card rounded-xl overflow-hidden h-full bg-white shadow-sm border border-gray-100 flex flex-col">
+                <div className="product-card glass-card rounded-xl overflow-hidden h-full flex flex-col">
                   {/* Product Image */}
                   <div className="relative aspect-square overflow-hidden">
                     {product.images && product.images.length > 0 && !product.images[0].startsWith('blob:') ? (
@@ -501,11 +503,11 @@ export default function FeaturedProducts() {
 
                     {/* Price - Always visible */}
                     <div className="flex items-center gap-2 mb-3">
-                      <span className="text-sm font-bold text-primary">
+                      <span className="text-sm font-bold dark:text-white" style={{ color: '#27355C' }}>
                         {formatCurrency(product.price)}
                       </span>
                       {product.comparePrice && product.comparePrice > product.price && (
-                        <span className="text-xs text-muted-foreground line-through">
+                        <span className="text-xs text-muted-foreground dark:text-white-80 line-through">
                           {formatCurrency(product.comparePrice)}
                         </span>
                       )}

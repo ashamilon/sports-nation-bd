@@ -24,6 +24,7 @@ interface Product {
     value?: string
     price?: number
     fabricType?: string
+    tracksuitType?: string
     sizes?: string
   }>
   category?: {
@@ -59,6 +60,22 @@ export default function ProductsGrid() {
       }
     }
     
+    // Check if this is a Tracksuit with tracksuitType
+    if (product.category?.slug === 'tracksuit' && product.variants.some(v => v.tracksuitType)) {
+      const tracksuitTypes = product.variants
+        .filter(v => v.tracksuitType)
+        .map(v => v.tracksuitType)
+        .filter(Boolean)
+      
+      if (tracksuitTypes.length > 0) {
+        return {
+          type: 'tracksuit',
+          tracksuitTypes: tracksuitTypes,
+          priceRange: getTracksuitPriceRange(product.variants)
+        }
+      }
+    }
+    
     // For other variants, show the first few
     const otherVariants = product.variants
       .filter(v => v.name && v.value)
@@ -90,6 +107,39 @@ export default function ProductsGrid() {
         } catch (error) {
           console.error('Error parsing sizes:', error)
         }
+      }
+    })
+    
+    if (prices.length === 0) return null
+    
+    const minPrice = Math.min(...prices)
+    const maxPrice = Math.max(...prices)
+    
+    return minPrice === maxPrice ? minPrice : { min: minPrice, max: maxPrice }
+  }
+
+  // Function to get price range for Tracksuit variants
+  const getTracksuitPriceRange = (variants: Product['variants']) => {
+    if (!variants) return null
+    
+    const prices: number[] = []
+    
+    variants.forEach(variant => {
+      // Check for tracksuit structure with sizes JSON
+      if (variant.sizes) {
+        try {
+          const sizes = JSON.parse(variant.sizes)
+          sizes.forEach((size: any) => {
+            if (size.price) prices.push(size.price)
+          })
+        } catch (error) {
+          console.error('Error parsing tracksuit sizes:', error)
+        }
+      }
+      
+      // Check for direct price on variant
+      if (variant.price && variant.price > 0) {
+        prices.push(variant.price)
       }
     })
     
@@ -370,6 +420,31 @@ export default function ProductsGrid() {
                     )
                   }
                   
+                  if (variantInfo.type === 'tracksuit' && variantInfo.tracksuitTypes) {
+                    return (
+                      <div className="space-y-1 mt-2">
+                        <div className="flex flex-wrap gap-1">
+                          {variantInfo.tracksuitTypes.map((tracksuitType, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent/20"
+                            >
+                              {tracksuitType}
+                            </span>
+                          ))}
+                        </div>
+                        {variantInfo.priceRange && (
+                          <div className="text-xs text-muted-foreground">
+                            {typeof variantInfo.priceRange === 'number' 
+                              ? `From ${formatCurrency(variantInfo.priceRange)}`
+                              : `${formatCurrency(variantInfo.priceRange.min)} - ${formatCurrency(variantInfo.priceRange.max)}`
+                            }
+                          </div>
+                        )}
+                      </div>
+                    )
+                  }
+                  
                   if (variantInfo.type === 'other' && variantInfo.variants) {
                     return (
                       <div className="flex flex-wrap gap-1 mt-2">
@@ -489,6 +564,28 @@ export default function ProductsGrid() {
                             {variantInfo.fabrics.length > 1 && (
                               <span className="text-xs text-muted-foreground">
                                 +{variantInfo.fabrics.length - 1}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    }
+                    
+                    if (variantInfo.type === 'tracksuit' && variantInfo.tracksuitTypes) {
+                      return (
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap gap-1">
+                            {variantInfo.tracksuitTypes.slice(0, 1).map((tracksuitType, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent/20"
+                              >
+                                {tracksuitType}
+                              </span>
+                            ))}
+                            {variantInfo.tracksuitTypes.length > 1 && (
+                              <span className="text-xs text-muted-foreground">
+                                +{variantInfo.tracksuitTypes.length - 1}
                               </span>
                             )}
                           </div>

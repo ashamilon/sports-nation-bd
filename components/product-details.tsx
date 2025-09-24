@@ -31,6 +31,7 @@ interface Product {
     value?: string
     price?: number
     fabricType?: string
+    tracksuitType?: string
     sizes?: string
   }>
   category: {
@@ -81,6 +82,36 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'description' | 'wash-care' | 'reviews'>('description')
   const [reviewsKey, setReviewsKey] = useState(0) // Key to force re-render of reviews
+
+  // Calculate display price based on selected variants
+  const getDisplayPrice = () => {
+    // For tracksuit products, show the variant price as main price
+    if (product.category.slug === 'tracksuit' && selectedVariants['Tracksuit Type']) {
+      const selectedVariant = product.variants.find(v => v.value === selectedVariants['Tracksuit Type'])
+      if (selectedVariant && selectedVariant.price) {
+        return selectedVariant.price
+      }
+    }
+    
+    // For jersey products, show the size-specific price
+    if (product.category.slug === 'jersey' && selectedVariants['Size'] && selectedVariants['Fabric']) {
+      const selectedFabricVariant = product.variants.find(v => v.fabricType === selectedVariants['Fabric'])
+      if (selectedFabricVariant?.sizes) {
+        try {
+          const sizes = JSON.parse(selectedFabricVariant.sizes)
+          const selectedSize = sizes.find((s: any) => s.size === selectedVariants['Size'])
+          if (selectedSize) {
+            return selectedSize.price
+          }
+        } catch (error) {
+          console.error('Error parsing sizes:', error)
+        }
+      }
+    }
+    
+    // For other products, show base price
+    return product.price
+  }
 
   // Hydrate the wishlist store on client side
   useEffect(() => {
@@ -203,6 +234,13 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
       }
     }
     
+    if (product.variants.length > 0 && product.category.slug === 'tracksuit') {
+      if (!selectedVariants['Tracksuit Type'] || !selectedVariants['Size']) {
+        toast.error('Please select tracksuit type and size')
+        return
+      }
+    }
+    
     let totalPrice = product.price
     let variantId = undefined
     
@@ -219,6 +257,21 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
           }
         } catch (error) {
           console.error('Error parsing sizes:', error)
+        }
+      }
+    } else if (product.category.slug === 'tracksuit' && selectedVariants['Size'] && selectedVariants['Tracksuit Type']) {
+      // For tracksuit variant structure with tracksuitType and sizes
+      const selectedTracksuitVariant = product.variants.find(v => v.tracksuitType === selectedVariants['Tracksuit Type'])
+      if (selectedTracksuitVariant?.sizes) {
+        try {
+          const sizes = JSON.parse(selectedTracksuitVariant.sizes)
+          const selectedSize = sizes.find((s: any) => s.size === selectedVariants['Size'])
+          if (selectedSize) {
+            totalPrice = selectedSize.price
+            variantId = selectedTracksuitVariant.id
+          }
+        } catch (error) {
+          console.error('Error parsing tracksuit sizes:', error)
         }
       }
     } else {
@@ -281,6 +334,13 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
     if (product.variants.length > 0 && product.category.slug === 'jersey') {
       if (!selectedVariants['Fabric'] || !selectedVariants['Size']) {
         toast.error('Please select fabric type and size')
+        return
+      }
+    }
+    
+    if (product.variants.length > 0 && product.category.slug === 'tracksuit') {
+      if (!selectedVariants['Tracksuit Type'] || !selectedVariants['Size']) {
+        toast.error('Please select tracksuit type and size')
         return
       }
     }
@@ -362,8 +422,8 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid lg:grid-cols-2 gap-12">
+    <div className="container mx-auto px-4 py-4 md:py-8">
+      <div className="grid lg:grid-cols-2 gap-6 md:gap-12">
         {/* Product Images */}
         <div className="space-y-4">
           {/* Main Image */}
@@ -412,7 +472,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
         </div>
 
         {/* Product Info */}
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           {/* Title and Rating */}
           <div>
             <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
@@ -438,9 +498,9 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
           {/* Price */}
           <div className="flex items-center gap-3">
             <span className="text-3xl font-bold text-primary">
-              {formatCurrency(product.price)}
+              {formatCurrency(getDisplayPrice())}
             </span>
-            {product.comparePrice && product.comparePrice > product.price && (
+            {product.comparePrice && product.comparePrice > getDisplayPrice() && (
               <span className="text-lg text-muted-foreground line-through">
                 {formatCurrency(product.comparePrice)}
               </span>
@@ -615,6 +675,167 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
                     </div>
                   )}
                 </div>
+              ) : product.category.slug === 'tracksuit' && product.variants.some(v => v.tracksuitType) ? (
+                // Tracksuit variant structure with tracksuitType and sizes
+                <div className="space-y-4">
+                  {/* Tracksuit Type Selector */}
+                  <div>
+                    <h4 className="font-medium mb-2">Tracksuit Type</h4>
+                    <div className="flex gap-2 flex-wrap">
+                      {product.variants
+                        .filter((variant) => variant.tracksuitType)
+                        .map((variant) => {
+                          // Check if this tracksuit type has any available sizes
+                          let hasAvailableSizes = false
+                          if (variant.sizes) {
+                            try {
+                              const sizes = JSON.parse(variant.sizes)
+                              hasAvailableSizes = sizes.some((sizeItem: any) => sizeItem.stock > 0)
+                            } catch (error) {
+                              hasAvailableSizes = false
+                            }
+                          }
+                          
+                          const isDisabled = !hasAvailableSizes
+                          const isSelected = selectedVariants['Tracksuit Type'] === variant.tracksuitType
+                          
+                          return (
+                            <div key={variant.id} className="relative group">
+                              <button
+                                onClick={() => {
+                                  if (!isDisabled) {
+                                    handleVariantChange('Tracksuit Type', variant.tracksuitType || '')
+                                  } else {
+                                    handleTooltipShow(`tracksuit-${variant.id}`)
+                                  }
+                                }}
+                                onTouchStart={() => isDisabled && handleTooltipShow(`tracksuit-${variant.id}`)}
+                                disabled={isDisabled}
+                                className={`px-4 py-2 border rounded-lg transition-colors relative ${
+                                  isDisabled
+                                    ? 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
+                                    : isSelected
+                                    ? 'border-primary bg-primary/10 text-primary'
+                                    : 'border-border hover:border-primary/50'
+                                }`}
+                              >
+                                {variant.tracksuitType}
+                                {variant.price && (
+                                  <span className="ml-1 text-xs">
+                                    ({formatCurrency(variant.price)})
+                                  </span>
+                                )}
+                                {/* Visual "cut" line for disabled tracksuit types */}
+                                {isDisabled && (
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="w-full h-0.5 bg-red-400 transform rotate-12"></div>
+                                  </div>
+                                )}
+                              </button>
+                              
+                              {/* Stock info tooltip */}
+                              {isDisabled && (
+                                <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 ${
+                                  activeTooltip === `tracksuit-${variant.id}` ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                }`}>
+                                  No Stock Available
+                                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                    </div>
+                  </div>
+                  
+                  {/* Size Selector - Show sizes for selected tracksuit type */}
+                  {selectedVariants['Tracksuit Type'] && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium">Size</h4>
+                        <button
+                          onClick={() => setShowSizeChart(true)}
+                          className="flex items-center gap-2 px-3 py-1 text-sm text-primary hover:text-primary/80 transition-colors"
+                        >
+                          <Ruler className="h-4 w-4" />
+                          Size Chart
+                        </button>
+                      </div>
+                      <div className="flex gap-2 flex-wrap">
+                        {(() => {
+                          const selectedTracksuitVariant = product.variants.find(v => v.tracksuitType === selectedVariants['Tracksuit Type'])
+                          if (!selectedTracksuitVariant?.sizes) return null
+                          
+                          try {
+                            const sizes = JSON.parse(selectedTracksuitVariant.sizes)
+                            
+                            return sizes.map((sizeItem: any) => {
+                              const isOutOfStock = sizeItem.stock <= 0
+                              const isLowStock = sizeItem.stock <= 5 && sizeItem.stock > 0
+                              const isSelected = selectedVariants['Size'] === sizeItem.size
+                              
+                              return (
+                                <div key={sizeItem.size} className="relative group">
+                                  <button
+                                    onClick={() => {
+                                      if (!isOutOfStock) {
+                                        handleVariantChange('Size', sizeItem.size)
+                                      } else {
+                                        handleTooltipShow(`size-${sizeItem.size}`)
+                                      }
+                                    }}
+                                    onTouchStart={() => isOutOfStock && handleTooltipShow(`size-${sizeItem.size}`)}
+                                    disabled={isOutOfStock}
+                                    className={`px-4 py-2 border rounded-lg transition-colors relative ${
+                                      isOutOfStock
+                                        ? 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
+                                        : isSelected
+                                        ? 'border-primary bg-primary/10 text-primary'
+                                        : isLowStock
+                                        ? 'border-orange-300 bg-orange-50 text-orange-700'
+                                        : 'border-border hover:border-primary/50'
+                                    }`}
+                                  >
+                                    {sizeItem.size}
+                                    {sizeItem.price && sizeItem.price !== product.price && (
+                                      <span className="ml-1 text-xs">
+                                        ({formatCurrency(sizeItem.price)})
+                                      </span>
+                                    )}
+                                    {/* Visual "cut" line for disabled sizes */}
+                                    {isOutOfStock && (
+                                      <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="w-full h-0.5 bg-red-400 transform rotate-12"></div>
+                                      </div>
+                                    )}
+                                  </button>
+                                  
+                                  {/* Stock info tooltip */}
+                                  {isOutOfStock && (
+                                    <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 ${
+                                      activeTooltip === `size-${sizeItem.size}` ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                    }`}>
+                                      Out of Stock
+                                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Low stock indicator */}
+                                  {isLowStock && !isOutOfStock && (
+                                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-400 rounded-full border-2 border-white"></div>
+                                  )}
+                                </div>
+                              )
+                            })
+                          } catch (error) {
+                            console.error('Error parsing tracksuit sizes:', error)
+                            return null
+                          }
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : (
                 // Original variant structure
                 Object.entries(
@@ -775,6 +996,18 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
             </div>
           )}
 
+          {/* Validation message for tracksuits */}
+          {product.category.slug === 'tracksuit' && (!selectedVariants['Size'] || !selectedVariants['Tracksuit Type']) && (
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                {!selectedVariants['Tracksuit Type'] 
+                  ? 'Please select a Tracksuit Type to see available sizes'
+                  : 'Please select a Size to add to cart'
+                }
+              </p>
+            </div>
+          )}
+
               {/* Add to Cart and Wishlist Buttons Side by Side */}
               <div className="flex gap-3">
                 <button
@@ -921,7 +1154,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
               )}
 
               {activeTab === 'reviews' && (
-                <div className="space-y-6">
+                <div className="space-y-4 md:space-y-6">
                   {/* Reviews Summary */}
                   <ReviewsSummary productId={product.id} />
                   

@@ -36,7 +36,8 @@ export async function GET(
     // Images are already an array in the database
     const productWithParsedImages = {
       ...product,
-      images: product.images || []
+      images: product.images || [],
+      variants: product.ProductVariant || []
     }
 
     return NextResponse.json(productWithParsedImages)
@@ -135,6 +136,19 @@ export async function PUT(
             // Jersey variant with fabric type and sizes
             return {
               fabricType: variant.fabricType,
+              tracksuitType: null,
+              sizes: typeof variant.sizes === 'string' ? variant.sizes : JSON.stringify(variant.sizes),
+              name: null,
+              value: null,
+              price: null,
+              stock: 0,
+              productId: id
+            }
+          } else if (variant.tracksuitType) {
+            // Tracksuit variant with tracksuit type and sizes
+            return {
+              fabricType: null,
+              tracksuitType: variant.tracksuitType,
               sizes: typeof variant.sizes === 'string' ? variant.sizes : JSON.stringify(variant.sizes),
               name: null,
               value: null,
@@ -146,6 +160,7 @@ export async function PUT(
             // Simple variant
             return {
               fabricType: null,
+              tracksuitType: null,
               sizes: null,
               name: variant.name,
               value: variant.value,
@@ -174,7 +189,8 @@ export async function PUT(
     // Parse images from JSON string
     const productWithParsedImages = {
       ...updatedProduct,
-      images: updatedProduct?.images || []
+      images: updatedProduct?.images || [],
+      variants: updatedProduct?.ProductVariant || []
     }
 
     return NextResponse.json({

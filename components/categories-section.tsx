@@ -92,22 +92,22 @@ export default function CategoriesSection() {
               viewport={{ once: true }}
             >
               <Link href={category.href}>
-                <div className="group relative overflow-hidden rounded-2xl glass-card transition-all duration-300">
+                <div className="group relative overflow-hidden rounded-2xl transition-all duration-300 category-card hover:shadow-lg hover:shadow-[#27355C]/20" style={{ backgroundColor: '#F8F9FB', border: '1px solid rgba(39, 53, 92, 0.1)' }}>
                   {/* Background gradient */}
                   <div className={`absolute inset-0 bg-gradient-to-br ${category.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
                   
                   <div className="relative p-8">
                     {/* Icon */}
                     <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors duration-300">
-                      <category.icon className="h-8 w-8 text-primary" />
+                      <category.icon className="h-8 w-8 dark:text-white category-icon" style={{ color: '#27355C' }} />
                     </div>
 
                     {/* Content */}
                     <div className="space-y-3">
-                      <h3 className="text-xl font-semibold group-hover:text-primary transition-colors duration-300">
+                      <h3 className="text-xl font-semibold group-hover:text-primary transition-colors duration-300 category-title" style={{ color: '#27355C' }}>
                         {category.name}
                       </h3>
-                      <p className="text-muted-foreground">
+                      <p className="text-muted-foreground category-description" style={{ color: '#27355C' }}>
                         {category.description}
                       </p>
                     </div>
@@ -127,7 +127,7 @@ export default function CategoriesSection() {
         </div>
 
         {/* Mobile Slideshow */}
-        <div className="md:hidden">
+        <div className="md:hidden -mt-4">
           <MobileCategorySlideshow 
             categories={categories.map(cat => ({
               ...cat,

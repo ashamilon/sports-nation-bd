@@ -93,6 +93,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       value: variant.value || undefined,
       price: variant.price || undefined,
       fabricType: variant.fabricType || undefined,
+      tracksuitType: variant.tracksuitType || undefined,
       sizes: variant.sizes || undefined
     })),
     category: product.Category ? {
@@ -122,14 +123,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
     <div className="min-h-screen bg-background">
       <Header />
       <main>
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-3 md:py-6">
           <Breadcrumb 
             items={[
               { label: 'Products', href: '/products' },
               ...(product.Category ? [{ label: product.Category.name, href: `/category/${product.Category.slug}` }] : []),
               { label: product.name }
             ]}
-            className="mb-6"
+            className="mb-3 md:mb-6"
           />
         </div>
         <ProductDetails product={productWithRating} />

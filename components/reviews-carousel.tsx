@@ -87,11 +87,11 @@ export default function ReviewsCarousel() {
 
   if (loading) {
     return (
-      <section className="py-16 bg-muted/30 dark:bg-black-90/30">
+      <section className="py-8 md:py-16 bg-muted/30 dark:bg-black-90/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4 text-foreground dark:text-white-100">Customer Reviews</h2>
-            <p className="text-muted-foreground dark:text-white-80">What our customers are saying</p>
+            <h2 className="text-3xl font-bold mb-4 dark:text-black" style={{ color: '#27355C' }}>Customer Reviews</h2>
+            <p className="dark:text-black" style={{ color: '#27355C' }}>What our customers are saying</p>
           </div>
           <div className="flex space-x-6 overflow-hidden">
             {[...Array(5)].map((_, i) => (
@@ -108,11 +108,11 @@ export default function ReviewsCarousel() {
   }
 
   return (
-    <section className="py-16 bg-muted/30 dark:bg-black-90/30">
+    <section className="py-8 md:py-16 bg-muted/30 dark:bg-black-90/30">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4 text-foreground dark:text-white-100">5-Star Customer Reviews</h2>
-          <p className="text-muted-foreground dark:text-white-80">What our satisfied customers are saying</p>
+          <h2 className="text-3xl font-bold mb-4 dark:text-white" style={{ color: '#27355C' }}>5-Star Customer Reviews</h2>
+          <p className="dark:text-white" style={{ color: '#27355C' }}>What our satisfied customers are saying</p>
         </div>
 
         <div 
@@ -178,8 +178,8 @@ function ReviewCard({ review }: { review: Review }) {
             )}
           </div>
           <div>
-            <h4 className="font-semibold text-sm text-foreground dark:text-white-100">{review.User.name}</h4>
-            <p className="text-xs text-muted-foreground dark:text-white-70">{formatDate(review.createdAt)}</p>
+            <h4 className="font-semibold text-sm dark:text-black" style={{ color: '#27355C' }}>{review.User.name}</h4>
+            <p className="text-xs dark:text-black" style={{ color: '#27355C' }}>{formatDate(review.createdAt)}</p>
           </div>
         </div>
         
@@ -196,16 +196,16 @@ function ReviewCard({ review }: { review: Review }) {
 
       {/* Product info */}
       <div className="mb-4">
-        <div className="flex items-center space-x-2 text-sm text-muted-foreground dark:text-white-70">
+        <div className="flex items-center space-x-2 text-sm dark:text-black" style={{ color: '#27355C' }}>
           <span>Reviewed:</span>
-          <span className="font-medium text-foreground dark:text-white-100">{review.Product.name}</span>
+          <span className="font-medium dark:text-black" style={{ color: '#27355C' }}>{review.Product.name}</span>
         </div>
       </div>
 
       {/* Review comment */}
       <div className="relative">
         <Quote className="absolute -top-2 -left-2 w-6 h-6 text-primary/20" />
-        <p className="text-sm text-muted-foreground dark:text-white-80 leading-relaxed pl-4">
+        <p className="text-sm dark:text-black leading-relaxed pl-4" style={{ color: '#27355C' }}>
           "{truncateComment(review.comment)}"
         </p>
       </div>

@@ -63,7 +63,7 @@ export default function DynamicHome() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 md:space-y-8">
 
       {/* Home Top Banners - Slideshow */}
       {isSectionVisible('banner') && data?.banners?.homeTop && data.banners.homeTop.length > 0 && data && (

@@ -69,10 +69,10 @@ export default function Footer() {
                 />
               </div>
               <div className="flex flex-col">
-                <h1 className="text-sm font-display font-bold text-brand-dark dark:text-brand-light">
+                <h1 className="text-sm font-display font-bold text-brand-dark dark:text-white">
                   Sports Nation BD
                 </h1>
-                <p className="text-xs text-brand-medium dark:text-brand-light-gray">Buy Your Dream Here</p>
+                <p className="text-xs text-brand-medium dark:text-white">Buy Your Dream Here</p>
               </div>
             </div>
             

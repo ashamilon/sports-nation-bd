@@ -71,7 +71,12 @@ export default function CircularCollectionsCarousel() {
 
   if (loading) {
     return (
-      <section className="py-12 bg-gray-50 dark:bg-black-90">
+      <section 
+        className="py-12 circular-carousel-section" 
+        style={{ 
+          backgroundColor: '#F7F8FA' 
+        }}
+      >
         <div className="container mx-auto px-4">
           <div className="flex space-x-4 md:space-x-6 overflow-hidden">
             {[...Array(6)].map((_, i) => (
@@ -93,7 +98,12 @@ export default function CircularCollectionsCarousel() {
   const duplicatedCollections = [...collections, ...collections, ...collections]
 
   return (
-    <section className="py-12 bg-gray-50 dark:bg-black-90">
+    <section 
+      className="py-12 circular-carousel-section" 
+      style={{ 
+        backgroundColor: '#F7F8FA' 
+      }}
+    >
       <div className="container mx-auto px-4">
         <div className="relative overflow-hidden">
           <motion.div
@@ -154,8 +164,18 @@ export default function CircularCollectionsCarousel() {
           </motion.div>
           
           {/* Gradient overlays for smooth edges */}
-          <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-gray-50 dark:from-black-90 to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-gray-50 dark:from-black-90 to-transparent z-10 pointer-events-none" />
+          <div 
+            className="absolute left-0 top-0 bottom-0 w-16 to-transparent z-10 pointer-events-none gradient-overlay-left"
+            style={{
+              background: 'linear-gradient(to right, #F7F8FA, transparent)'
+            }}
+          />
+          <div 
+            className="absolute right-0 top-0 bottom-0 w-16 to-transparent z-10 pointer-events-none gradient-overlay-right"
+            style={{
+              background: 'linear-gradient(to left, #F7F8FA, transparent)'
+            }}
+          />
         </div>
       </div>
     </section>

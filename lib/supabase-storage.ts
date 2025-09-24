@@ -43,12 +43,12 @@ export const supabaseStorage = supabaseServiceKey ? createClient(supabaseUrl, su
 
 // Storage bucket names
 export const STORAGE_BUCKETS = {
-  PRODUCTS: 'products',
-  CATEGORIES: 'categories',
-  BADGES: 'badges',
-  BANNERS: 'banners',
-  USERS: 'users',
-  GENERAL: 'uploads'
+  PRODUCTS: 'products' as const,
+  CATEGORIES: 'categories' as const,
+  BADGES: 'badges' as const,
+  BANNERS: 'banners' as const,
+  USERS: 'users' as const,
+  GENERAL: 'uploads' as const
 } as const
 
 // Helper function to upload file to Supabase Storage

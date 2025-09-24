@@ -7,6 +7,7 @@ import { ArrowLeft, Upload, X, Plus, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'react-hot-toast'
 import FootballBadgeSelector from '@/components/admin/football-badge-selector'
+import RichTextEditor from '@/components/rich-text-editor'
 
 interface ProductVariant {
   id?: string
@@ -15,6 +16,7 @@ interface ProductVariant {
   price?: number
   stock?: number
   fabricType?: 'Fan Version' | 'Player Version'
+  tracksuitType?: 'Set' | 'Upper'
   sizes?: {
     size: string
     price: number
@@ -31,12 +33,20 @@ export default function NewProductPage() {
   const [categories, setCategories] = useState<any[]>([])
   const [selectedBadges, setSelectedBadges] = useState<string[]>([])
   const [selectedFabrics, setSelectedFabrics] = useState<('Fan Version' | 'Player Version')[]>([])
+  const [selectedTracksuitTypes, setSelectedTracksuitTypes] = useState<('Set' | 'Upper')[]>([])
   const [fabricPrices, setFabricPrices] = useState<{
     'Fan Version': number
     'Player Version': number
   }>({
     'Fan Version': 0,
     'Player Version': 0
+  })
+  const [tracksuitPrices, setTracksuitPrices] = useState<{
+    'Set': number
+    'Upper': number
+  }>({
+    'Set': 0,
+    'Upper': 0
   })
   
   const [formData, setFormData] = useState({
@@ -102,6 +112,10 @@ export default function NewProductPage() {
     if (category.slug === 'jersey') {
       // Reset fabric selection and variants for jersey
       setSelectedFabrics([])
+      setVariants([])
+    } else if (category.slug === 'tracksuit') {
+      // Reset tracksuit selection and variants
+      setSelectedTracksuitTypes([])
       setVariants([])
     } else {
       // For other categories, use simple variant system
@@ -177,6 +191,15 @@ export default function NewProductPage() {
     }
   }
 
+  const handleTracksuitSelection = (tracksuitType: 'Set' | 'Upper', selected: boolean) => {
+    if (selected) {
+      setSelectedTracksuitTypes(prev => [...prev, tracksuitType])
+    } else {
+      setSelectedTracksuitTypes(prev => prev.filter(t => t !== tracksuitType))
+      setVariants(prev => prev.filter(v => v.tracksuitType !== tracksuitType))
+    }
+  }
+
   const generateJerseyVariants = () => {
     if (selectedFabrics.length === 0) return
 
@@ -204,13 +227,42 @@ export default function NewProductPage() {
     setVariants(newVariants)
   }
 
+  const generateTracksuitVariants = () => {
+    if (selectedTracksuitTypes.length === 0) return
+
+    const sizes = ['S', 'M', 'L', 'XL', 'XXL']
+    const newVariants: ProductVariant[] = []
+
+    selectedTracksuitTypes.forEach(tracksuitType => {
+      const basePrice = tracksuitPrices[tracksuitType] || formData.price
+      const tracksuitSizes = sizes.map(size => {
+        return {
+          size,
+          price: basePrice,
+          stock: 0
+        }
+      })
+
+      newVariants.push({
+        tracksuitType: tracksuitType,
+        price: basePrice,
+        stock: 0,
+        sizes: tracksuitSizes
+      })
+    })
+
+    setVariants(newVariants)
+  }
+
   // Generate variants when fabric selection or prices change
   useEffect(() => {
     const category = categories.find(cat => cat.id === formData.categoryId)
     if (category?.slug === 'jersey' && selectedFabrics.length > 0) {
       generateJerseyVariants()
+    } else if (category?.slug === 'tracksuit' && selectedTracksuitTypes.length > 0) {
+      generateTracksuitVariants()
     }
-  }, [selectedFabrics, fabricPrices, formData.price, formData.categoryId])
+  }, [selectedFabrics, fabricPrices, selectedTracksuitTypes, tracksuitPrices, formData.price, formData.categoryId])
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -267,10 +319,31 @@ export default function NewProductPage() {
     }))
   }
 
+  const updateTracksuitVariantStock = (tracksuitType: 'Set' | 'Upper', size: string, stock: number) => {
+    setVariants(prev => prev.map(variant => {
+      if (variant.tracksuitType === tracksuitType) {
+        return {
+          ...variant,
+          sizes: variant.sizes && Array.isArray(variant.sizes) ? variant.sizes.map(sizeItem => 
+            sizeItem.size === size ? { ...sizeItem, stock } : sizeItem
+          ) : variant.sizes
+        }
+      }
+      return variant
+    }))
+  }
+
   const updateFabricPrice = (fabricType: 'Fan Version' | 'Player Version', price: number) => {
     setFabricPrices(prev => ({
       ...prev,
       [fabricType]: price
+    }))
+  }
+
+  const updateTracksuitPrice = (tracksuitType: 'Set' | 'Upper', price: number) => {
+    setTracksuitPrices(prev => ({
+      ...prev,
+      [tracksuitType]: price
     }))
   }
 
@@ -460,13 +533,11 @@ export default function NewProductPage() {
 
               <div className="mt-4 space-y-2">
                 <label className="text-sm font-medium text-foreground">Description *</label>
-                <textarea
-                  name="description"
+                <RichTextEditor
                   value={formData.description}
-                  onChange={handleInputChange}
-                  className="glass-input w-full px-3 py-2 rounded-lg min-h-[120px]"
-                  placeholder="Enter product description"
-                  required
+                  onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
+                  placeholder=""
+                  className="min-h-[120px]"
                 />
               </div>
             </motion.div>
@@ -598,6 +669,50 @@ export default function NewProductPage() {
                 </div>
               )}
 
+              {/* Tracksuit Type Selection */}
+              {formData.categoryId && categories.find(cat => cat.id === formData.categoryId)?.slug === 'tracksuit' && (
+                <div className="mb-6">
+                  <h3 className="text-md font-medium text-foreground mb-3">Select Tracksuit Types & Set Prices</h3>
+                  <div className="space-y-4">
+                    {(['Set', 'Upper'] as const).map(tracksuitType => (
+                      <div key={tracksuitType} className="glass-card p-4 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <label className="flex items-center space-x-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={selectedTracksuitTypes.includes(tracksuitType)}
+                              onChange={(e) => handleTracksuitSelection(tracksuitType, e.target.checked)}
+                              className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary focus:ring-2"
+                            />
+                            <span className="text-sm font-medium text-foreground">{tracksuitType}</span>
+                          </label>
+                          
+                          {selectedTracksuitTypes.includes(tracksuitType) && (
+                            <div className="flex items-center space-x-2">
+                              <label className="text-xs text-muted-foreground">Base Price (BDT):</label>
+                              <input
+                                type="number"
+                                value={tracksuitPrices[tracksuitType] || formData.price}
+                                onChange={(e) => updateTracksuitPrice(tracksuitType, parseFloat(e.target.value) || 0)}
+                                className="glass-input w-24 px-2 py-1 rounded text-sm"
+                                min="0"
+                                step="0.01"
+                                placeholder="0"
+                              />
+                            </div>
+                          )}
+                        </div>
+                        {selectedTracksuitTypes.includes(tracksuitType) && (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            All sizes (S, M, L, XL, XXL) will use this base price.
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Jersey Variants Display */}
               {formData.categoryId && categories.find(cat => cat.id === formData.categoryId)?.slug === 'jersey' && variants.length > 0 ? (
                 <div className="space-y-6">
@@ -661,6 +776,67 @@ export default function NewProductPage() {
               ) : formData.categoryId && categories.find(cat => cat.id === formData.categoryId)?.slug === 'jersey' ? (
                 <p className="text-muted-foreground text-center py-8">
                   Select fabric types above to generate variants.
+                </p>
+              ) : formData.categoryId && categories.find(cat => cat.id === formData.categoryId)?.slug === 'tracksuit' && variants.length > 0 ? (
+                /* Tracksuit Variants Display */
+                <div className="space-y-6">
+                  {variants.map((variant, index) => (
+                    <div key={index} className="glass-card p-6 rounded-lg">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-foreground">
+                          {variant.tracksuitType}
+                        </h3>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-muted-foreground">
+                            Base: {variant.tracksuitType ? tracksuitPrices[variant.tracksuitType] || formData.price : formData.price} BDT
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => variant.tracksuitType && handleTracksuitSelection(variant.tracksuitType, false)}
+                            className="text-destructive hover:text-destructive/80"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                        {variant.sizes && Array.isArray(variant.sizes) && variant.sizes.map((sizeItem, sizeIndex) => (
+                          <div key={sizeIndex} className="glass-card p-3 rounded-lg">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-medium text-foreground">{sizeItem.size}</span>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <div>
+                                <label className="text-xs text-muted-foreground">Price (BDT)</label>
+                                <div className="glass-input w-full px-2 py-1 rounded text-sm bg-muted/50 text-muted-foreground">
+                                  {sizeItem.price.toLocaleString()}
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Base price
+                                </p>
+                              </div>
+                              <div>
+                                <label className="text-xs text-muted-foreground">Stock</label>
+                                <input
+                                  type="number"
+                                  value={sizeItem.stock}
+                                  onChange={(e) => variant.tracksuitType && updateTracksuitVariantStock(variant.tracksuitType, sizeItem.size, parseInt(e.target.value) || 0)}
+                                  className="glass-input w-full px-2 py-1 rounded text-sm"
+                                  min="0"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : formData.categoryId && categories.find(cat => cat.id === formData.categoryId)?.slug === 'tracksuit' ? (
+                <p className="text-muted-foreground text-center py-8">
+                  Select tracksuit types above to generate variants.
                 </p>
               ) : variants.length > 0 ? (
                 /* Other Category Variants */
@@ -730,6 +906,8 @@ export default function NewProductPage() {
                 <p className="text-muted-foreground text-center py-8">
                   {formData.categoryId && categories.find(cat => cat.id === formData.categoryId)?.slug === 'jersey' 
                     ? 'Select fabric types above to generate variants.'
+                    : formData.categoryId && categories.find(cat => cat.id === formData.categoryId)?.slug === 'tracksuit'
+                    ? 'Select tracksuit types above to generate variants.'
                     : 'No variants added. Click "Add Variant" to create product variations.'
                   }
                 </p>

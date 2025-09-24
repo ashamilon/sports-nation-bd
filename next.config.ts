@@ -42,6 +42,11 @@ const nextConfig: NextConfig = {
         hostname: 'thephysiocompany.co.uk',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+        pathname: '/**',
+      },
     ],
     formats: ['image/webp', 'image/avif'],
     dangerouslyAllowSVG: true,

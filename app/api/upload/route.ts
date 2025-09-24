@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Determine bucket based on folder
-    let bucket = STORAGE_BUCKETS.GENERAL
+    let bucket: string = STORAGE_BUCKETS.GENERAL
     switch (folder.toLowerCase()) {
       case 'products':
         bucket = STORAGE_BUCKETS.PRODUCTS

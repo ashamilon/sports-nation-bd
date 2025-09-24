@@ -16,6 +16,59 @@
   display: none;  /* Safari and Chrome */
 }
 
+/* Rich Text Editor Styles */
+.rich-text-editor [contenteditable] {
+  outline: none;
+  line-height: 1.6;
+}
+
+.rich-text-editor [contenteditable]:empty:before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.rich-text-editor [contenteditable] h1,
+.rich-text-editor [contenteditable] h2,
+.rich-text-editor [contenteditable] h3,
+.rich-text-editor [contenteditable] h4,
+.rich-text-editor [contenteditable] h5,
+.rich-text-editor [contenteditable] h6 {
+  font-weight: 600;
+  margin: 0.5rem 0;
+}
+
+.rich-text-editor [contenteditable] h3 {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+.rich-text-editor [contenteditable] p {
+  margin: 0.5rem 0;
+}
+
+.rich-text-editor [contenteditable] ul,
+.rich-text-editor [contenteditable] ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.rich-text-editor [contenteditable] li {
+  margin: 0.25rem 0;
+}
+
+.rich-text-editor [contenteditable] strong {
+  font-weight: 600;
+}
+
+.rich-text-editor [contenteditable] em {
+  font-style: italic;
+}
+
+.rich-text-editor [contenteditable] u {
+  text-decoration: underline;
+}
+
 /* Circular carousel responsive width */
 .circular-carousel-mobile {
   width: calc(var(--item-count) * 96px) !important; /* 80px + 16px space */
@@ -143,6 +196,57 @@
 .dark .bg-black-90 { background-color: #212631; }
 .dark .bg-black-80 { background-color: #373F4E; }
 .dark .bg-black-70 { background-color: #4E576A; }
+
+/* Circular carousel dark mode override */
+.dark .circular-carousel-section {
+  background-color: #212631 !important;
+}
+
+/* Circular carousel dark mode gradient overlays */
+.dark .circular-carousel-section .gradient-overlay-left {
+  background: linear-gradient(to right, #212631, transparent) !important;
+}
+
+.dark .circular-carousel-section .gradient-overlay-right {
+  background: linear-gradient(to left, #212631, transparent) !important;
+}
+
+/* Exclusive products dark mode override */
+.dark .exclusive-products-section {
+  background: linear-gradient(to bottom right, #0A0E15, #0A0E15) !important;
+}
+
+/* Category cards dark mode override */
+.dark .category-card {
+  background-color: #4E576A !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark .category-card .category-icon {
+  color: white !important;
+}
+
+.dark .category-card .category-title {
+  color: white !important;
+}
+
+.dark .category-card .category-description {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Category card hover effects */
+.category-card {
+  transition: all 0.3s ease;
+}
+
+.category-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(39, 53, 92, 0.15);
+}
+
+.dark .category-card:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
 .dark .bg-black-60 { background-color: #667085; }
 
 .dark .text-white-100 { color: #FFFFFF; }

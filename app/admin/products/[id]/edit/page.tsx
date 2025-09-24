@@ -6,10 +6,12 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, Upload, X, Plus, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'react-hot-toast'
+import RichTextEditor from '@/components/rich-text-editor'
 
 interface ProductVariant {
   id?: string
   fabricType?: 'Fan Version' | 'Player Version'
+  tracksuitType?: 'Set' | 'Upper'
   sizes?: {
     size: string
     price: number
@@ -278,6 +280,28 @@ export default function EditProductPage() {
     }))
   }
 
+  const updateTracksuitVariantStock = (tracksuitType: 'Set' | 'Upper', size: string, stock: number) => {
+    setVariants(prev => prev.map(variant => {
+      if (variant.tracksuitType === tracksuitType && variant.sizes) {
+        try {
+          const sizes = typeof variant.sizes === 'string' ? JSON.parse(variant.sizes) : variant.sizes
+          if (Array.isArray(sizes)) {
+            const updatedSizes = sizes.map((s: any) => 
+              s.size === size ? { ...s, stock } : s
+            )
+            return {
+              ...variant,
+              sizes: updatedSizes
+            }
+          }
+        } catch (error) {
+          console.error('Error updating tracksuit variant stock:', error)
+        }
+      }
+      return variant
+    }))
+  }
+
   const generateVariantsForCategory = (categoryId: string) => {
     const category = categories.find(cat => cat.id === categoryId)
     if (!category) return
@@ -525,13 +549,11 @@ export default function EditProductPage() {
 
               <div className="mt-4 space-y-2">
                 <label className="text-sm font-medium text-foreground">Description *</label>
-                <textarea
-                  name="description"
+                <RichTextEditor
                   value={formData.description}
-                  onChange={handleInputChange}
-                  className="glass-input w-full px-3 py-2 rounded-lg min-h-[120px]"
-                  placeholder="Enter product description"
-                  required
+                  onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
+                  placeholder=""
+                  className="min-h-[120px]"
                 />
               </div>
             </motion.div>
@@ -723,6 +745,77 @@ export default function EditProductPage() {
                 <p className="text-muted-foreground text-center py-8">
                   Select fabric types above to generate variants.
                 </p>
+              </motion.div>
+            ) : formData.categoryId && categories.find(cat => cat.id === formData.categoryId)?.slug === 'tracksuit' && variants.length > 0 ? (
+              /* Tracksuit Variants Display */
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="glass-card p-6 rounded-xl"
+              >
+                <h2 className="text-lg font-semibold text-foreground mb-4">Tracksuit Variants</h2>
+                <div className="space-y-6">
+                  {variants.map((variant, index) => (
+                    <div key={index} className="glass-card p-6 rounded-lg">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-foreground">
+                          {variant.tracksuitType}
+                        </h3>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-muted-foreground">
+                            Base: {variant.price || formData.price} BDT
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeVariant(index)}
+                            className="text-destructive hover:text-destructive/80"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {variant.sizes && (() => {
+                          try {
+                            const sizes = typeof variant.sizes === 'string' ? JSON.parse(variant.sizes) : variant.sizes;
+                            return Array.isArray(sizes) ? sizes.map((sizeItem: any, sizeIndex: number) => (
+                          <div key={sizeIndex} className="glass-card p-3 rounded-lg">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-medium text-sm text-foreground">{sizeItem.size}</span>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <div>
+                                <label className="text-xs text-muted-foreground">Price (BDT)</label>
+                                <div className="glass-input w-full px-2 py-1 rounded text-sm bg-muted/50 text-muted-foreground">
+                                  {sizeItem.price.toLocaleString()}
+                                </div>
+                              </div>
+                              
+                              <div>
+                                <label className="text-xs text-muted-foreground">Stock</label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={sizeItem.stock}
+                                  onChange={(e) => updateTracksuitVariantStock(variant.tracksuitType!, sizeItem.size, parseInt(e.target.value) || 0)}
+                                  className="glass-input w-full px-2 py-1 rounded text-sm"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                            )) : null;
+                          } catch (error) {
+                            console.error('Error parsing tracksuit sizes:', error);
+                            return null;
+                          }
+                        })()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </motion.div>
             ) : variants.length > 0 ? (
               /* Other Category Variants */
