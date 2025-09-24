@@ -110,10 +110,11 @@ export default function MobileCategorySlideshow({
                     
                     <div className="relative p-4 h-full flex flex-col">
                       <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors duration-300">
-                        {React.createElement(category.icon, { 
-                          className: "h-6 w-6 dark:text-white category-icon", 
-                          style: { color: '#27355C' } as React.CSSProperties 
-                        })}
+                        <span style={{ color: '#27355C' }}>
+                          {React.createElement(category.icon, { 
+                            className: "h-6 w-6 dark:text-white category-icon"
+                          })}
+                        </span>
                       </div>
                       
                       <div className="flex-grow">
