@@ -6,14 +6,11 @@ import BannerSlideshowSimple from '@/components/banner-slideshow-simple'
 import BannerPreloader from '@/components/banner-preloader'
 import CountdownTimer from '@/components/countdown-timer'
 import HeroSection from '@/components/hero-section'
-import CircularCollectionsCarousel from '@/components/circular-collections-carousel'
+import LazyHomepageSection from '@/components/lazy-homepage-section'
 import CategoriesSection from '@/components/categories-section'
 import CountdownBanner from '@/components/countdown-banner'
 import CollectionsSection from '@/components/collections-section'
 import CollectionsDisplay from '@/components/collections-display'
-import FeaturedProducts from '@/components/featured-products'
-import ExclusiveProducts from '@/components/exclusive-products'
-import ReviewsCarousel from '@/components/reviews-carousel'
 import { 
   SkeletonBanner, 
   SkeletonCountdown, 
@@ -79,7 +76,7 @@ export default function DynamicHome() {
       {isSectionVisible('hero') && <HeroSection />}
 
       {/* Circular Collections Carousel */}
-      <CircularCollectionsCarousel />
+      <LazyHomepageSection component="circular-carousel" />
 
       {/* Home Hero Banners - Slideshow */}
       {isSectionVisible('banner') && data?.banners?.homeHero && data.banners.homeHero.length > 0 && data && (
@@ -122,13 +119,13 @@ export default function DynamicHome() {
       <CollectionsDisplay />
 
       {/* Featured Products */}
-      {isSectionVisible('featured-products') && <FeaturedProducts />}
+      {isSectionVisible('featured-products') && <LazyHomepageSection component="featured-products" />}
 
       {/* Exclusive Products */}
-      <ExclusiveProducts />
+      <LazyHomepageSection component="exclusive-products" />
 
       {/* Reviews Carousel */}
-      <ReviewsCarousel />
+      <LazyHomepageSection component="reviews" />
     </div>
   )
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, memo, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -16,7 +16,7 @@ interface Collection {
   carouselOrder?: number
 }
 
-export default function CircularCollectionsCarousel() {
+const CircularCollectionsCarousel = memo(function CircularCollectionsCarousel() {
   const [collections, setCollections] = useState<Collection[]>([])
   const [loading, setLoading] = useState(true)
   const [settings, setSettings] = useState({
@@ -30,7 +30,10 @@ export default function CircularCollectionsCarousel() {
     const fetchCollections = async () => {
       try {
         // First check if carousel is enabled
-        const settingsResponse = await fetch('/api/public/circular-collections/settings')
+        const settingsResponse = await fetch('/api/public/circular-collections/settings', {
+          cache: 'force-cache',
+          next: { revalidate: 300 } // Cache for 5 minutes
+        })
         const settingsData = await settingsResponse.json()
         
         if (settingsData.success) {
@@ -44,7 +47,10 @@ export default function CircularCollectionsCarousel() {
         }
 
         // Fetch collections that are in the carousel
-        const response = await fetch('/api/collections?isActive=true&isInCarousel=true')
+        const response = await fetch('/api/collections?isActive=true&isInCarousel=true', {
+          cache: 'force-cache',
+          next: { revalidate: 300 } // Cache for 5 minutes
+        })
         const data = await response.json()
         
         if (data.success && data.data) {
@@ -180,4 +186,6 @@ export default function CircularCollectionsCarousel() {
       </div>
     </section>
   )
-}
+})
+
+export default CircularCollectionsCarousel

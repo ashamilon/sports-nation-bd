@@ -13,6 +13,7 @@ import VisitorTracking from "@/components/visitor-tracking";
 import RealtimeUpdates from "@/components/realtime-updates";
 import { Toaster } from "react-hot-toast";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import ImagePreloader from "@/components/image-preloader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -102,6 +103,7 @@ export default function RootLayout({
                     />
                     <RealtimeUpdates />
                     <SpeedInsights />
+                    <ImagePreloader />
                   </RegionalProvider>
                 </WishlistProvider>
               </CartProvider>

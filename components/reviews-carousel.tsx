@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, memo, useCallback } from 'react'
 import { Star, Quote } from 'lucide-react'
 import Image from 'next/image'
 
@@ -22,7 +22,7 @@ interface Review {
   }
 }
 
-export default function ReviewsCarousel() {
+const ReviewsCarousel = memo(function ReviewsCarousel() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -33,7 +33,10 @@ export default function ReviewsCarousel() {
     const fetchReviews = async () => {
       try {
         setLoading(true)
-        const response = await fetch('/api/reviews?rating=5&limit=20')
+        const response = await fetch('/api/reviews?rating=5&limit=20', {
+          cache: 'force-cache',
+          next: { revalidate: 300 } // Cache for 5 minutes
+        })
         const data = await response.json()
         
         if (data.success) {
@@ -218,4 +221,6 @@ function ReviewCard({ review }: { review: Review }) {
       </div>
     </div>
   )
-}
+})
+
+export default ReviewsCarousel

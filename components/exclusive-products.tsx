@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Star, Heart, ShoppingCart, Eye } from 'lucide-react'
 import Image from 'next/image'
@@ -28,7 +28,7 @@ interface ExclusiveProductsProps {
   className?: string
 }
 
-export default function ExclusiveProducts({ className = "" }: ExclusiveProductsProps) {
+const ExclusiveProducts = memo(function ExclusiveProducts({ className = "" }: ExclusiveProductsProps) {
   const [products, setProducts] = useState<Product[]>([])
   const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -45,7 +45,10 @@ export default function ExclusiveProducts({ className = "" }: ExclusiveProductsP
 
     const fetchProducts = async () => {
       try {
-        const response = await fetch('/api/public/exclusive-products?limit=5')
+        const response = await fetch('/api/public/exclusive-products?limit=5', {
+          cache: 'force-cache',
+          next: { revalidate: 300 } // Cache for 5 minutes
+        })
         if (response.ok) {
           const data = await response.json()
           // The public API already returns formatted and filtered products
@@ -488,4 +491,6 @@ export default function ExclusiveProducts({ className = "" }: ExclusiveProductsP
       </div>
     </section>
   )
-}
+})
+
+export default ExclusiveProducts

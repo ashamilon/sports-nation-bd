@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, memo, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { useCartStore } from '@/lib/store/cart-store'
 import { useWishlistStore } from '@/lib/store/wishlist-store'
@@ -38,7 +38,7 @@ interface Product {
   isNew?: boolean
 }
 
-export default function FeaturedProducts() {
+const FeaturedProducts = memo(function FeaturedProducts() {
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isHydrated, setIsHydrated] = useState(false)
@@ -114,9 +114,10 @@ export default function FeaturedProducts() {
     
     const fetchFeaturedProducts = async () => {
       try {
-        // Add cache-busting for featured products
-        const response = await fetch(`/api/products?featured=true&limit=6&_t=${Date.now()}`, {
-          cache: 'no-store'
+        // Fetch featured products with caching
+        const response = await fetch('/api/products?featured=true&limit=6', {
+          cache: 'force-cache',
+          next: { revalidate: 300 } // Cache for 5 minutes
         })
         const data = await response.json()
         if (data.success) {
@@ -547,4 +548,6 @@ export default function FeaturedProducts() {
       </div>
     </section>
   )
-}
+})
+
+export default FeaturedProducts
