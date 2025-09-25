@@ -25,21 +25,38 @@ function getSupabaseServiceKey(): string {
          ''
 }
 
-// Supabase configuration
-const supabaseUrl = getSupabaseUrl()
-const supabaseServiceKey = getSupabaseServiceKey()
+// Lazy initialization of Supabase client
+let _supabaseStorage: any = null
 
-if (!supabaseServiceKey) {
-  console.warn('⚠️ Missing Supabase service role key. Image uploads will use placeholder service.')
+function getSupabaseClient() {
+  if (_supabaseStorage) {
+    return _supabaseStorage
+  }
+
+  const supabaseUrl = getSupabaseUrl()
+  const supabaseServiceKey = getSupabaseServiceKey()
+
+  if (!supabaseServiceKey) {
+    console.warn('⚠️ Missing Supabase service role key. Image uploads will use placeholder service.')
+    return null
+  }
+
+  try {
+    _supabaseStorage = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
+    return _supabaseStorage
+  } catch (error) {
+    console.error('Failed to initialize Supabase client:', error)
+    return null
+  }
 }
 
-// Create Supabase client with service role key for server-side operations
-export const supabaseStorage = supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-}) : null
+// Export the getter function
+export const supabaseStorage = getSupabaseClient()
 
 // Storage bucket names
 export const STORAGE_BUCKETS = {
@@ -61,8 +78,10 @@ export async function uploadToSupabaseStorage(
     upsert?: boolean
   }
 ) {
+  const client = getSupabaseClient()
+  
   // If Supabase is not configured, fall back to placeholder
-  if (!supabaseStorage) {
+  if (!client) {
     console.log('📁 Supabase not configured, using placeholder service')
     const timestamp = Date.now()
     const placeholderUrl = `https://picsum.photos/400/400?random=${timestamp}`
@@ -83,7 +102,7 @@ export async function uploadToSupabaseStorage(
     const fileBuffer = await file.arrayBuffer()
     
     // Upload file to Supabase Storage
-    const { data, error } = await supabaseStorage.storage
+    const { data, error } = await client.storage
       .from(bucket)
       .upload(path, fileBuffer, {
         contentType: file.type,
@@ -97,7 +116,7 @@ export async function uploadToSupabaseStorage(
     }
 
     // Get public URL
-    const { data: urlData } = supabaseStorage.storage
+    const { data: urlData } = client.storage
       .from(bucket)
       .getPublicUrl(data.path)
 
@@ -120,13 +139,15 @@ export async function uploadToSupabaseStorage(
 
 // Helper function to delete file from Supabase Storage
 export async function deleteFromSupabaseStorage(bucket: string, path: string) {
-  if (!supabaseStorage) {
+  const client = getSupabaseClient()
+  
+  if (!client) {
     console.log('📁 Supabase not configured, skipping delete')
     return { success: true }
   }
 
   try {
-    const { error } = await supabaseStorage.storage
+    const { error } = await client.storage
       .from(bucket)
       .remove([path])
 
@@ -147,11 +168,13 @@ export async function deleteFromSupabaseStorage(bucket: string, path: string) {
 
 // Helper function to get file URL from Supabase Storage
 export function getSupabaseStorageUrl(bucket: string, path: string) {
-  if (!supabaseStorage) {
+  const client = getSupabaseClient()
+  
+  if (!client) {
     return `https://picsum.photos/400/400?random=${Date.now()}`
   }
 
-  const { data } = supabaseStorage.storage
+  const { data } = client.storage
     .from(bucket)
     .getPublicUrl(path)
   
