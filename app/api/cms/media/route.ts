@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { createClient } from '@supabase/supabase-js'
 
 // GET - Fetch media files
 export async function GET(request: NextRequest) {
@@ -82,12 +83,51 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Initialize Supabase client
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { success: false, error: 'Storage configuration missing' },
+        { status: 500 }
+      )
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
     // Generate unique filename
     const timestamp = Date.now()
-    const filename = `${timestamp}-${file.name}`
+    const randomString = Math.random().toString(36).substring(2, 8)
+    const extension = file.name.split('.').pop()
+    const filename = `media-${timestamp}-${randomString}.${extension}`
     
-    // In a real application, you would upload to a cloud storage service
-    // For now, we'll store the file info in the database
+    // Convert file to buffer
+    const bytes = await file.arrayBuffer()
+    const buffer = Buffer.from(bytes)
+    
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('cms-media')
+      .upload(`media/${filename}`, buffer, {
+        contentType: file.type,
+        upsert: false
+      })
+
+    if (uploadError) {
+      console.error('Supabase upload error:', uploadError)
+      return NextResponse.json(
+        { success: false, error: `Failed to upload file: ${uploadError.message}` },
+        { status: 500 }
+      )
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('cms-media')
+      .getPublicUrl(`media/${filename}`)
+    
+    // Store file info in database
     const media = await prisma.media.create({
       data: {
         id: crypto.randomUUID(),
@@ -95,7 +135,7 @@ export async function POST(request: NextRequest) {
         originalName: file.name,
         mimeType: file.type,
         size: file.size,
-        url: `/uploads/${filename}`, // This would be the actual URL in production
+        url: urlData.publicUrl,
         alt,
         caption,
         category,

@@ -20,7 +20,7 @@ export default function SignUpPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [step, setStep] = useState(1) // 1: Basic info, 2: Email verification, 3: Phone verification
+  const [step, setStep] = useState(1) // 1: Basic info, 2: Email verification
   const [otp, setOtp] = useState('')
   const [isOtpSent, setIsOtpSent] = useState(false)
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
@@ -36,18 +36,20 @@ export default function SignUpPage() {
   const handleSendOtp = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('/api/auth/send-otp', {
+      const response = await fetch('/api/auth/send-email-otp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ phone: formData.phone })
+        body: JSON.stringify({ email: formData.email })
       })
 
       const data = await response.json()
       if (response.ok) {
         setIsOtpSent(true)
-        alert(`OTP sent to ${formData.phone}\n\nFor testing, OTP is: ${data.otp}`)
+        setError('')
+        // Don't show OTP in alert for security
+        alert(`OTP sent to ${formData.email}. Please check your email.`)
       } else {
         setError(data.message || 'Failed to send OTP')
       }
@@ -61,12 +63,12 @@ export default function SignUpPage() {
   const handleVerifyOtp = async () => {
     try {
       setIsVerifyingOtp(true)
-      const response = await fetch('/api/auth/send-otp', {
+      const response = await fetch('/api/auth/send-email-otp', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ phone: formData.phone, otp })
+        body: JSON.stringify({ email: formData.email, otp })
       })
 
       const data = await response.json()
@@ -104,16 +106,7 @@ export default function SignUpPage() {
         throw new Error(data.message || 'Something went wrong')
       }
 
-      // Check if email verification is required
-      if (data.requiresVerification) {
-        // Show verification message instead of auto sign in
-        setError('')
-        alert(`Registration successful! Please check your email to verify your account.\n\nFor testing, you can use this verification link:\n${data.verificationUrl}`)
-        router.push('/auth/signin?message=Please verify your email to continue')
-        return
-      }
-
-      // Auto sign in after successful registration (if no verification required)
+      // Auto sign in after successful registration
       const result = await signIn('credentials', {
         email: formData.email,
         password: formData.password,
@@ -330,9 +323,9 @@ export default function SignUpPage() {
               <>
                 {/* OTP Verification Form */}
                 <div className="text-center mb-6">
-                  <h3 className="text-lg font-semibold mb-2">Verify Your Phone</h3>
+                  <h3 className="text-lg font-semibold mb-2">Verify Your Email</h3>
                   <p className="text-sm text-muted-foreground">
-                    We sent a 6-digit code to {formData.phone}
+                    We sent a 6-digit code to {formData.email}
                   </p>
                 </div>
 
@@ -380,7 +373,7 @@ export default function SignUpPage() {
                     }}
                     className="w-full text-sm text-muted-foreground hover:text-foreground"
                   >
-                    Change phone number
+                    Change email address
                   </button>
                 </div>
               </>

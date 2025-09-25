@@ -45,7 +45,15 @@ export default function LazyHomepageSection({ component, className = "" }: LazyH
           </section>
         )
       case 'featured-products':
-        return <SkeletonSection title="Featured Products" className="py-8 md:py-16 lg:py-24" />
+        return (
+          <SkeletonSection title="Featured Products" className="py-8 md:py-16 lg:py-24">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <SkeletonCard key={i} />
+              ))}
+            </div>
+          </SkeletonSection>
+        )
       case 'exclusive-products':
         return (
           <section className="py-8 md:py-16">

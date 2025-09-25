@@ -1,4 +1,8 @@
 import { PrismaClient } from '@prisma/client'
+import dotenv from 'dotenv'
+
+// Load environment variables
+dotenv.config({ path: '.env.local' })
 
 const prisma = new PrismaClient()
 
@@ -155,76 +159,97 @@ export class OTPService {
    * Brevo Email Implementation
    */
   private async sendBrevoEmail(email: string, otp: string): Promise<boolean> {
-    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'api-key': this.config.brevoApiKey!
-      },
-      body: JSON.stringify({
+    try {
+      console.log('📧 Sending Brevo email to:', email);
+      console.log('📧 Using API key:', this.config.brevoApiKey ? 'Present' : 'Missing');
+      console.log('📧 From email:', this.config.brevoFromEmail);
+      console.log('📧 From name:', this.config.brevoFromName);
+      
+      const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'api-key': this.config.brevoApiKey!
+        },
+        body: JSON.stringify({
         sender: {
           name: this.config.brevoFromName || 'Sports Nation BD',
-          email: this.config.brevoFromEmail || 'noreply@sportsnationbd.com'
+          email: 'sportsnationbd@yahoo.com'
         },
-        to: [
-          {
-            email: email,
-            name: 'User'
-          }
-        ],
-        subject: 'Sports Nation BD - Verification Code',
-        htmlContent: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #2563eb; margin: 0;">🏆 Sports Nation BD</h1>
-              <p style="color: #6b7280; margin: 5px 0;">Your Premier Sports Store</p>
-            </div>
-            
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; text-align: center; margin: 20px 0;">
-              <h2 style="color: white; margin: 0 0 15px 0; font-size: 24px;">Verification Code</h2>
-              <p style="color: white; margin: 0 0 20px 0; font-size: 16px;">Please use the following code to verify your account:</p>
-              
-              <div style="background-color: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 10px; margin: 20px 0;">
-                <h1 style="color: white; font-size: 36px; margin: 0; letter-spacing: 8px; font-weight: bold;">${otp}</h1>
+          to: [
+            {
+              email: email,
+              name: 'User'
+            }
+          ],
+          subject: 'Sports Nation BD - Verification Code',
+          htmlContent: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #2563eb; margin: 0;">🏆 Sports Nation BD</h1>
+                <p style="color: #6b7280; margin: 5px 0;">Your Premier Sports Store</p>
               </div>
               
-              <p style="color: white; margin: 0; font-size: 14px;">This code will expire in 10 minutes</p>
+              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; text-align: center; margin: 20px 0;">
+                <h2 style="color: white; margin: 0 0 15px 0; font-size: 24px;">Verification Code</h2>
+                <p style="color: white; margin: 0 0 20px 0; font-size: 16px;">Please use the following code to verify your account:</p>
+                
+                <div style="background-color: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 10px; margin: 20px 0;">
+                  <h1 style="color: white; font-size: 36px; margin: 0; letter-spacing: 8px; font-weight: bold;">${otp}</h1>
+                </div>
+                
+                <p style="color: white; margin: 0; font-size: 14px;">This code will expire in 10 minutes</p>
+              </div>
+              
+              <div style="background-color: #f8fafc; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                <h3 style="color: #1f2937; margin: 0 0 10px 0;">Security Tips:</h3>
+                <ul style="color: #4b5563; margin: 0; padding-left: 20px;">
+                  <li>Never share this code with anyone</li>
+                  <li>Sports Nation BD will never ask for your verification code</li>
+                  <li>If you didn't request this code, please ignore this email</li>
+                </ul>
+              </div>
+              
+              <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                <p style="color: #6b7280; font-size: 14px; margin: 0;">
+                  © 2024 Sports Nation BD. All rights reserved.<br>
+                  Your Premier Sports Store in Bangladesh
+                </p>
+              </div>
             </div>
+          `,
+          textContent: `
+            Sports Nation BD - Verification Code
             
-            <div style="background-color: #f8fafc; padding: 20px; border-radius: 10px; margin: 20px 0;">
-              <h3 style="color: #1f2937; margin: 0 0 10px 0;">Security Tips:</h3>
-              <ul style="color: #4b5563; margin: 0; padding-left: 20px;">
-                <li>Never share this code with anyone</li>
-                <li>Sports Nation BD will never ask for your verification code</li>
-                <li>If you didn't request this code, please ignore this email</li>
-              </ul>
-            </div>
+            Your verification code is: ${otp}
             
-            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-              <p style="color: #6b7280; font-size: 14px; margin: 0;">
-                © 2024 Sports Nation BD. All rights reserved.<br>
-                Your Premier Sports Store in Bangladesh
-              </p>
-            </div>
-          </div>
-        `,
-        textContent: `
-          Sports Nation BD - Verification Code
-          
-          Your verification code is: ${otp}
-          
-          This code will expire in 10 minutes.
-          
-          If you didn't request this code, please ignore this email.
-          
-          © 2024 Sports Nation BD - Your Premier Sports Store
-        `
-      })
-    })
+            This code will expire in 10 minutes.
+            
+            If you didn't request this code, please ignore this email.
+            
+            © 2024 Sports Nation BD - Your Premier Sports Store
+          `
+        })
+      });
 
-    const result = await response.json()
-    return response.ok
+      console.log('📊 Brevo response status:', response.status);
+      console.log('📊 Brevo response ok:', response.ok);
+      
+      const result = await response.json();
+      console.log('📊 Brevo response body:', JSON.stringify(result, null, 2));
+      
+      if (response.ok) {
+        console.log('✅ Brevo email sent successfully!');
+        return true;
+      } else {
+        console.log('❌ Brevo email failed:', result);
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Error in sendBrevoEmail:', error);
+      return false;
+    }
   }
 
   /**

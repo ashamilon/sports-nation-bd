@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import fs from 'fs/promises'
-import path from 'path'
+import { createClient } from '@supabase/supabase-js'
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,21 +37,49 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Initialize Supabase client
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { success: false, error: 'Storage configuration missing' },
+        { status: 500 }
+      )
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
     const buffer = Buffer.from(await file.arrayBuffer())
-    const fileExtension = path.extname(file.name)
-    const uniqueFilename = `banner-${Date.now()}-${Math.random().toString(36).substr(2, 6)}${fileExtension}`
+    const fileExtension = file.name.split('.').pop()
+    const uniqueFilename = `banner-${Date.now()}-${Math.random().toString(36).substr(2, 6)}.${fileExtension}`
     
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'banners')
-    await fs.mkdir(uploadDir, { recursive: true })
-    
-    const filePath = path.join(uploadDir, uniqueFilename)
-    await fs.writeFile(filePath, buffer)
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('banner-images')
+      .upload(`banners/${uniqueFilename}`, buffer, {
+        contentType: file.type,
+        upsert: false
+      })
+
+    if (uploadError) {
+      console.error('Supabase upload error:', uploadError)
+      return NextResponse.json(
+        { success: false, error: `Failed to upload image: ${uploadError.message}` },
+        { status: 500 }
+      )
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('banner-images')
+      .getPublicUrl(`banners/${uniqueFilename}`)
 
     return NextResponse.json({
       success: true,
       file: {
         name: uniqueFilename,
-        url: `/uploads/banners/${uniqueFilename}`,
+        url: urlData.publicUrl,
         size: file.size,
         mimeType: file.type,
       },

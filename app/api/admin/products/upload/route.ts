@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
-import { existsSync } from 'fs'
+import { createClient } from '@supabase/supabase-js'
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,12 +23,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), 'public', 'uploads', 'products')
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true })
+    // Initialize Supabase client
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { success: false, error: 'Storage configuration missing' },
+        { status: 500 }
+      )
     }
 
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
     const uploadedFiles = []
 
     for (const file of files) {
@@ -60,15 +64,32 @@ export async function POST(request: NextRequest) {
       const bytes = await file.arrayBuffer()
       const buffer = Buffer.from(bytes)
       
-      // Write file to disk
-      const filepath = join(uploadsDir, filename)
-      await writeFile(filepath, buffer)
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(`products/${filename}`, buffer, {
+          contentType: file.type,
+          upsert: false
+        })
+
+      if (uploadError) {
+        console.error('Supabase upload error:', uploadError)
+        return NextResponse.json(
+          { success: false, error: `Failed to upload ${file.name}: ${uploadError.message}` },
+          { status: 500 }
+        )
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(`products/${filename}`)
       
       // Store file info
       uploadedFiles.push({
         filename,
         originalName: file.name,
-        url: `/uploads/products/${filename}`,
+        url: urlData.publicUrl,
         size: file.size,
         type: file.type
       })

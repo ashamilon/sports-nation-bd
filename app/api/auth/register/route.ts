@@ -7,9 +7,9 @@ export async function POST(request: NextRequest) {
     const { name, email, phone, password } = await request.json()
 
     // Validation
-    if (!name || !email || !phone || !password) {
+    if (!name || !email || !password) {
       return NextResponse.json(
-        { message: 'All fields are required' },
+        { message: 'Name, email, and password are required' },
         { status: 400 }
       )
     }
@@ -36,44 +36,26 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    // Create user (unverified)
+    // Create user (verified since email OTP was already verified)
     const user = await prisma.user.create({
       data: {
         name,
         email,
-        phone,
+        phone: phone || null, // Phone is optional now
         password: hashedPassword,
         role: 'customer',
-        emailVerified: null // User needs to verify email
-      }
-    })
-
-    // Generate email verification token
-    const crypto = require('crypto')
-    const token = crypto.randomBytes(32).toString('hex')
-    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-
-    // Store verification token
-    await prisma.verificationToken.create({
-      data: {
-        identifier: email,
-        token,
-        expires
+        emailVerified: new Date() // Email is already verified via OTP
       }
     })
 
     // Return user without password
     const { password: _, ...userWithoutPassword } = user
 
-    // TODO: Send verification email
-    const verificationUrl = `${process.env.NEXTAUTH_URL}/auth/verify-email?token=${token}&email=${encodeURIComponent(email)}`
-
     return NextResponse.json(
       { 
-        message: 'User created successfully. Please check your email to verify your account.',
+        message: 'Registration successful! Your account has been created.',
         user: userWithoutPassword,
-        verificationUrl, // Remove this in production
-        requiresVerification: true
+        requiresVerification: false
       },
       { status: 201 }
     )

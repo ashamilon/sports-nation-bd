@@ -42,7 +42,6 @@ const FeaturedProducts = memo(function FeaturedProducts() {
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isHydrated, setIsHydrated] = useState(false)
-  const [isPaused, setIsPaused] = useState(false)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const { addItem } = useCartStore()
   const { addToWishlist, isInWishlist } = useWishlistStore()
@@ -133,45 +132,7 @@ const FeaturedProducts = memo(function FeaturedProducts() {
     fetchFeaturedProducts()
   }, [])
 
-  // Auto-scroll functionality
-  useEffect(() => {
-    if (!scrollContainerRef.current || products.length === 0 || isPaused) return
-
-    const container = scrollContainerRef.current
-    const scrollWidth = container.scrollWidth
-    const clientWidth = container.clientWidth
-    const maxScroll = scrollWidth - clientWidth
-
-    if (maxScroll <= 0) return
-
-    let scrollPosition = 0
-    const scrollSpeed = 0.5 // pixels per frame
-    let scrollDirection = 1 // 1 for right, -1 for left
-
-    const autoScroll = () => {
-      if (isPaused) return
-
-      scrollPosition += scrollSpeed * scrollDirection
-
-      // Reverse direction when reaching the end
-      if (scrollPosition >= maxScroll) {
-        scrollPosition = maxScroll
-        scrollDirection = -1
-      } else if (scrollPosition <= 0) {
-        scrollPosition = 0
-        scrollDirection = 1
-      }
-
-      container.scrollLeft = scrollPosition
-      requestAnimationFrame(autoScroll)
-    }
-
-    const animationId = requestAnimationFrame(autoScroll)
-
-    return () => {
-      cancelAnimationFrame(animationId)
-    }
-  }, [products, isPaused])
+  // Manual scroll functionality - no auto-scrolling
 
   const handleAddToCart = (product: Product) => {
     addItem({
@@ -243,8 +204,6 @@ const FeaturedProducts = memo(function FeaturedProducts() {
           <div 
             ref={scrollContainerRef}
             className="flex space-x-6 overflow-x-auto pb-4 scrollbar-hide"
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {products.map((product, index) => (
@@ -411,8 +370,6 @@ const FeaturedProducts = memo(function FeaturedProducts() {
           <div 
             ref={scrollContainerRef}
             className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide"
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {products.map((product, index) => (

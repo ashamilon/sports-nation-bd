@@ -37,12 +37,11 @@ export default function EmailOTPRegistration({ onRegistrationComplete }: EmailOT
     setSuccess('')
 
     try {
-      const response = await fetch('/api/otp/send', {
+      const response = await fetch('/api/auth/send-email-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          identifier: email,
-          type: 'email'
+          email: email
         })
       })
 
@@ -72,11 +71,11 @@ export default function EmailOTPRegistration({ onRegistrationComplete }: EmailOT
     setSuccess('')
 
     try {
-      const response = await fetch('/api/otp/verify', {
-        method: 'POST',
+      const response = await fetch('/api/auth/send-email-otp', {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          identifier: email,
+          email: email,
           otp: otp
         })
       })
@@ -150,12 +149,11 @@ export default function EmailOTPRegistration({ onRegistrationComplete }: EmailOT
     setSuccess('')
 
     try {
-      const response = await fetch('/api/otp/send', {
+      const response = await fetch('/api/auth/send-email-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          identifier: email,
-          type: 'email'
+          email: email
         })
       })
 
